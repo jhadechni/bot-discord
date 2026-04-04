@@ -1,4 +1,4 @@
-import { google } from 'googleapis';
+import { google, type sheets_v4 } from 'googleapis';
 import { readFile } from 'fs/promises';
 import path from 'path';
 
@@ -24,6 +24,7 @@ function getSpreadsheetId(): string {
 // ── Nombres de tabs y cabeceras ───────────────────────────────────────────────
 
 export const SHOP_TABS = {
+  categorias: 'Categorías',
   productos:  'Productos',
   inventario: 'Inventario',
   ventas:     'Ventas',
@@ -33,7 +34,8 @@ export const SHOP_TABS = {
 export type ShopTab = keyof typeof SHOP_TABS;
 
 export const SHOP_HEADERS: Record<ShopTab, string[]> = {
-  productos:  ['Nombre', 'Tipo', 'Precio ($)', 'Descripción', 'Activo'],
+  categorias: ['Clave Categoría', 'Categoría', 'Clave Subcategoría', 'Subcategoría'],
+  productos:  ['Nombre', 'Tipo', 'Categoría', 'Subcategoría', 'Precio ($)', 'Descripción', 'Activo'],
   inventario: ['Material', 'Unidad', 'Stock Total', 'Reservado', 'Disponible', 'Alerta Mínima'],
   ventas:     ['Fecha', 'Código', 'Cliente (Discord)', 'Productos', 'Total ($)'],
   pedidos:    ['Código', 'Estado', 'Cliente', 'Productos', 'Total ($)', 'Creado'],
@@ -98,6 +100,86 @@ export async function appendRow(tab: ShopTab, row: string[]): Promise<void> {
     valueInputOption: 'USER_ENTERED',
     insertDataOption: 'INSERT_ROWS',
     requestBody:      { values: [row] },
+  });
+}
+
+/**
+ * Aplica dropdown de validación a las columnas Categoría (C) y Subcategoría (D)
+ * del tab Productos, referenciando directamente el tab Categorías como fuente.
+ * Si se actualiza la taxonomía y se re-exporta Categorías, los dropdowns reflejan
+ * los nuevos valores automáticamente sin necesidad de hardcodear las listas.
+ */
+export async function applyProductosDropdowns(
+  categoryKeys:    string[],
+  subcategoryKeys: string[],
+): Promise<void> {
+  const auth  = await getAuth();
+  const api   = google.sheets({ version: 'v4', auth });
+  const id    = getSpreadsheetId();
+
+  await ensureTab(api, id, SHOP_TABS.productos);
+
+  // Obtener sheetIds numéricos de Productos y Categorías
+  const meta = await api.spreadsheets.get({ spreadsheetId: id, fields: 'sheets.properties' });
+  const sheets = meta.data.sheets ?? [];
+
+  const productosSheetId  = sheets.find(s => s.properties?.title === SHOP_TABS.productos)?.properties?.sheetId  ?? 0;
+  const categoriasSheetId = sheets.find(s => s.properties?.title === SHOP_TABS.categorias)?.properties?.sheetId ?? null;
+
+  // Si el tab Categorías existe, usamos referencias a rango para que sea dinámico.
+  // Si no, caemos en lista estática como respaldo.
+  const totalRows = Math.max(categoryKeys.length, subcategoryKeys.length) + 1; // +1 por la cabecera
+
+  function makeRangeValidation(
+    productosCol: number,   // columna en Productos (0-indexed)
+    sourceCol:    number,   // columna en Categorías (0-indexed: 0=claveCateg, 2=claveSub)
+    staticValues: string[], // fallback si no existe el tab Categorías
+  ): sheets_v4.Schema$Request {
+    const range = {
+      sheetId:          productosSheetId,
+      startRowIndex:    1,
+      endRowIndex:      1000,
+      startColumnIndex: productosCol,
+      endColumnIndex:   productosCol + 1,
+    };
+
+    if (categoriasSheetId !== null) {
+      // ONE_OF_RANGE referencia el tab Categorías directamente
+      const colLetter = sourceCol === 0 ? 'A' : 'C';
+      const rangeRef  = `'${SHOP_TABS.categorias}'!${colLetter}2:${colLetter}${totalRows}`;
+      return {
+        setDataValidation: {
+          range,
+          rule: {
+            condition:    { type: 'ONE_OF_RANGE', values: [{ userEnteredValue: `=${rangeRef}` }] },
+            showCustomUi: true,
+            strict:       false,
+          },
+        },
+      };
+    }
+
+    // Fallback: lista estática
+    return {
+      setDataValidation: {
+        range,
+        rule: {
+          condition:    { type: 'ONE_OF_LIST', values: staticValues.map(v => ({ userEnteredValue: v })) },
+          showCustomUi: true,
+          strict:       false,
+        },
+      },
+    };
+  }
+
+  await api.spreadsheets.batchUpdate({
+    spreadsheetId: id,
+    requestBody:   {
+      requests: [
+        makeRangeValidation(2, 0, categoryKeys),    // columna C → clave categoría
+        makeRangeValidation(3, 2, subcategoryKeys), // columna D → clave subcategoría
+      ],
+    },
   });
 }
 

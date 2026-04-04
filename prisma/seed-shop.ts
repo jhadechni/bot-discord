@@ -5,540 +5,593 @@
 
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client.js';
+// Taxonomía dinámica — seed usa categoría genérica. Importar con /sync importar categorias.
+const inferTaxonomyForMaterial = (_name: string) => ({ category: 'general', subcategory: 'otros' });
+const inferTaxonomyForKit      = (_mats: string[]) => ({ category: 'general', subcategory: 'otros' });
+const inferTaxonomyForService  = (_name: string) => ({ category: 'general', subcategory: 'otros' });
 import 'dotenv/config';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma  = new PrismaClient({ adapter });
+
 const GUILD_ID = process.env.GUILD_ID ?? '1486504829755850764';
 const PRODUCT_TYPES = ['single', 'bulk', 'kit', 'service'] as const;
-const TARGET_PRODUCTS_PER_TYPE = 100;
+const TOTAL_USERS = 100;
+const TOTAL_MATERIALS = 100;
+const PRODUCTS_PER_TYPE = 25;
+const TOTAL_CLOSED_ORDERS = 100;
+const TOTAL_WITHDRAWALS = 100;
+const BASE_DISCORD_USER_ID = 880000000000000000n;
+
+type ProductType = typeof PRODUCT_TYPES[number];
+
+type ProductDef = {
+  name: string;
+  type: ProductType;
+  category: string;
+  subcategory: string;
+  price: number;
+  desc: string;
+  components: Array<{ mat: string; qty: number }>;
+};
+
+type CreatedUser = {
+  id: string;
+  discordUserId: string;
+  username: string;
+  displayName: string;
+};
+
+type CreatedMaterial = {
+  id: string;
+  name: string;
+  stock: number;
+};
+
+type CreatedProduct = ProductDef & { id: string };
+
+const MATERIAL_NAMES = [
+  'piedra',
+  'piedra_lisa',
+  'roca',
+  'andesita',
+  'andesita_pulida',
+  'granito',
+  'granito_pulido',
+  'diorita',
+  'diorita_pulida',
+  'pizarra_profunda',
+  'adoquin_pizarra',
+  'ladrillos_pizarra',
+  'toba',
+  'calcita',
+  'grava',
+  'arena',
+  'arenisca',
+  'arenisca_cortada',
+  'arenisca_roja',
+  'tierra',
+  'tierra_fertil',
+  'barro',
+  'adobe',
+  'nieve',
+  'hielo',
+  'roble',
+  'abedul',
+  'abeto',
+  'jungla',
+  'acacia',
+  'roble_oscuro',
+  'mangle',
+  'cerezo',
+  'bambu',
+  'hongo_carmesi',
+  'hongo_distorsionado',
+  'musgo',
+  'hoja_roble',
+  'hoja_abedul',
+  'hoja_jungla',
+  'cristal',
+  'cristal_tintado',
+  'terracota',
+  'terracota_blanca',
+  'terracota_roja',
+  'terracota_azul',
+  'hormigon_blanco',
+  'hormigon_gris',
+  'hormigon_negro',
+  'hormigon_azul',
+  'prismarina',
+  'ladrillos_prismarina',
+  'prismarina_oscura',
+  'ladrillos_piedra',
+  'ladrillos_piedra_agrietados',
+  'ladrillos_nether',
+  'verruga_nether',
+  'basalto',
+  'basalto_pulido',
+  'piedra_negra',
+  'ladrillos_piedra_negra',
+  'cuarzo',
+  'ladrillos_cuarzo',
+  'bloque_cuarzo_liso',
+  'end_stone',
+  'purpur',
+  'obsidiana',
+  'obsidiana_llorosa',
+  'magma',
+  'glowstone',
+  'carbon',
+  'hierro',
+  'oro',
+  'cobre',
+  'lapislazuli',
+  'redstone',
+  'esmeralda',
+  'diamante',
+  'netherita',
+  'amatista',
+  'cobre_cortado',
+  'cobre_oxidado',
+  'bloque_heno',
+  'lana_blanca',
+  'lana_gris',
+  'lana_negra',
+  'lana_azul',
+  'lana_verde',
+  'ladrillo',
+  'bloque_ladrillo',
+  'linterna_marina',
+  'esponja',
+  'esponja_humeda',
+  'netherrack',
+  'arena_almas',
+  'tierra_almas',
+  'piedra_end',
+  'purpur_pilar',
+  'algas_secas',
+  'mosaico_bambu',
+] as const;
+
+const SERVICE_NAMES = [
+  'Entrega express',
+  'Entrega premium',
+  'Escolta de entrega',
+  'Mudanza de inventario',
+  'Reabastecimiento rapido',
+  'Transporte al spawn',
+  'Transporte a base',
+  'Logistica de clan',
+  'Organizacion de almacen',
+  'Clasificacion de cofres',
+  'Armado de kit de guerra',
+  'Armado de kit de mineria',
+  'Armado de kit de construccion',
+  'Reposicion de insumos',
+  'Ayuda de farmeo',
+  'Asistencia de construccion',
+  'Mantenimiento de stock',
+  'Despacho nocturno',
+  'Despacho prioritario',
+  'Despacho seguro',
+  'Ruta de entrega',
+  'Courier del nether',
+  'Courier del end',
+  'Mudanza de proyecto',
+  'Servicio VIP de entrega',
+] as const;
+
+if (MATERIAL_NAMES.length < TOTAL_MATERIALS) {
+  throw new Error(`Se requieren al menos ${TOTAL_MATERIALS} materiales base para el seed.`);
+}
+
+function labelize(value: string): string {
+  return value
+    .split('_')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function roundPrice(price: number): number {
+  return Math.max(50, Math.round(price / 50) * 50);
+}
+
+function buildDiscordUserId(offset: number): string {
+  return (BASE_DISCORD_USER_ID + BigInt(offset)).toString();
+}
+
+function materialUnitPrice(name: string): number {
+  const index = MATERIAL_NAMES.indexOf(name as (typeof MATERIAL_NAMES)[number]);
+  const safeIndex = index >= 0 ? index : 0;
+  return 500 + (safeIndex % 10) * 75;
+}
+
+function buildProductDefs(materialNames: string[]): ProductDef[] {
+  const products: ProductDef[] = [];
+
+  for (let index = 0; index < PRODUCTS_PER_TYPE; index += 1) {
+    const material = materialNames[index]!;
+    const taxonomy = inferTaxonomyForMaterial(material);
+    products.push({
+      name:  `${labelize(material)} x1 cofre doble`,
+      type:  'single',
+      category: taxonomy.category,
+      subcategory: taxonomy.subcategory,
+      price: roundPrice(materialUnitPrice(material)),
+      desc:  '',
+      components: [{ mat: material, qty: 1 }],
+    });
+  }
+
+  for (let index = 0; index < PRODUCTS_PER_TYPE; index += 1) {
+    const material = materialNames[PRODUCTS_PER_TYPE + index]!;
+    const quantity = 2 + (index % 4);
+    const taxonomy = inferTaxonomyForMaterial(material);
+    products.push({
+      name:  `${labelize(material)} x${quantity} cofres dobles`,
+      type:  'bulk',
+      category: taxonomy.category,
+      subcategory: taxonomy.subcategory,
+      price: roundPrice(materialUnitPrice(material) * quantity * 0.92),
+      desc:  '',
+      components: [{ mat: material, qty: quantity }],
+    });
+  }
+
+  for (let index = 0; index < PRODUCTS_PER_TYPE; index += 1) {
+    const first  = materialNames[50 + index]!;
+    const second = materialNames[75 + (index % 25)]!;
+    const third  = materialNames[(index * 3) % materialNames.length]!;
+    const components = [
+      { mat: first, qty: 1 + (index % 2) },
+      { mat: second, qty: 1 + ((index + 1) % 2) },
+      { mat: third, qty: 1 + (index % 3) },
+    ];
+    const price = roundPrice(
+      components.reduce((sum, component) => {
+        return sum + materialUnitPrice(component.mat) * component.qty;
+      }, 0) * 0.9,
+    );
+    const taxonomy = inferTaxonomyForKit(components.map(component => component.mat));
+
+    products.push({
+      name:  `Kit Seed ${String(index + 1).padStart(3, '0')} - ${labelize(first)}`,
+      type:  'kit',
+      category: taxonomy.category,
+      subcategory: taxonomy.subcategory,
+      price,
+      desc:  '',
+      components,
+    });
+  }
+
+  for (let index = 0; index < PRODUCTS_PER_TYPE; index += 1) {
+    const taxonomy = inferTaxonomyForService(SERVICE_NAMES[index]!);
+    products.push({
+      name:  `${SERVICE_NAMES[index]} Seed`,
+      type:  'service',
+      category: taxonomy.category,
+      subcategory: taxonomy.subcategory,
+      price: roundPrice(250 + index * 35),
+      desc:  'Servicio manual del staff.',
+      components: [],
+    });
+  }
+
+  return products;
+}
+
+async function clearShopData() {
+  const [orders, products] = await Promise.all([
+    prisma.shopOrder.findMany({ where: { guildId: GUILD_ID }, select: { id: true } }),
+    prisma.shopProduct.findMany({ where: { guildId: GUILD_ID }, select: { id: true } }),
+  ]);
+
+  const orderIds = orders.map(order => order.id);
+  const productIds = products.map(product => product.id);
+
+  if (orderIds.length > 0) {
+    await prisma.shopOrderEvent.deleteMany({ where: { orderId: { in: orderIds } } });
+    await prisma.shopSale.deleteMany({ where: { orderId: { in: orderIds } } });
+    await prisma.shopOrderItem.deleteMany({ where: { orderId: { in: orderIds } } });
+  }
+
+  await prisma.shopInventoryMovement.deleteMany({ where: { guildId: GUILD_ID } });
+  await prisma.shopWithdrawal.deleteMany({ where: { guildId: GUILD_ID } });
+
+  if (orderIds.length > 0) {
+    await prisma.shopOrder.deleteMany({ where: { id: { in: orderIds } } });
+  }
+
+  if (productIds.length > 0) {
+    await prisma.shopProductPrice.deleteMany({ where: { productId: { in: productIds } } });
+    await prisma.shopProductComponent.deleteMany({ where: { productId: { in: productIds } } });
+  }
+
+  await prisma.shopProduct.deleteMany({ where: { guildId: GUILD_ID } });
+  await prisma.shopInventory.deleteMany({ where: { guildId: GUILD_ID } });
+  await prisma.shopMaterial.deleteMany({ where: { guildId: GUILD_ID } });
+  await prisma.shopUser.deleteMany({ where: { guildId: GUILD_ID } });
+}
 
 async function main() {
   console.log('🌱 Sembrando datos de prueba de la tienda...\n');
+  console.log(`🧹 Eliminando datos previos de tienda para guild ${GUILD_ID}...`);
+  await clearShopData();
+  console.log('✅ Datos previos eliminados');
 
   // ── 1. Usuarios ─────────────────────────────────────────────────────────────
-  const staff = await prisma.shopUser.upsert({
-    where:  { guildId_discordUserId: { guildId: GUILD_ID, discordUserId: '111111111111111111' } },
-    update: {},
-    create: {
+  const staff = await prisma.shopUser.create({
+    data: {
       guildId:       GUILD_ID,
       discordUserId: '111111111111111111',
-      username:      'StaffDemo',
-      displayName:   'Staff Demo',
+      username:      'StaffSeed',
+      displayName:   'Staff Seed',
     },
   });
 
-  const cliente1 = await prisma.shopUser.upsert({
-    where:  { guildId_discordUserId: { guildId: GUILD_ID, discordUserId: '222222222222222222' } },
-    update: {},
-    create: {
-      guildId:       GUILD_ID,
-      discordUserId: '222222222222222222',
-      username:      'Jugador1',
-      displayName:   'Jugador Uno',
-    },
-  });
+  const customers: CreatedUser[] = [];
 
-  const cliente2 = await prisma.shopUser.upsert({
-    where:  { guildId_discordUserId: { guildId: GUILD_ID, discordUserId: '333333333333333333' } },
-    update: {},
-    create: {
-      guildId:       GUILD_ID,
-      discordUserId: '333333333333333333',
-      username:      'Jugador2',
-      displayName:   'Jugador Dos',
-    },
-  });
+  for (let index = 1; index < TOTAL_USERS; index += 1) {
+    const sequence = String(index).padStart(3, '0');
+    const user = await prisma.shopUser.create({
+      data: {
+        guildId:       GUILD_ID,
+        discordUserId: buildDiscordUserId(index),
+        username:      `ClienteSeed${sequence}`,
+        displayName:   `Cliente Seed ${sequence}`,
+      },
+    });
 
-  console.log('✅ Usuarios creados');
+    customers.push({
+      id: user.id,
+      discordUserId: user.discordUserId,
+      username: user.username,
+      displayName: user.displayName,
+    });
+  }
+
+  console.log(`✅ Usuarios creados: ${1 + customers.length}`);
 
   // ── 2. Materiales + inventario ────────────────────────────────────────────
-  const materiales = [
-    { name: 'piedra',         baseUnit: 'cofre_doble', stock: 20,   alert: 3  },
-    { name: 'diamante',       baseUnit: 'item',        stock: 500,  alert: 50 },
-    { name: 'hierro',         baseUnit: 'stack',       stock: 30,   alert: 5  },
-    { name: 'madera',         baseUnit: 'cofre_doble', stock: 10,   alert: 2  },
-    { name: 'antorcha',       baseUnit: 'stack',       stock: 15,   alert: 3  },
-    { name: 'pan',            baseUnit: 'item',        stock: 1024, alert: 64 },
-    { name: 'pico_diamante',  baseUnit: 'item',        stock: 20,   alert: 5  },
-    { name: 'espada_hierro',  baseUnit: 'item',        stock: 10,   alert: 2  },
-    { name: 'cofre',          baseUnit: 'item',        stock: 200,  alert: 20 },
-  ];
+  const createdMaterials: CreatedMaterial[] = [];
+  const materialIdByName: Record<string, string> = {};
 
-  const matMap: Record<string, string> = {}; // name → id
-
-  for (const m of materiales) {
-    const mat = await prisma.shopMaterial.upsert({
-      where:  { guildId_name: { guildId: GUILD_ID, name: m.name } },
-      update: {},
-      create: {
+  for (const [index, materialName] of MATERIAL_NAMES.slice(0, TOTAL_MATERIALS).entries()) {
+    const stock = 300 + (index % 10) * 25;
+    const alert = 10 + (index % 5) * 2;
+    const material = await prisma.shopMaterial.create({
+      data: {
         guildId:  GUILD_ID,
-        name:     m.name,
-        baseUnit: m.baseUnit,
+        name:     materialName,
+        baseUnit: 'cofre_doble',
         inventory: {
           create: {
-            guildId:      GUILD_ID,
-            currentStock: m.stock,
-            minStockAlert: m.alert,
+            guildId:       GUILD_ID,
+            currentStock:  stock,
+            reservedStock: 0,
+            minStockAlert: alert,
           },
         },
       },
     });
-    matMap[m.name] = mat.id;
 
-    // Movimiento inicial de stock
+    createdMaterials.push({ id: material.id, name: material.name, stock });
+    materialIdByName[material.name] = material.id;
+
     await prisma.shopInventoryMovement.create({
       data: {
-        guildId:      GUILD_ID,
-        materialId:   mat.id,
-        movementType: 'stock_add',
-        quantity:     m.stock,
-        reason:       'Stock inicial (seed)',
+        guildId:       GUILD_ID,
+        materialId:    material.id,
+        movementType:  'stock_add',
+        quantity:      stock,
+        reason:        'Stock inicial completo de seed',
         performedById: staff.id,
       },
     });
   }
 
-  console.log('✅ Materiales e inventario creados');
+  console.log(`✅ Materiales creados: ${createdMaterials.length}`);
 
-  // ── 3. Productos ─────────────────────────────────────────────────────────
-  type ProductDef = {
-    name: string;
-    type: typeof PRODUCT_TYPES[number];
-    price: number;
-    desc: string;
-    components: Array<{ mat: string; qty: number }>;
-  };
+  // ── 3. Productos ───────────────────────────────────────────────────────────
+  const productDefs = buildProductDefs(createdMaterials.map(material => material.name));
+  const createdProducts: CreatedProduct[] = [];
 
-  const materialUnitPrice: Record<string, number> = {
-    piedra:        500,
-    diamante:      200,
-    hierro:        400,
-    madera:        300,
-    antorcha:      120,
-    pan:           25,
-    pico_diamante: 1500,
-    espada_hierro: 900,
-    cofre:         80,
-  };
-
-  const labelForMaterial = (name: string) =>
-    name
-      .split('_')
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
-
-  const roundPrice = (price: number) => Math.max(50, Math.round(price / 50) * 50);
-
-  const buildGeneratedProduct = (
-    type: typeof PRODUCT_TYPES[number],
-    serial: number,
-  ): ProductDef => {
-    if (type === 'service') {
-      return {
-        name:  `Servicio Seed ${String(serial).padStart(3, '0')}`,
-        type,
-        price: roundPrice(150 + serial * 15),
-        desc:  '',
-        components: [],
-      };
-    }
-
-    if (type === 'kit') {
-      const first  = materiales[(serial - 1) % materiales.length]!;
-      const second = materiales[(serial + 1) % materiales.length]!;
-      const third  = materiales[(serial + 4) % materiales.length]!;
-      const components: Array<{ mat: string; qty: number }> = [
-        { mat: first.name,  qty: 1 + (serial % 3) },
-        { mat: second.name, qty: 1 + ((serial + 1) % 2) },
-      ];
-
-      if (serial % 2 === 0) {
-        components.push({ mat: third.name, qty: 1 + (serial % 4) });
-      }
-
-      const price = roundPrice(
-        components.reduce((sum, component) => {
-          return sum + (materialUnitPrice[component.mat] ?? 100) * component.qty;
-        }, 0) * 1.12,
-      );
-
-      return {
-        name:  `Kit Seed ${String(serial).padStart(3, '0')}`,
-        type,
-        price,
-        desc:  '',
-        components,
-      };
-    }
-
-    const material = materiales[(serial - 1) % materiales.length]!;
-    const singleQuantities = material.baseUnit === 'item'
-      ? [1, 2, 4, 8, 16, 32]
-      : [1, 1, 2, 2, 3, 4];
-    const bulkQuantities = material.baseUnit === 'item'
-      ? [16, 32, 48, 64, 96, 128]
-      : [1, 2, 3, 4, 5, 6];
-    const quantity = type === 'single'
-      ? singleQuantities[(serial - 1) % singleQuantities.length]!
-      : bulkQuantities[(serial - 1) % bulkQuantities.length]!;
-    const basePrice = (materialUnitPrice[material.name] ?? 100) * quantity;
-    const price = type === 'single'
-      ? roundPrice(basePrice)
-      : roundPrice(basePrice * 0.9);
-
-    return {
-      name:  `${type === 'single' ? 'Single' : 'Bulk'} Seed ${String(serial).padStart(3, '0')} - ${labelForMaterial(material.name)} x${quantity}`,
-      type,
-      price,
-      desc:  '',
-      components: [{ mat: material.name, qty: quantity }],
-    };
-  };
-
-  const completeProductsByType = (baseProducts: ProductDef[]) => {
-    const products = [...baseProducts];
-    const counts = new Map<typeof PRODUCT_TYPES[number], number>(
-      PRODUCT_TYPES.map(type => [type, 0]),
-    );
-
-    for (const product of baseProducts) {
-      counts.set(product.type, (counts.get(product.type) ?? 0) + 1);
-    }
-
-    for (const type of PRODUCT_TYPES) {
-      let serial = 1;
-      while ((counts.get(type) ?? 0) < TARGET_PRODUCTS_PER_TYPE) {
-        const candidate = buildGeneratedProduct(type, serial);
-        serial += 1;
-
-        if (products.some(product => product.name === candidate.name)) continue;
-
-        products.push(candidate);
-        counts.set(type, (counts.get(type) ?? 0) + 1);
-      }
-    }
-
-    return products;
-  };
-
-  const productosBase: ProductDef[] = [
-    {
-      name:  'Piedra x1 cofre doble',
-      type:  'bulk',
-      price: 500,
-      desc:  '1 cofre doble de piedra',
-      components: [{ mat: 'piedra', qty: 1 }],
-    },
-    {
-      name:  'Diamante x16',
-      type:  'single',
-      price: 3200,
-      desc:  '16 diamantes',
-      components: [{ mat: 'diamante', qty: 16 }],
-    },
-    {
-      name:  'Diamante x64',
-      type:  'bulk',
-      price: 12000,
-      desc:  '64 diamantes (1 stack)',
-      components: [{ mat: 'diamante', qty: 64 }],
-    },
-    {
-      name:  'Hierro x1 stack',
-      type:  'bulk',
-      price: 400,
-      desc:  '1 stack de lingotes de hierro',
-      components: [{ mat: 'hierro', qty: 1 }],
-    },
-    {
-      name:  'Kit Minero',
-      type:  'kit',
-      price: 1800,
-      desc:  'Pico de diamante + 2 stacks de antorchas + 64 panes',
-      components: [
-        { mat: 'pico_diamante', qty: 1 },
-        { mat: 'antorcha',      qty: 2 },
-        { mat: 'pan',           qty: 64 },
-      ],
-    },
-    {
-      name:  'Kit Guerrero',
-      type:  'kit',
-      price: 2500,
-      desc:  'Espada de hierro + 2 cofres + 32 panes',
-      components: [
-        { mat: 'espada_hierro', qty: 1 },
-        { mat: 'cofre',         qty: 2 },
-        { mat: 'pan',           qty: 32 },
-      ],
-    },
-    {
-      name:  'Madera x1 cofre doble',
-      type:  'bulk',
-      price: 300,
-      desc:  '1 cofre doble de madera (cualquier tipo)',
-      components: [{ mat: 'madera', qty: 1 }],
-    },
-    {
-      name:  'Entrega a domicilio',
-      type:  'service',
-      price: 200,
-      desc:  'El staff entrega el pedido directamente en tu base',
-      components: [],
-    },
-  ];
-  const productos = completeProductsByType(productosBase);
-
-  const prodMap: Record<string, string> = {}; // name → id
-
-  for (const p of productos) {
-    const prod = await prisma.shopProduct.upsert({
-      where:  { guildId_name: { guildId: GUILD_ID, name: p.name } },
-      update: {},
-      create: {
+  for (const productDef of productDefs) {
+    const product = await prisma.shopProduct.create({
+      data: {
         guildId:     GUILD_ID,
-        name:        p.name,
-        productType: p.type,
-        description: p.desc,
+        name:        productDef.name,
+        productType: productDef.type,
+        category:    productDef.category,
+        subcategory: productDef.subcategory,
+        description: productDef.desc,
         isActive:    true,
         prices: {
-          create: { price: p.price, changedByUserId: staff.id },
+          create: {
+            price:           productDef.price,
+            changedByUserId: staff.id,
+          },
         },
+        ...(productDef.components.length > 0
+          ? {
+              components: {
+                create: productDef.components.map(component => ({
+                  materialId:       materialIdByName[component.mat]!,
+                  quantityRequired: component.qty,
+                })),
+              },
+            }
+          : {}),
       },
     });
-    prodMap[p.name] = prod.id;
 
-    for (const comp of p.components) {
-      await prisma.shopProductComponent.upsert({
-        where:  { productId_materialId: { productId: prod.id, materialId: matMap[comp.mat]! } },
-        update: { quantityRequired: comp.qty },
-        create: { productId: prod.id, materialId: matMap[comp.mat]!, quantityRequired: comp.qty },
-      });
-    }
+    createdProducts.push({ ...productDef, id: product.id });
   }
 
-  console.log('✅ Productos y componentes creados');
+  console.log(`✅ Productos creados: ${createdProducts.length}`);
 
-  // ── 4. Pedidos de ejemplo ────────────────────────────────────────────────
+  // ── 4. Pedidos cerrados + ventas ───────────────────────────────────────────
+  let totalOrderEvents = 0;
+  let totalOrderItems = 0;
+  let totalSales = 0;
+  let totalSaleMovements = 0;
 
-  // Limpiar pedidos de seed anteriores (para idempotencia)
-  const seedCodes = ['AQ-SEED01', 'AQ-SEED02', 'AQ-SEED03', 'AQ-SEED04'];
-  const oldOrders = await prisma.shopOrder.findMany({
-    where: { orderCode: { in: seedCodes } },
-    select: { id: true },
-  });
-  const oldIds = oldOrders.map(o => o.id);
-  if (oldIds.length > 0) {
-    await prisma.shopSale.deleteMany({ where: { orderId: { in: oldIds } } });
-    await prisma.shopOrderEvent.deleteMany({ where: { orderId: { in: oldIds } } });
-    await prisma.shopInventoryMovement.deleteMany({ where: { relatedOrderId: { in: oldIds } } });
-    await prisma.shopOrderItem.deleteMany({ where: { orderId: { in: oldIds } } });
-    await prisma.shopOrder.deleteMany({ where: { id: { in: oldIds } } });
-    // Restaurar stocks reservados que se crearon en seeds anteriores
-    await prisma.shopInventory.updateMany({ where: { guildId: GUILD_ID }, data: { reservedStock: 0 } });
-  }
+  for (let index = 0; index < TOTAL_CLOSED_ORDERS; index += 1) {
+    const customer = customers[index % customers.length]!;
+    const product = createdProducts[index % createdProducts.length]!;
+    const quantity = product.type === 'service' ? 1 : 1 + (index % 2);
+    const subtotal = product.price * quantity;
+    const acceptedAt = new Date(Date.now() - (TOTAL_CLOSED_ORDERS - index) * 90 * 60_000);
+    const closedAt = new Date(acceptedAt.getTime() + 45 * 60_000);
+    const orderCode = `AQ-TST${String(index + 1).padStart(4, '0')}`;
 
-  // Pedido 1: pendiente
-  const order1 = await prisma.shopOrder.create({
-    data: {
-      guildId:        GUILD_ID,
-      orderCode:      'AQ-SEED01',
-      customerUserId: cliente1.id,
-      status:         'pending',
-      subtotalAmount: 3200,
-      totalAmount:    3200,
-      items: {
-        create: {
-          productId:     prodMap['Diamante x16']!,
-          quantity:      1,
-          unitPrice:     3200,
-          grossLineTotal: 3200,
-        },
-      },
-    },
-  });
-  await prisma.shopOrderEvent.create({
-    data: { orderId: order1.id, eventType: 'created', newStatus: 'pending', performedById: cliente1.id },
-  });
-
-  // Pedido 2: aceptado (stock reservado)
-  const order2 = await prisma.shopOrder.create({
-    data: {
-      guildId:          GUILD_ID,
-      orderCode:        'AQ-SEED02',
-      customerUserId:   cliente2.id,
-      status:           'accepted',
-      acceptedByUserId: staff.id,
-      acceptedAt:       new Date(),
-      subtotalAmount:   1800,
-      totalAmount:      1800,
-      items: {
-        create: {
-          productId:        prodMap['Kit Minero']!,
-          quantity:         1,
-          unitPrice:        1800,
-          grossLineTotal:   1800,
-          reservedQuantity: 1,
-        },
-      },
-    },
-  });
-  // Reservar stock del Kit Minero: pico_diamante x1, antorcha x2, pan x64
-  await prisma.shopInventory.update({
-    where: { materialId: matMap['pico_diamante']! },
-    data:  { reservedStock: { increment: 1 } },
-  });
-  await prisma.shopInventory.update({
-    where: { materialId: matMap['antorcha']! },
-    data:  { reservedStock: { increment: 2 } },
-  });
-  await prisma.shopInventory.update({
-    where: { materialId: matMap['pan']! },
-    data:  { reservedStock: { increment: 64 } },
-  });
-  for (const [mat, qty] of [['pico_diamante', 1], ['antorcha', 2], ['pan', 64]] as const) {
-    await prisma.shopInventoryMovement.create({
+    const order = await prisma.shopOrder.create({
       data: {
-        guildId:        GUILD_ID,
-        materialId:     matMap[mat]!,
-        movementType:   'reserve',
-        quantity:       qty,
-        reason:         'Reserva pedido AQ-SEED02',
-        relatedOrderId: order2.id,
-        performedById:  staff.id,
+        guildId:          GUILD_ID,
+        orderCode,
+        customerUserId:   customer.id,
+        status:           'closed',
+        acceptedByUserId: staff.id,
+        closedByUserId:   staff.id,
+        subtotalAmount:   subtotal,
+        totalAmount:      subtotal,
+        acceptedAt,
+        closedAt,
+        items: {
+          create: {
+            productId:          product.id,
+            quantity,
+            unitPrice:          product.price,
+            grossLineTotal:     subtotal,
+            reservedQuantity:   product.components.length > 0 ? quantity : 0,
+            deliveredQuantity:  quantity,
+          },
+        },
       },
     });
-  }
-  await prisma.shopOrderEvent.create({
-    data: { orderId: order2.id, eventType: 'created',  newStatus: 'pending',  performedById: cliente2.id },
-  });
-  await prisma.shopOrderEvent.create({
-    data: { orderId: order2.id, eventType: 'accepted', oldStatus: 'pending', newStatus: 'accepted', performedById: staff.id },
-  });
 
-  // Pedido 3: cerrado (venta registrada)
-  const order3 = await prisma.shopOrder.create({
-    data: {
-      guildId:         GUILD_ID,
-      orderCode:       'AQ-SEED03',
-      customerUserId:  cliente1.id,
-      status:          'closed',
-      acceptedByUserId: staff.id,
-      closedByUserId:   staff.id,
-      acceptedAt:      new Date(Date.now() - 2 * 24 * 3600_000),
-      closedAt:        new Date(Date.now() - 1 * 24 * 3600_000),
-      subtotalAmount:  1300,
-      totalAmount:     1300,
-      items: {
-        create: [
-          {
-            productId:        prodMap['Hierro x1 stack']!,
-            quantity:         2,
-            unitPrice:        400,
-            grossLineTotal:   800,
-            reservedQuantity: 2,
-            deliveredQuantity: 2,
-          },
-          {
-            productId:        prodMap['Entrega a domicilio']!,
-            quantity:         1,
-            unitPrice:        200,
-            grossLineTotal:   200,
-            reservedQuantity: 0,
-            deliveredQuantity: 1,
-          },
-          {
-            productId:        prodMap['Madera x1 cofre doble']!,
-            quantity:         1,
-            unitPrice:        300,
-            grossLineTotal:   300,
-            reservedQuantity: 1,
-            deliveredQuantity: 1,
-          },
-        ],
-      },
-    },
-  });
-  // Consumir stock
-  await prisma.shopInventory.update({
-    where: { materialId: matMap['hierro']! },
-    data:  { currentStock: { decrement: 2 }, reservedStock: { decrement: 2 } },
-  });
-  await prisma.shopInventory.update({
-    where: { materialId: matMap['madera']! },
-    data:  { currentStock: { decrement: 1 }, reservedStock: { decrement: 1 } },
-  });
-  for (const [mat, qty] of [['hierro', 2], ['madera', 1]] as const) {
-    await prisma.shopInventoryMovement.create({
-      data: {
-        guildId:        GUILD_ID,
-        materialId:     matMap[mat]!,
-        movementType:   'sale',
-        quantity:       qty,
-        reason:         'Venta pedido AQ-SEED03',
-        relatedOrderId: order3.id,
-        performedById:  staff.id,
-      },
-    });
-  }
-  await prisma.shopSale.create({
-    data: {
-      guildId:        GUILD_ID,
-      orderId:        order3.id,
-      buyerUserId:    cliente1.id,
-      registeredById: staff.id,
-      totalAmount:    1300,
-      soldAt:         new Date(Date.now() - 1 * 24 * 3600_000),
-    },
-  });
-  for (const [evt, old, nw] of [
-    ['created', null, 'pending'],
-    ['accepted', 'pending', 'accepted'],
-    ['closed', 'accepted', 'closed'],
-  ] as const) {
+    totalOrderItems += 1;
+
     await prisma.shopOrderEvent.create({
-      data: { orderId: order3.id, eventType: evt, oldStatus: old ?? null, newStatus: nw, performedById: staff.id },
+      data: {
+        orderId:       order.id,
+        eventType:     'created',
+        newStatus:     'pending',
+        performedById: customer.id,
+      },
     });
+    await prisma.shopOrderEvent.create({
+      data: {
+        orderId:       order.id,
+        eventType:     'accepted',
+        oldStatus:     'pending',
+        newStatus:     'accepted',
+        performedById: staff.id,
+      },
+    });
+    await prisma.shopOrderEvent.create({
+      data: {
+        orderId:       order.id,
+        eventType:     'closed',
+        oldStatus:     'accepted',
+        newStatus:     'closed',
+        performedById: staff.id,
+      },
+    });
+    totalOrderEvents += 3;
+
+    for (const component of product.components) {
+      const movementQuantity = component.qty * quantity;
+      await prisma.shopInventory.update({
+        where: { materialId: materialIdByName[component.mat]! },
+        data:  { currentStock: { decrement: movementQuantity } },
+      });
+      await prisma.shopInventoryMovement.create({
+        data: {
+          guildId:        GUILD_ID,
+          materialId:     materialIdByName[component.mat]!,
+          movementType:   'sale',
+          quantity:       movementQuantity,
+          reason:         `Venta cerrada del pedido ${orderCode}`,
+          relatedOrderId: order.id,
+          performedById:  staff.id,
+        },
+      });
+      totalSaleMovements += 1;
+    }
+
+    await prisma.shopSale.create({
+      data: {
+        guildId:        GUILD_ID,
+        orderId:        order.id,
+        buyerUserId:    customer.id,
+        registeredById: staff.id,
+        totalAmount:    subtotal,
+        soldAt:         closedAt,
+      },
+    });
+    totalSales += 1;
   }
 
-  // Pedido 4: rechazado
-  const order4 = await prisma.shopOrder.create({
-    data: {
-      guildId:          GUILD_ID,
-      orderCode:        'AQ-SEED04',
-      customerUserId:   cliente2.id,
-      status:           'rejected',
-      rejectedByUserId: staff.id,
-      rejectedAt:       new Date(Date.now() - 3 * 24 * 3600_000),
-      rejectionReason:  'No hay suficiente stock en este momento.',
-      subtotalAmount:   12000,
-      totalAmount:      12000,
-      items: {
-        create: {
-          productId:     prodMap['Diamante x64']!,
-          quantity:      1,
-          unitPrice:     12000,
-          grossLineTotal: 12000,
-        },
-      },
-    },
-  });
-  await prisma.shopOrderEvent.create({
-    data: { orderId: order4.id, eventType: 'created',  newStatus: 'pending',  performedById: cliente2.id },
-  });
-  await prisma.shopOrderEvent.create({
-    data: { orderId: order4.id, eventType: 'rejected', oldStatus: 'pending', newStatus: 'rejected', performedById: staff.id, notes: 'No hay suficiente stock en este momento.' },
-  });
+  console.log(`✅ Pedidos cerrados creados: ${TOTAL_CLOSED_ORDERS}`);
 
-  console.log('✅ Pedidos de ejemplo creados (pending, accepted, closed, rejected)');
+  // ── 5. Retiros de inventario ───────────────────────────────────────────────
+  let totalWithdrawals = 0;
+  let totalWithdrawalMovements = 0;
+
+  for (let index = 0; index < TOTAL_WITHDRAWALS; index += 1) {
+    const material = createdMaterials[index % createdMaterials.length]!;
+    const quantity = 1 + (index % 3);
+
+    await prisma.shopInventory.update({
+      where: { materialId: material.id },
+      data:  { currentStock: { decrement: quantity } },
+    });
+
+    await prisma.shopWithdrawal.create({
+      data: {
+        guildId:       GUILD_ID,
+        materialId:    material.id,
+        quantity,
+        reason:        `Retiro seed ${String(index + 1).padStart(3, '0')}`,
+        performedById: staff.id,
+      },
+    });
+    totalWithdrawals += 1;
+
+    await prisma.shopInventoryMovement.create({
+      data: {
+        guildId:       GUILD_ID,
+        materialId:    material.id,
+        movementType:  'withdrawal',
+        quantity,
+        reason:        `Retiro seed ${String(index + 1).padStart(3, '0')}`,
+        performedById: staff.id,
+      },
+    });
+    totalWithdrawalMovements += 1;
+  }
+
+  console.log(`✅ Retiros creados: ${totalWithdrawals}`);
+
+  const totalComponents = productDefs.reduce((sum, product) => sum + product.components.length, 0);
+  const totalMovements = createdMaterials.length + totalSaleMovements + totalWithdrawalMovements;
 
   console.log('\n✨ Seed completado.');
   console.log(`   Guild: ${GUILD_ID}`);
-  console.log(`   Materiales: ${materiales.length} | Productos: ${productos.length} | Pedidos: 4`);
-  console.log(
-    `   Por tipo: ${PRODUCT_TYPES.map(type => `${type}:${productos.filter(product => product.type === type).length}`).join(' | ')}`,
-  );
+  console.log(`   ShopUser: ${1 + customers.length}`);
+  console.log(`   ShopMaterial: ${createdMaterials.length}`);
+  console.log(`   ShopInventory: ${createdMaterials.length}`);
+  console.log(`   ShopProduct: ${createdProducts.length}`);
+  console.log(`   ShopProductPrice: ${createdProducts.length}`);
+  console.log(`   ShopProductComponent: ${totalComponents}`);
+  console.log(`   ShopOrder: ${TOTAL_CLOSED_ORDERS}`);
+  console.log(`   ShopOrderItem: ${totalOrderItems}`);
+  console.log(`   ShopSale: ${totalSales}`);
+  console.log(`   ShopWithdrawal: ${totalWithdrawals}`);
+  console.log(`   ShopOrderEvent: ${totalOrderEvents}`);
+  console.log(`   ShopInventoryMovement: ${totalMovements}`);
 }
 
 main()

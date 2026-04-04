@@ -32,11 +32,8 @@ import {
   syncPedidosToSheet,
 } from '../shop/sync.js';
 import {
+  buildCatalogView,
   queryCatalogProducts,
-  groupBySections,
-  paginateSectionProducts,
-  buildCatalogEmbed,
-  buildCatalogButtons,
 } from '../shop/catalog.js';
 
 // ── Cooldown de sugerencias (en memoria) ──────────────────────────────────────
@@ -139,6 +136,36 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       suggestCooldown.set(cooldownKey, Date.now());
       await interaction.editReply('✅ Tu sugerencia fue enviada.');
       return;
+    }
+
+    // --- Select menu: navegación del catálogo de tienda ---
+    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('tienda:catalog:')) {
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      await interaction.deferUpdate();
+
+      const products = await queryCatalogProducts(guildId);
+
+      if (interaction.customId === 'tienda:catalog:category') {
+        const selectedCategory = interaction.values[0];
+        const { embed, components } = buildCatalogView(products, selectedCategory, null, 1);
+        await interaction.editReply({ embeds: [embed], components });
+        return;
+      }
+
+      if (interaction.customId.startsWith('tienda:catalog:subcategory:')) {
+        const selectedCategory = interaction.customId.split(':')[3];
+        const selectedSubcategory = interaction.values[0];
+        const { embed, components } = buildCatalogView(
+          products,
+          selectedCategory,
+          selectedSubcategory,
+          1,
+        );
+        await interaction.editReply({ embeds: [embed], components });
+        return;
+      }
     }
 
     // --- Select menu: selección de rol(es) en reclutamiento ---
@@ -653,38 +680,61 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       }
     }
 
-    // --- Botones de navegación del catálogo de tienda ---
-    if (interaction.isButton() && interaction.customId.startsWith('tienda:catalog:')) {
-      const [, , section, rawPage] = interaction.customId.split(':');
+    // --- Select menus de categoría/subcategoría del catálogo ---
+    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('tienda:catalog:')) {
+      const parts   = interaction.customId.split(':');
+      const action  = parts[2]; // 'category' | 'subcategory'
       const guildId = interaction.guildId;
       if (!guildId) return;
 
       await interaction.deferUpdate();
 
-      const products        = await queryCatalogProducts(guildId);
-      const sections        = groupBySections(products);
-      const availableSections = [...sections.keys()];
-      const sectionKey      = section ?? availableSections[0]!;
-      const sectionProducts = sections.get(sectionKey) ?? [];
-      const pages           = paginateSectionProducts(sectionProducts);
-      const requestedPage   = Number.parseInt(rawPage ?? '1', 10);
-      const currentPage     = Math.min(
-        Math.max(Number.isNaN(requestedPage) ? 1 : requestedPage, 1),
-        pages.length,
-      );
+      const products = await queryCatalogProducts(guildId);
+      const selected = interaction.values[0]!;
 
-      const embed      = buildCatalogEmbed(
-        pages[currentPage - 1] ?? [],
-        sectionKey,
-        availableSections,
-        currentPage,
-        pages.length,
-      );
-      const components = buildCatalogButtons(
-        availableSections,
-        sectionKey,
-        currentPage,
-        pages.length,
+      let categoryKey:    string | undefined;
+      let subcategoryKey: string | undefined;
+
+      if (action === 'category') {
+        categoryKey = selected;
+        // subcategoría se resetea a la primera de la nueva categoría
+      } else if (action === 'subcategory') {
+        categoryKey    = parts[3]; // tienda:catalog:subcategory:{category}
+        subcategoryKey = selected;
+      }
+
+      const { embed, components } = buildCatalogView(products, categoryKey, subcategoryKey, 1);
+      await interaction.editReply({ embeds: [embed], components });
+      return;
+    }
+
+    // --- Botones de navegación del catálogo de tienda ---
+    if (interaction.isButton() && interaction.customId.startsWith('tienda:catalog:')) {
+      const parts = interaction.customId.split(':');
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      let category: string | undefined;
+      let subcategory: string | undefined;
+      let rawPage: string | undefined;
+
+      if (parts[2] === 'page') {
+        category = parts[3];
+        subcategory = parts[4];
+        rawPage = parts[5];
+      } else if (parts[2] === 'page-label') {
+        return;
+      }
+
+      await interaction.deferUpdate();
+
+      const products = await queryCatalogProducts(guildId);
+      const requestedPage = Number.parseInt(rawPage ?? '1', 10);
+      const { embed, components } = buildCatalogView(
+        products,
+        category,
+        subcategory,
+        Number.isNaN(requestedPage) ? 1 : requestedPage,
       );
 
       await interaction.editReply({ embeds: [embed], components });

@@ -12,8 +12,10 @@ import { sheetsEnabled } from '../../shop/sync.js';
 import {
   syncProductosToSheet,
   syncInventarioToSheet,
+  syncCategoriasToSheet,
   syncVentasToSheet,
   syncPedidosToSheet,
+  importCategoriasFromSheet,
   importProductosFromSheet,
   importInventarioFromSheet,
   type ImportSummary,
@@ -55,6 +57,9 @@ export const syncCommand: Command = {
         .setName('exportar')
         .setDescription('Exporta datos de la BD a Google Sheets')
         .addSubcommand(sub =>
+          sub.setName('categorias').setDescription('Exporta la taxonomía de categorías/subcategorías a Sheets y aplica dropdowns'),
+        )
+        .addSubcommand(sub =>
           sub.setName('productos').setDescription('Exporta el catálogo de productos a Sheets'),
         )
         .addSubcommand(sub =>
@@ -67,7 +72,7 @@ export const syncCommand: Command = {
           sub.setName('pedidos').setDescription('Exporta los pedidos activos a Sheets'),
         )
         .addSubcommand(sub =>
-          sub.setName('todo').setDescription('Exporta productos, inventario, ventas y pedidos a Sheets'),
+          sub.setName('todo').setDescription('Exporta categorías, productos, inventario, ventas y pedidos a Sheets'),
         ),
     )
     .addSubcommandGroup(group =>
@@ -75,10 +80,16 @@ export const syncCommand: Command = {
         .setName('importar')
         .setDescription('Importa datos de Google Sheets a la BD')
         .addSubcommand(sub =>
+          sub.setName('categorias').setDescription('Carga la taxonomía de categorías desde el tab Categorías de Sheets'),
+        )
+        .addSubcommand(sub =>
           sub.setName('productos').setDescription('Importa productos desde el tab Productos de Sheets'),
         )
         .addSubcommand(sub =>
           sub.setName('inventario').setDescription('Importa stock desde el tab Inventario de Sheets'),
+        )
+        .addSubcommand(sub =>
+          sub.setName('todo').setDescription('Importa categorías, productos e inventario desde Sheets'),
         ),
     ),
 
@@ -109,7 +120,8 @@ export const syncCommand: Command = {
     if (group === 'exportar') {
       const tasks: Array<() => Promise<void>> = [];
 
-      if (sub === 'productos' || sub === 'todo') tasks.push(() => syncProductosToSheet(guildId));
+      if (sub === 'categorias' || sub === 'todo') tasks.push(() => syncCategoriasToSheet());
+      if (sub === 'productos'  || sub === 'todo') tasks.push(() => syncProductosToSheet(guildId));
       if (sub === 'inventario' || sub === 'todo') tasks.push(() => syncInventarioToSheet(guildId));
       if (sub === 'ventas'     || sub === 'todo') tasks.push(() => syncVentasToSheet(guildId));
       if (sub === 'pedidos'    || sub === 'todo') tasks.push(() => syncPedidosToSheet(guildId));
@@ -126,6 +138,22 @@ export const syncCommand: Command = {
       const staffUser = await upsertShopUser(guildId, interaction.user);
 
       let summary: ImportSummary;
+
+      if (sub === 'categorias') {
+        summary = await importCategoriasFromSheet();
+        const catCount = summary.created;
+        const embed = new EmbedBuilder()
+          .setTitle('📥 Taxonomía importada desde Sheets')
+          .setDescription(
+            summary.errors.length > 0
+              ? summaryText(summary)
+              : `✅ **${catCount}** categoría${catCount !== 1 ? 's' : ''} cargada${catCount !== 1 ? 's' : ''} en memoria.\nLos productos se clasificarán con esta taxonomía hasta el próximo reinicio o re-importación.`,
+          )
+          .setColor(summary.errors.length > 0 ? 0xffa500 : 0x57f287)
+          .setTimestamp();
+        await interaction.editReply({ embeds: [embed] });
+        return;
+      }
 
       if (sub === 'productos') {
         summary = await importProductosFromSheet(guildId, staffUser.id);
@@ -150,8 +178,41 @@ export const syncCommand: Command = {
           .setTimestamp();
         await interaction.editReply({ embeds: [embed] });
 
-        // Re-exportar para reflejar el estado real (ej: disponible, reservado)
         void syncInventarioToSheet(guildId);
+        return;
+      }
+
+      if (sub === 'todo') {
+        // 1. Categorías primero — los productos necesitan la taxonomía para clasificarse
+        const sumCategorias = await importCategoriasFromSheet();
+        // 2. Productos e inventario en paralelo
+        const [sumProductos, sumInventario] = await Promise.all([
+          importProductosFromSheet(guildId, staffUser.id),
+          importInventarioFromSheet(guildId, staffUser.id),
+        ]);
+
+        const hasErrors = sumCategorias.errors.length > 0 || sumProductos.errors.length > 0 || sumInventario.errors.length > 0;
+        const catLabel = `✅ ${sumCategorias.created} categorías cargadas`;
+        const embed = new EmbedBuilder()
+          .setTitle('📥 Importación Completa desde Sheets')
+          .addFields(
+            { name: '🗂️ Categorías',  value: sumCategorias.errors.length > 0 ? summaryText(sumCategorias) : catLabel, inline: false },
+            { name: '📦 Productos',   value: summaryText(sumProductos),  inline: false },
+            { name: '🗃️ Inventario',  value: summaryText(sumInventario), inline: false },
+          )
+          .setColor(hasErrors ? 0xffa500 : 0x57f287)
+          .setFooter({ text: 'Re-exportando estado real a Sheets en segundo plano...' })
+          .setTimestamp();
+        await interaction.editReply({ embeds: [embed] });
+
+        // 3. Re-exportar todo en segundo plano para que el sheet quede con el estado real de la BD
+        void Promise.all([
+          syncCategoriasToSheet(),
+          syncProductosToSheet(guildId),
+          syncInventarioToSheet(guildId),
+          syncVentasToSheet(guildId),
+          syncPedidosToSheet(guildId),
+        ]);
         return;
       }
     }

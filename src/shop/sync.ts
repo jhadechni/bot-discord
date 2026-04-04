@@ -10,7 +10,13 @@
 
 import { prisma } from '../database/prisma.js';
 import { logger } from '../core/logger.js';
-import { writeTab, appendRow, readTab } from '../utils/sheets-shop.js';
+import { writeTab, appendRow, readTab, applyProductosDropdowns } from '../utils/sheets-shop.js';
+import {
+  coerceShopTaxonomy,
+  getTaxonomy,
+  loadTaxonomy,
+  parseTaxonomyRows,
+} from './taxonomy.js';
 
 /** Devuelve true si Google Sheets está configurado en el entorno. */
 export function sheetsEnabled(): boolean {
@@ -18,6 +24,60 @@ export function sheetsEnabled(): boolean {
 }
 
 // ── DB → Sheet ────────────────────────────────────────────────────────────────
+
+/**
+ * Escribe el tab "Categorías" con la taxonomía completa como referencia
+ * y aplica dropdowns de validación en las columnas Categoría/Subcategoría del tab Productos.
+ */
+export async function syncCategoriasToSheet(): Promise<void> {
+  if (!sheetsEnabled()) return;
+  try {
+    const taxonomy = getTaxonomy();
+    const rows: string[][] = [];
+    for (const cat of taxonomy) {
+      for (const sub of cat.subcategories) {
+        rows.push([cat.key, `${cat.emoji} ${cat.label}`, sub.key, sub.label]);
+      }
+    }
+    await writeTab('categorias', rows);
+
+    const categoryKeys    = taxonomy.map(c => c.key);
+    const subcategoryKeys = taxonomy.flatMap(c => c.subcategories.map(s => s.key));
+    await applyProductosDropdowns(categoryKeys, subcategoryKeys);
+  } catch (err) {
+    logger.warn({ err }, '[sync] Error exportando categorías a Sheets');
+  }
+}
+
+/**
+ * Lee el tab Categorías y actualiza el cache de taxonomía en memoria.
+ * No modifica la base de datos — la taxonomía es puramente in-memory.
+ */
+export async function importCategoriasFromSheet(): Promise<ImportSummary> {
+  const summary: ImportSummary = { created: 0, updated: 0, unchanged: 0, notFound: 0, errors: [] };
+  if (!sheetsEnabled()) return summary;
+
+  try {
+    const rows = await readTab('categorias');
+    if (rows.length === 0) {
+      summary.errors.push('El tab Categorías está vacío.');
+      return summary;
+    }
+
+    const categories = parseTaxonomyRows(rows);
+    if (categories.length === 0) {
+      summary.errors.push('No se pudieron parsear categorías del tab Categorías.');
+      return summary;
+    }
+
+    loadTaxonomy(categories);
+    summary.created = categories.length;
+  } catch (err) {
+    summary.errors.push(err instanceof Error ? err.message : String(err));
+  }
+
+  return summary;
+}
 
 export async function syncProductosToSheet(guildId: string): Promise<void> {
   if (!sheetsEnabled()) return;
@@ -31,6 +91,8 @@ export async function syncProductosToSheet(guildId: string): Promise<void> {
     const rows = products.map(p => [
       p.name,
       p.productType,
+      p.category,
+      p.subcategory,
       String(p.prices[0]?.price ?? 0),
       p.description ?? '',
       p.isActive ? 'TRUE' : 'FALSE',
@@ -178,13 +240,17 @@ export async function importProductosFromSheet(
   const rows = await readTab('productos');
 
   for (const row of rows) {
-    const nombre      = row[0]?.trim() ?? '';
-    const tipo        = row[1]?.trim() || 'single';
-    const precioStr   = (row[2] ?? '0').replace(',', '.');
-    const precio      = parseFloat(precioStr);
-    const descripcion = row[3]?.trim() || null;
-    const activoStr   = (row[4]?.trim() ?? 'TRUE').toUpperCase();
-    const activo      = activoStr === 'TRUE' || activoStr === '1' || activoStr === 'VERDADERO';
+    // Columnas: Nombre | Tipo | Categoría | Subcategoría | Precio ($) | Descripción | Activo
+    const nombre          = row[0]?.trim() ?? '';
+    const tipo            = row[1]?.trim() || 'single';
+    const categoriaRaw    = row[2]?.trim() || null;
+    const subcategoriaRaw = row[3]?.trim() || null;
+    const precioStr       = (row[4] ?? '0').replace(',', '.');
+    const precio          = parseFloat(precioStr);
+    const descripcion     = row[5]?.trim() || null;
+    const activoStr       = (row[6]?.trim() ?? 'TRUE').toUpperCase();
+    const activo          = activoStr === 'TRUE' || activoStr === '1' || activoStr === 'VERDADERO';
+    const taxonomy        = coerceShopTaxonomy(categoriaRaw, subcategoriaRaw);
 
     if (!nombre) continue;
     if (isNaN(precio) || precio < 0) {
@@ -204,6 +270,8 @@ export async function importProductosFromSheet(
             guildId,
             name:        nombre,
             productType: tipo,
+            category:    taxonomy.category,
+            subcategory: taxonomy.subcategory,
             description: descripcion,
             isActive:    activo,
             prices: { create: { price: precio, changedByUserId: staffUserId } },
@@ -233,10 +301,20 @@ export async function importProductosFromSheet(
       }
 
       // Descripción / Activo
-      if (existing.description !== descripcion || existing.isActive !== activo) {
+      if (
+        existing.description !== descripcion ||
+        existing.isActive !== activo ||
+        existing.category !== taxonomy.category ||
+        existing.subcategory !== taxonomy.subcategory
+      ) {
         await prisma.shopProduct.update({
           where: { id: existing.id },
-          data:  { description: descripcion, isActive: activo },
+          data:  {
+            category: taxonomy.category,
+            subcategory: taxonomy.subcategory,
+            description: descripcion,
+            isActive: activo,
+          },
         });
         changed = true;
       }

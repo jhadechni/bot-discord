@@ -12,19 +12,16 @@ import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import { upsertShopUser } from '../../database/shop-user.js';
 import { syncProductosToSheet, syncInventarioToSheet } from '../../shop/sync.js';
 import {
+  buildCatalogView,
   queryCatalogProducts,
-  groupBySections,
-  paginateSectionProducts,
-  buildCatalogEmbed,
-  buildCatalogButtons,
 } from '../../shop/catalog.js';
-
-const TYPE_LABELS: Record<string, string> = {
-  single:  '📦 Unidad',
-  bulk:    '🗃️ Granel',
-  kit:     '🎒 Kit',
-  service: '🔧 Servicio',
-};
+import {
+  assertShopTaxonomy,
+  getCategoryDefinition,
+  getSubcategoryDefinition,
+  listCategoryDefinitions,
+  listSubcategoryDefinitions,
+} from '../../shop/taxonomy.js';
 
 function hasStaffPermission(
   interaction: ChatInputCommandInteraction,
@@ -102,9 +99,49 @@ export const tiendaCommand: Command = {
         )
         .addStringOption(opt =>
           opt
+            .setName('categoria')
+            .setDescription('Categoría del juego')
+            .setRequired(true)
+            .setAutocomplete(true),
+        )
+        .addStringOption(opt =>
+          opt
+            .setName('subcategoria')
+            .setDescription('Subcategoría dentro de la categoría')
+            .setRequired(true)
+            .setAutocomplete(true),
+        )
+        .addStringOption(opt =>
+          opt
             .setName('descripcion')
             .setDescription('Descripción opcional del producto')
             .setRequired(false),
+        ),
+    )
+    .addSubcommand(sub =>
+      sub
+        .setName('producto-clasificar')
+        .setDescription('[Staff] Cambia la categoría y subcategoría de un producto')
+        .addStringOption(opt =>
+          opt
+            .setName('producto')
+            .setDescription('Nombre del producto')
+            .setRequired(true)
+            .setAutocomplete(true),
+        )
+        .addStringOption(opt =>
+          opt
+            .setName('categoria')
+            .setDescription('Nueva categoría')
+            .setRequired(true)
+            .setAutocomplete(true),
+        )
+        .addStringOption(opt =>
+          opt
+            .setName('subcategoria')
+            .setDescription('Nueva subcategoría')
+            .setRequired(true)
+            .setAutocomplete(true),
         ),
     )
     .addSubcommand(sub =>
@@ -213,6 +250,37 @@ export const tiendaCommand: Command = {
     const focused = interaction.options.getFocused(true);
     const value   = focused.value.toLowerCase();
 
+    if (focused.name === 'categoria') {
+      const categories = listCategoryDefinitions()
+        .filter(category => {
+          const haystack = `${category.label} ${category.key}`.toLowerCase();
+          return haystack.includes(value);
+        })
+        .slice(0, 25)
+        .map(category => ({
+          name: `${category.emoji} ${category.label}`,
+          value: category.key,
+        }));
+      await interaction.respond(categories);
+      return;
+    }
+
+    if (focused.name === 'subcategoria') {
+      const categoria = interaction.options.getString('categoria');
+      const subcategories = listSubcategoryDefinitions(categoria)
+        .filter(subcategory => {
+          const haystack = `${subcategory.label} ${subcategory.key}`.toLowerCase();
+          return haystack.includes(value);
+        })
+        .slice(0, 25)
+        .map(subcategory => ({
+          name: subcategory.label,
+          value: subcategory.key,
+        }));
+      await interaction.respond(subcategories);
+      return;
+    }
+
     // 'nombre' autocomplete → materiales (solo en subcomandos que lo necesitan)
     // 'material' autocomplete → materiales
     if (focused.name === 'nombre' || focused.name === 'material') {
@@ -249,7 +317,7 @@ export const tiendaCommand: Command = {
 
     // ── /tienda ver ──────────────────────────────────────────────────────────
     if (sub === 'ver') {
-      await interaction.deferReply();
+      await interaction.deferReply({ephemeral: true });
 
       const products = await queryCatalogProducts(guildId);
 
@@ -258,24 +326,7 @@ export const tiendaCommand: Command = {
         return;
       }
 
-      const sections        = groupBySections(products);
-      const availableSections = [...sections.keys()];
-      const firstSection    = availableSections[0]!;
-      const pages          = paginateSectionProducts(sections.get(firstSection)!);
-      const currentPage    = 1;
-      const embed          = buildCatalogEmbed(
-        pages[currentPage - 1]!,
-        firstSection,
-        availableSections,
-        currentPage,
-        pages.length,
-      );
-      const components     = buildCatalogButtons(
-        availableSections,
-        firstSection,
-        currentPage,
-        pages.length,
-      );
+      const { embed, components } = buildCatalogView(products);
 
       await interaction.editReply({ embeds: [embed], components });
       return;
@@ -361,6 +412,17 @@ export const tiendaCommand: Command = {
       const tipo       = interaction.options.getString('tipo', true);
       const precio     = interaction.options.getNumber('precio', true);
       const descripcion = interaction.options.getString('descripcion') ?? null;
+      const categoriaRaw = interaction.options.getString('categoria', true);
+      const subcategoriaRaw = interaction.options.getString('subcategoria', true);
+      let taxonomy: ReturnType<typeof assertShopTaxonomy>;
+      try {
+        taxonomy = assertShopTaxonomy(categoriaRaw, subcategoriaRaw);
+      } catch (err) {
+        await interaction.editReply(`❌ ${err instanceof Error ? err.message : 'Clasificación inválida.'}`);
+        return;
+      }
+      const categoryLabel = getCategoryDefinition(taxonomy.category).label;
+      const subcategoryLabel = getSubcategoryDefinition(taxonomy.category, taxonomy.subcategory).label;
 
       const existing = await prisma.shopProduct.findUnique({
         where: { guildId_name: { guildId, name: nombre } },
@@ -375,6 +437,8 @@ export const tiendaCommand: Command = {
           guildId,
           name:        nombre,
           productType: tipo,
+          category:    taxonomy.category,
+          subcategory: taxonomy.subcategory,
           description: descripcion,
           prices: {
             create: { price: precio, changedByUserId: staffUser.id },
@@ -385,7 +449,46 @@ export const tiendaCommand: Command = {
       void syncProductosToSheet(guildId);
       await interaction.editReply(
         `✅ Producto **${nombre}** creado a **${precio} $**.\n` +
+        `Clasificación: **${categoryLabel} / ${subcategoryLabel}**.\n` +
         `Usa \`/tienda producto-componente\` para definir sus materiales.`,
+      );
+      return;
+    }
+
+    // ── /tienda producto-clasificar ─────────────────────────────────────────
+    if (sub === 'producto-clasificar') {
+      const nombreProducto = interaction.options.getString('producto', true);
+      const categoriaRaw = interaction.options.getString('categoria', true);
+      const subcategoriaRaw = interaction.options.getString('subcategoria', true);
+      let taxonomy: ReturnType<typeof assertShopTaxonomy>;
+      try {
+        taxonomy = assertShopTaxonomy(categoriaRaw, subcategoriaRaw);
+      } catch (err) {
+        await interaction.editReply(`❌ ${err instanceof Error ? err.message : 'Clasificación inválida.'}`);
+        return;
+      }
+      const categoryLabel = getCategoryDefinition(taxonomy.category).label;
+      const subcategoryLabel = getSubcategoryDefinition(taxonomy.category, taxonomy.subcategory).label;
+
+      const product = await prisma.shopProduct.findUnique({
+        where: { guildId_name: { guildId, name: nombreProducto } },
+      });
+      if (!product) {
+        await interaction.editReply(`❌ Producto **${nombreProducto}** no encontrado.`);
+        return;
+      }
+
+      await prisma.shopProduct.update({
+        where: { id: product.id },
+        data:  {
+          category: taxonomy.category,
+          subcategory: taxonomy.subcategory,
+        },
+      });
+
+      void syncProductosToSheet(guildId);
+      await interaction.editReply(
+        `✅ **${nombreProducto}** ahora pertenece a **${categoryLabel} / ${subcategoryLabel}**.`,
       );
       return;
     }

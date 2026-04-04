@@ -3,56 +3,41 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
 } from 'discord.js';
 import { prisma } from '../database/prisma.js';
+import {
+  coerceShopTaxonomy,
+  compareCategoryKeys,
+  compareSubcategoryKeys,
+  getCategoryDefinition,
+  getSubcategoryDefinition,
+} from './taxonomy.js';
 
-// ── Configuración por sección ────────────────────────────────────────────────
+const CATALOG_PAGE_SIZE = 5;
 
-export const SECTION_ORDER = ['single', 'bulk', 'kit', 'service'] as const;
-export type SectionType = typeof SECTION_ORDER[number] | string;
-const MAX_EMBED_DESCRIPTION_LENGTH = 3800;
-
-interface SectionConfig {
-  label:     string;
-  emoji:     string;
-  color:     number;
-  thumbnail: string | null; // URL de imagen (Minecraft Wiki CDN)
-}
-
-const SECTION_CONFIG: Record<string, SectionConfig> = {
-  single:  {
-    label:     'Unidades',
-    emoji:     '📦',
-    color:     0x5865f2,
-    thumbnail: 'https://minecraft.wiki/images/Diamond_JE3_BE3.png',
-  },
-  bulk:    {
-    label:     'Granel',
-    emoji:     '🗃️',
-    color:     0xfaa61a,
-    thumbnail: 'https://minecraft.wiki/images/Chest_(S)_JE4.png',
-  },
-  kit:     {
-    label:     'Kits',
-    emoji:     '🎒',
-    color:     0x57f287,
-    thumbnail: 'https://minecraft.wiki/images/Bundle_JE2.png',
-  },
-  service: {
-    label:     'Servicios',
-    emoji:     '🔧',
-    color:     0xeb459e,
-    thumbnail: 'https://minecraft.wiki/images/Paper_JE2_BE2.png',
-  },
+const PRODUCT_TYPE_LABELS: Record<string, string> = {
+  single:  'Unidad',
+  bulk:    'Granel',
+  kit:     'Kit',
+  service: 'Servicio',
 };
 
-function getSectionConfig(type: string): SectionConfig {
-  return SECTION_CONFIG[type] ?? { label: type, emoji: '🛒', color: 0x99aab5, thumbnail: null };
-}
-
-// ── Tipos de consulta ────────────────────────────────────────────────────────
-
 export type CatalogProduct = Awaited<ReturnType<typeof queryCatalogProducts>>[number];
+
+type CatalogGrouping = Map<string, Map<string, CatalogProduct[]>>;
+
+type CatalogViewState = {
+  categoryKeys: string[];
+  currentCategory: string;
+  currentPage: number;
+  currentSubcategory: string;
+  pageProducts: CatalogProduct[];
+  subcategoryKeys: string[];
+  totalPages: number;
+  totalSubcategoryProducts: number;
+};
 
 export async function queryCatalogProducts(guildId: string) {
   return prisma.shopProduct.findMany({
@@ -61,159 +46,247 @@ export async function queryCatalogProducts(guildId: string) {
       prices:     { where: { validTo: null }, take: 1 },
       components: { include: { material: true }, orderBy: { quantityRequired: 'desc' } },
     },
-    orderBy: { name: 'asc' },
+    orderBy: [
+      { category: 'asc' },
+      { subcategory: 'asc' },
+      { name: 'asc' },
+    ],
   });
 }
 
-// ── Agrupar productos por tipo ───────────────────────────────────────────────
-
-export function groupBySections(products: CatalogProduct[]): Map<string, CatalogProduct[]> {
-  const map = new Map<string, CatalogProduct[]>();
-
-  // Primero en orden conocido
-  for (const type of SECTION_ORDER) {
-    const group = products.filter(p => p.productType === type);
-    if (group.length > 0) map.set(type, group);
-  }
-  // Luego tipos desconocidos
-  for (const p of products) {
-    if (!SECTION_ORDER.includes(p.productType as never) && !map.has(p.productType)) {
-      map.set(p.productType, products.filter(x => x.productType === p.productType));
-    }
-  }
-  return map;
+function labelize(value: string): string {
+  return value
+    .split('_')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 function buildProductLine(product: CatalogProduct): string {
-  const price    = product.prices[0];
+  const price = product.prices[0];
   const priceStr = price
     ? `💰 **${Number(price.price).toLocaleString('es-ES')} ${price.currency}**`
     : '💰 _Sin precio_';
-
+  const typeStr = `🏷️ ${PRODUCT_TYPE_LABELS[product.productType] ?? labelize(product.productType)}`;
   const compsStr = product.components.length > 0
-    ? '\n> 🔩 ' + product.components.map(c => `${c.material.name} ×${c.quantityRequired}`).join('  ·  ')
+    ? '\n> 🔩 ' + product.components.map(component => `${component.material.name} ×${component.quantityRequired}`).join('  ·  ')
     : '';
-
   const descStr = product.description ? `\n${product.description}` : '';
 
-  return `### ${product.name}\n${priceStr}${descStr}${compsStr}`;
+  return `### ${product.name}\n${typeStr}  ·  ${priceStr}${descStr}${compsStr}`;
 }
 
-export function paginateSectionProducts(sectionProducts: CatalogProduct[]): CatalogProduct[][] {
-  const pages: CatalogProduct[][] = [];
-  let currentPage: CatalogProduct[] = [];
-  let currentLength = 0;
+function groupCatalogProducts(products: CatalogProduct[]): CatalogGrouping {
+  const grouped = new Map<string, Map<string, CatalogProduct[]>>();
 
-  for (const product of sectionProducts) {
-    const line = buildProductLine(product);
-    const separatorLength = currentPage.length > 0 ? 2 : 0;
+  for (const product of products) {
+    const taxonomy = coerceShopTaxonomy(product.category, product.subcategory);
 
-    if (
-      currentPage.length > 0 &&
-      currentLength + separatorLength + line.length > MAX_EMBED_DESCRIPTION_LENGTH
-    ) {
-      pages.push(currentPage);
-      currentPage = [product];
-      currentLength = line.length;
-      continue;
+    if (!grouped.has(taxonomy.category)) {
+      grouped.set(taxonomy.category, new Map());
     }
 
-    currentPage.push(product);
-    currentLength += separatorLength + line.length;
+    const subcategories = grouped.get(taxonomy.category)!;
+    if (!subcategories.has(taxonomy.subcategory)) {
+      subcategories.set(taxonomy.subcategory, []);
+    }
+
+    subcategories.get(taxonomy.subcategory)!.push(product);
   }
 
-  if (currentPage.length > 0) {
-    pages.push(currentPage);
+  const orderedCategories = [...grouped.keys()].sort(compareCategoryKeys);
+
+  return new Map(
+    orderedCategories.map(categoryKey => {
+      const subcategoryMap = grouped.get(categoryKey)!;
+      const orderedSubcategories = [...subcategoryMap.keys()].sort((left, right) =>
+        compareSubcategoryKeys(categoryKey, left, right),
+      );
+
+      return [
+        categoryKey,
+        new Map(
+          orderedSubcategories.map(subcategoryKey => [
+            subcategoryKey,
+            subcategoryMap.get(subcategoryKey)!,
+          ]),
+        ),
+      ];
+    }),
+  );
+}
+
+function paginateCatalogProducts(products: CatalogProduct[]): CatalogProduct[][] {
+  const pages: CatalogProduct[][] = [];
+
+  for (let index = 0; index < products.length; index += CATALOG_PAGE_SIZE) {
+    pages.push(products.slice(index, index + CATALOG_PAGE_SIZE));
   }
 
   return pages.length > 0 ? pages : [[]];
 }
 
-// ── Embed del catálogo ────────────────────────────────────────────────────────
+function resolveCatalogViewState(
+  products: CatalogProduct[],
+  categoryKey?: string | null,
+  subcategoryKey?: string | null,
+  requestedPage = 1,
+): CatalogViewState {
+  const grouped = groupCatalogProducts(products);
+  const categoryKeys = [...grouped.keys()];
+  const fallbackCategory = categoryKeys[0] ?? 'general';
+  const normalizedCategory = coerceShopTaxonomy(categoryKey, null).category;
+  const currentCategory = grouped.has(normalizedCategory) ? normalizedCategory : fallbackCategory;
+  const subcategoryMap = grouped.get(currentCategory) ?? new Map([['otros', []]]);
+  const subcategoryKeys = [...subcategoryMap.keys()];
+  const fallbackSubcategory = subcategoryKeys[0] ?? 'otros';
+  const normalizedSubcategory = coerceShopTaxonomy(currentCategory, subcategoryKey).subcategory;
+  const currentSubcategory = subcategoryMap.has(normalizedSubcategory)
+    ? normalizedSubcategory
+    : fallbackSubcategory;
+  const subcategoryProducts = subcategoryMap.get(currentSubcategory) ?? [];
+  const pages = paginateCatalogProducts(subcategoryProducts);
+  const currentPage = Math.min(Math.max(requestedPage, 1), pages.length);
 
-export function buildCatalogEmbed(
-  sectionProducts: CatalogProduct[],
-  currentSection:  string,
-  allSections:     string[],
-  currentPage:     number,
-  totalPages:      number,
-): EmbedBuilder {
-  const cfg   = getSectionConfig(currentSection);
-  const idx   = allSections.indexOf(currentSection) + 1;
-  const total = allSections.length;
-  const lines = sectionProducts.map(buildProductLine);
+  return {
+    categoryKeys,
+    currentCategory,
+    currentPage,
+    currentSubcategory,
+    pageProducts: pages[currentPage - 1] ?? [],
+    subcategoryKeys,
+    totalPages: pages.length,
+    totalSubcategoryProducts: subcategoryProducts.length,
+  };
+}
 
-  const embed = new EmbedBuilder()
-    .setTitle(`🏪 Tienda Aquaris  ·  ${cfg.emoji} ${cfg.label}`)
+function buildCatalogEmbed(state: CatalogViewState): EmbedBuilder {
+  const category = getCategoryDefinition(state.currentCategory);
+  const subcategory = getSubcategoryDefinition(state.currentCategory, state.currentSubcategory);
+  const categoryIndex = state.categoryKeys.indexOf(state.currentCategory) + 1;
+  const subcategoryIndex = state.subcategoryKeys.indexOf(state.currentSubcategory) + 1;
+  const lines = state.pageProducts.map(buildProductLine);
+
+  return new EmbedBuilder()
+    .setTitle(`🏪 Tienda Aquaris  ·  ${category.emoji} ${category.label}`)
     .setDescription(
-      lines.length > 0
-        ? lines.join('\n\n')
-        : '_No hay productos en esta sección._',
+      [
+        `**Subcategoría:** ${subcategory.label}`,
+        lines.length > 0 ? lines.join('\n\n') : '_No hay productos en esta subcategoría._',
+      ].join('\n\n'),
     )
-    .setColor(cfg.color)
+    .setColor(0x5865f2)
     .setFooter({
       text: [
-        `${sectionProducts.length} producto${sectionProducts.length !== 1 ? 's' : ''}`,
-        `Pagina ${currentPage} de ${totalPages}`,
-        `Sección ${idx} de ${total}`,
-        '/pedido crear para comprar',
+        `${state.pageProducts.length} de ${state.totalSubcategoryProducts} producto${state.totalSubcategoryProducts !== 1 ? 's' : ''}`,
+        `Pagina ${state.currentPage} de ${state.totalPages}`,
+        `Categoría ${categoryIndex} de ${state.categoryKeys.length}`,
+        `Subcategoría ${subcategoryIndex} de ${state.subcategoryKeys.length}`,
       ].join('  ·  '),
     })
     .setTimestamp();
-
-  if (cfg.thumbnail) embed.setThumbnail(cfg.thumbnail);
-
-  return embed;
 }
 
-// ── Botones de navegación ─────────────────────────────────────────────────────
-
-export function buildCatalogButtons(
-  allSections:    string[],
-  currentSection: string,
-  currentPage:    number,
-  totalPages:     number,
-): ActionRowBuilder<ButtonBuilder>[] {
-  const rows: ActionRowBuilder<ButtonBuilder>[] = [];
-
-  if (allSections.length > 1) {
-    const sectionRow = new ActionRowBuilder<ButtonBuilder>();
-
-    for (const section of allSections) {
-      const cfg = getSectionConfig(section);
-      sectionRow.addComponents(
-        new ButtonBuilder()
-          .setCustomId(`tienda:catalog:${section}:1`)
-          .setLabel(`${cfg.emoji} ${cfg.label}`)
-          .setStyle(section === currentSection ? ButtonStyle.Primary : ButtonStyle.Secondary)
-          .setDisabled(section === currentSection),
-      );
-    }
-
-    rows.push(sectionRow);
-  }
-
-  if (totalPages > 1) {
-    rows.push(
-      new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-          .setCustomId(`tienda:catalog:${currentSection}:${currentPage - 1}`)
-          .setLabel('Anterior')
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(currentPage <= 1),
-        new ButtonBuilder()
-          .setCustomId(`tienda:catalog:${currentSection}:${currentPage}`)
-          .setLabel(`Pagina ${currentPage}/${totalPages}`)
-          .setStyle(ButtonStyle.Primary)
-          .setDisabled(true),
-        new ButtonBuilder()
-          .setCustomId(`tienda:catalog:${currentSection}:${currentPage + 1}`)
-          .setLabel('Siguiente')
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(currentPage >= totalPages),
-      ),
+function buildCategoryRow(
+  categoryKeys: string[],
+  currentCategory: string,
+): ActionRowBuilder<StringSelectMenuBuilder> {
+  const select = new StringSelectMenuBuilder()
+    .setCustomId('tienda:catalog:category')
+    .setPlaceholder('Selecciona una categoría')
+    .addOptions(
+      categoryKeys.map(categoryKey => {
+        const category = getCategoryDefinition(categoryKey);
+        return new StringSelectMenuOptionBuilder()
+          .setLabel(`${category.emoji} ${category.label}`.slice(0, 100))
+          .setValue(categoryKey)
+          .setDefault(categoryKey === currentCategory);
+      }),
     );
+
+  return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
+}
+
+function buildSubcategoryRow(
+  currentCategory: string,
+  subcategoryKeys: string[],
+  currentSubcategory: string,
+): ActionRowBuilder<StringSelectMenuBuilder> {
+  const select = new StringSelectMenuBuilder()
+    .setCustomId(`tienda:catalog:subcategory:${currentCategory}`)
+    .setPlaceholder('Selecciona una subcategoría')
+    .addOptions(
+      subcategoryKeys.map(subcategoryKey => {
+        const subcategory = getSubcategoryDefinition(currentCategory, subcategoryKey);
+        return new StringSelectMenuOptionBuilder()
+          .setLabel(subcategory.label.slice(0, 100))
+          .setValue(subcategoryKey)
+          .setDefault(subcategoryKey === currentSubcategory);
+      }),
+    );
+
+  return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
+}
+
+function buildPaginationRow(
+  currentCategory: string,
+  currentSubcategory: string,
+  currentPage: number,
+  totalPages: number,
+): ActionRowBuilder<ButtonBuilder> {
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`tienda:catalog:page:${currentCategory}:${currentSubcategory}:${currentPage - 1}`)
+      .setLabel('Anterior')
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(currentPage <= 1),
+    new ButtonBuilder()
+      .setCustomId(`tienda:catalog:page-label:${currentCategory}:${currentSubcategory}:${currentPage}`)
+      .setLabel(`Pagina ${currentPage}/${totalPages}`)
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(true),
+    new ButtonBuilder()
+      .setCustomId(`tienda:catalog:page:${currentCategory}:${currentSubcategory}:${currentPage + 1}`)
+      .setLabel('Siguiente')
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(currentPage >= totalPages),
+  );
+}
+
+export function buildCatalogView(
+  products: CatalogProduct[],
+  categoryKey?: string | null,
+  subcategoryKey?: string | null,
+  requestedPage = 1,
+): {
+  components: Array<ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>>;
+  embed: EmbedBuilder;
+} {
+  const state = resolveCatalogViewState(products, categoryKey, subcategoryKey, requestedPage);
+  const components: Array<ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>> = [];
+
+  if (state.categoryKeys.length > 1) {
+    components.push(buildCategoryRow(state.categoryKeys, state.currentCategory));
   }
 
-  return rows;
+  if (state.subcategoryKeys.length > 1) {
+    components.push(buildSubcategoryRow(
+      state.currentCategory,
+      state.subcategoryKeys,
+      state.currentSubcategory,
+    ));
+  }
+
+  if (state.totalPages > 1) {
+    components.push(buildPaginationRow(
+      state.currentCategory,
+      state.currentSubcategory,
+      state.currentPage,
+      state.totalPages,
+    ));
+  }
+
+  return {
+    components,
+    embed: buildCatalogEmbed(state),
+  };
 }
