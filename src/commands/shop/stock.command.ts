@@ -1,0 +1,365 @@
+import {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  PermissionFlagsBits,
+  type AutocompleteInteraction,
+  type ChatInputCommandInteraction,
+  type GuildMember,
+} from 'discord.js';
+import type { Command } from '../../types/command.js';
+import { prisma } from '../../database/prisma.js';
+import { getOrCreateGuildConfig } from '../../database/guild-config.js';
+import { upsertShopUser } from '../../database/shop-user.js';
+import { syncInventarioToSheet } from '../../shop/sync.js';
+
+function hasStaffPermission(
+  interaction: ChatInputCommandInteraction,
+  staffRoleId: string | null,
+): boolean {
+  if (interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) return true;
+  if (staffRoleId) {
+    const member = interaction.member as GuildMember;
+    return member.roles.cache.has(staffRoleId);
+  }
+  return false;
+}
+
+export const stockCommand: Command = {
+  data: new SlashCommandBuilder()
+    .setName('stock')
+    .setDescription('[Staff] Gestión de inventario de materiales')
+    .addSubcommand(sub =>
+      sub.setName('ver').setDescription('Lista todos los materiales con su stock actual'),
+    )
+    .addSubcommand(sub =>
+      sub.setName('bajo').setDescription('Materiales por debajo del umbral de alerta'),
+    )
+    .addSubcommand(sub =>
+      sub
+        .setName('sumar')
+        .setDescription('Añade stock a un material')
+        .addStringOption(opt =>
+          opt
+            .setName('material')
+            .setDescription('Nombre del material')
+            .setRequired(true)
+            .setAutocomplete(true),
+        )
+        .addIntegerOption(opt =>
+          opt
+            .setName('cantidad')
+            .setDescription('Cantidad a añadir')
+            .setRequired(true)
+            .setMinValue(1),
+        )
+        .addStringOption(opt =>
+          opt.setName('motivo').setDescription('Motivo del ingreso (opcional)').setRequired(false),
+        ),
+    )
+    .addSubcommand(sub =>
+      sub
+        .setName('restar')
+        .setDescription('Retira stock de un material')
+        .addStringOption(opt =>
+          opt
+            .setName('material')
+            .setDescription('Nombre del material')
+            .setRequired(true)
+            .setAutocomplete(true),
+        )
+        .addIntegerOption(opt =>
+          opt
+            .setName('cantidad')
+            .setDescription('Cantidad a retirar')
+            .setRequired(true)
+            .setMinValue(1),
+        )
+        .addStringOption(opt =>
+          opt.setName('motivo').setDescription('Motivo del retiro').setRequired(false),
+        ),
+    )
+    .addSubcommand(sub =>
+      sub
+        .setName('actualizar')
+        .setDescription('Establece el stock absoluto de un material')
+        .addStringOption(opt =>
+          opt
+            .setName('material')
+            .setDescription('Nombre del material')
+            .setRequired(true)
+            .setAutocomplete(true),
+        )
+        .addIntegerOption(opt =>
+          opt
+            .setName('cantidad')
+            .setDescription('Nueva cantidad total')
+            .setRequired(true)
+            .setMinValue(0),
+        )
+        .addStringOption(opt =>
+          opt.setName('motivo').setDescription('Motivo del ajuste (opcional)').setRequired(false),
+        ),
+    )
+    .addSubcommand(sub =>
+      sub
+        .setName('alerta')
+        .setDescription('Configura el umbral de alerta de stock bajo para un material')
+        .addStringOption(opt =>
+          opt
+            .setName('material')
+            .setDescription('Nombre del material')
+            .setRequired(true)
+            .setAutocomplete(true),
+        )
+        .addIntegerOption(opt =>
+          opt
+            .setName('minimo')
+            .setDescription('Alerta cuando el stock disponible baje de este valor')
+            .setRequired(true)
+            .setMinValue(0),
+        ),
+    ),
+
+  async autocomplete(interaction: AutocompleteInteraction) {
+    const guildId = interaction.guildId;
+    if (!guildId) { await interaction.respond([]); return; }
+
+    const value = interaction.options.getFocused().toLowerCase();
+    const materials = await prisma.shopMaterial.findMany({
+      where:   { guildId, name: { contains: value, mode: 'insensitive' } },
+      take:    25,
+      select:  { name: true },
+      orderBy: { name: 'asc' },
+    });
+    await interaction.respond(materials.map(m => ({ name: m.name, value: m.name })));
+  },
+
+  async execute(interaction: ChatInputCommandInteraction) {
+    const guildId = interaction.guildId;
+    if (!guildId) return;
+
+    const config = await getOrCreateGuildConfig(guildId);
+    if (!hasStaffPermission(interaction, config.staffRoleId ?? null)) {
+      await interaction.reply({
+        content: '❌ Solo el staff puede gestionar el inventario.',
+        ephemeral: true,
+      });
+      return;
+    }
+
+    await interaction.deferReply({ ephemeral: true });
+    const sub = interaction.options.getSubcommand();
+
+    // ── /stock ver ───────────────────────────────────────────────────────────
+    if (sub === 'ver') {
+      const inventories = await prisma.shopInventory.findMany({
+        where:   { guildId },
+        include: { material: true },
+        orderBy: { material: { name: 'asc' } },
+      });
+
+      if (inventories.length === 0) {
+        await interaction.editReply('📦 No hay materiales registrados. Usa `/tienda material-agregar`.');
+        return;
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle('📦 Inventario de materiales')
+        .setColor(0x5865f2)
+        .setTimestamp();
+
+      for (const inv of inventories.slice(0, 25)) {
+        const disponible = inv.currentStock - inv.reservedStock;
+        const alerta     = inv.minStockAlert > 0 && disponible <= inv.minStockAlert ? ' ⚠️' : '';
+        embed.addFields({
+          name:   `${inv.material.name}${alerta}`,
+          value:  [
+            `Total: **${inv.currentStock}** ${inv.material.baseUnit}`,
+            `Reservado: ${inv.reservedStock}`,
+            `Disponible: **${disponible}**`,
+            inv.minStockAlert > 0 ? `Alerta: < ${inv.minStockAlert}` : '',
+          ].filter(Boolean).join('  ·  '),
+          inline: false,
+        });
+      }
+
+      await interaction.editReply({ embeds: [embed] });
+      return;
+    }
+
+    // ── /stock bajo ──────────────────────────────────────────────────────────
+    if (sub === 'bajo') {
+      const inventories = await prisma.shopInventory.findMany({
+        where:   { guildId, minStockAlert: { gt: 0 } },
+        include: { material: true },
+        orderBy: { material: { name: 'asc' } },
+      });
+
+      const bajos = inventories.filter(
+        inv => (inv.currentStock - inv.reservedStock) <= inv.minStockAlert,
+      );
+
+      if (bajos.length === 0) {
+        await interaction.editReply('✅ Todos los materiales están por encima del umbral de alerta.');
+        return;
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle('⚠️ Stock bajo')
+        .setColor(0xffa500)
+        .setTimestamp();
+
+      for (const inv of bajos) {
+        const disponible = inv.currentStock - inv.reservedStock;
+        embed.addFields({
+          name:   inv.material.name,
+          value:  `Disponible: **${disponible}** / Mínimo: ${inv.minStockAlert}`,
+          inline: true,
+        });
+      }
+
+      await interaction.editReply({ embeds: [embed] });
+      return;
+    }
+
+    // ── Subcomandos que modifican stock (requieren material + ShopUser) ───────
+    const staffUser     = await upsertShopUser(guildId, interaction.user);
+    const nombreMaterial = interaction.options.getString('material', true);
+
+    const material = await prisma.shopMaterial.findUnique({
+      where:   { guildId_name: { guildId, name: nombreMaterial } },
+      include: { inventory: true },
+    });
+    if (!material?.inventory) {
+      await interaction.editReply(`❌ Material **${nombreMaterial}** no encontrado.`);
+      return;
+    }
+
+    const inv = material.inventory;
+
+    // ── /stock sumar ─────────────────────────────────────────────────────────
+    if (sub === 'sumar') {
+      const cantidad = interaction.options.getInteger('cantidad', true);
+      const motivo   = interaction.options.getString('motivo') ?? 'Ingreso manual';
+
+      await prisma.$transaction([
+        prisma.shopInventory.update({
+          where: { id: inv.id },
+          data:  { currentStock: { increment: cantidad } },
+        }),
+        prisma.shopInventoryMovement.create({
+          data: {
+            guildId,
+            materialId:    material.id,
+            movementType:  'stock_add',
+            quantity:      cantidad,
+            reason:        motivo,
+            performedById: staffUser.id,
+          },
+        }),
+      ]);
+
+      void syncInventarioToSheet(guildId);
+      await interaction.editReply(
+        `✅ **+${cantidad}** ${material.baseUnit} de **${nombreMaterial}**.\n` +
+        `Stock total: ${inv.currentStock + cantidad}`,
+      );
+      return;
+    }
+
+    // ── /stock restar ────────────────────────────────────────────────────────
+    if (sub === 'restar') {
+      const cantidad = interaction.options.getInteger('cantidad', true);
+      const motivo   = interaction.options.getString('motivo') ?? 'Retiro manual';
+      const disponible = inv.currentStock - inv.reservedStock;
+
+      if (cantidad > disponible) {
+        await interaction.editReply(
+          `❌ Stock disponible insuficiente.\n` +
+          `Total: ${inv.currentStock}  ·  Reservado: ${inv.reservedStock}  ·  Disponible: **${disponible}**`,
+        );
+        return;
+      }
+
+      await prisma.$transaction([
+        prisma.shopInventory.update({
+          where: { id: inv.id },
+          data:  { currentStock: { decrement: cantidad } },
+        }),
+        prisma.shopInventoryMovement.create({
+          data: {
+            guildId,
+            materialId:    material.id,
+            movementType:  'stock_remove',
+            quantity:      cantidad,
+            reason:        motivo,
+            performedById: staffUser.id,
+          },
+        }),
+      ]);
+
+      void syncInventarioToSheet(guildId);
+      await interaction.editReply(
+        `✅ **-${cantidad}** ${material.baseUnit} de **${nombreMaterial}**.\n` +
+        `Stock total: ${inv.currentStock - cantidad}`,
+      );
+      return;
+    }
+
+    // ── /stock actualizar ────────────────────────────────────────────────────
+    if (sub === 'actualizar') {
+      const nuevaCantidad = interaction.options.getInteger('cantidad', true);
+      const motivo        = interaction.options.getString('motivo') ?? 'Ajuste manual';
+
+      if (nuevaCantidad < inv.reservedStock) {
+        await interaction.editReply(
+          `❌ No puedes bajar el stock por debajo del reservado (${inv.reservedStock}).`,
+        );
+        return;
+      }
+
+      const delta = nuevaCantidad - inv.currentStock;
+
+      await prisma.$transaction([
+        prisma.shopInventory.update({
+          where: { id: inv.id },
+          data:  { currentStock: nuevaCantidad },
+        }),
+        prisma.shopInventoryMovement.create({
+          data: {
+            guildId,
+            materialId:    material.id,
+            movementType:  'manual_adjustment',
+            quantity:      delta,
+            reason:        motivo,
+            performedById: staffUser.id,
+          },
+        }),
+      ]);
+
+      void syncInventarioToSheet(guildId);
+      await interaction.editReply(
+        `✅ Stock de **${nombreMaterial}** ajustado a **${nuevaCantidad}** (${delta >= 0 ? '+' : ''}${delta}).`,
+      );
+      return;
+    }
+
+    // ── /stock alerta ────────────────────────────────────────────────────────
+    if (sub === 'alerta') {
+      const minimo = interaction.options.getInteger('minimo', true);
+
+      await prisma.shopInventory.update({
+        where: { id: inv.id },
+        data:  { minStockAlert: minimo },
+      });
+
+      void syncInventarioToSheet(guildId);
+      await interaction.editReply(
+        minimo === 0
+          ? `✅ Alerta de stock desactivada para **${nombreMaterial}**.`
+          : `✅ Alerta configurada: se avisará cuando **${nombreMaterial}** baje de **${minimo}** unidades.`,
+      );
+      return;
+    }
+  },
+};

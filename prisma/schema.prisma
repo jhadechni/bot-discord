@@ -1,0 +1,311 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model GuildConfig {
+  id                     String   @id @default(cuid())
+  guildId                String   @unique
+  welcomeChannelId       String?
+  logsChannelId          String?  // fallback general
+  logsModChannelId       String?  // moderación manual
+  logsAutomodChannelId   String?  // auto-moderación (filtro, spam)
+  logsRecruitChannelId   String?  // reclutamiento
+  logsJoinsChannelId     String?  // entradas al servidor
+  logsLeavesChannelId    String?  // salidas del servidor
+  suggestionsChannelId   String?
+  recruitmentCategoryId  String?
+  visitorRoleId          String?
+  aspirantRoleId         String?
+  liderRoleId            String?
+  coLiderRoleId          String?
+  aquarisRoleId          String?
+  staffRoleId            String?
+  levelUpChannelId       String?  // notificaciones de subida de nivel
+  boostChannelId         String?  // anuncios de boost del servidor
+  shopStaffChannelId     String?  // canal donde el bot notifica pedidos pendientes al staff
+  shopCategoryId         String?  // categoría donde se crean los canales temporales de pedido
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model Suggestion {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  messageId String?
+  content   String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+}
+
+model RecruitmentTicket {
+  id            String   @id @default(cuid())
+  guildId       String
+  userId        String
+  channelId     String?
+  minecraftRole String?
+  answers       Json?
+  status        String   @default("OPEN")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ModerationLog {
+  id          String   @id @default(cuid())
+  guildId     String
+  targetId    String
+  moderatorId String
+  type        String
+  reason      String?
+  duration    Int?
+  createdAt   DateTime @default(now())
+}
+
+model UserActivity {
+  id           String   @id @default(cuid())
+  guildId      String
+  userId       String
+  xp           Int      @default(0)
+  level        Int      @default(0)
+  messageCount Int      @default(0)
+  voiceMinutes Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([guildId, userId])
+}
+
+model Reminder {
+  id          String   @id @default(cuid())
+  userId      String
+  guildId     String
+  message     String
+  triggerAt   DateTime
+  intervalMin Int?     // null = único, >0 = recurrente (minutos)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model FilterWord {
+  id        String   @id @default(cuid())
+  guildId   String
+  word      String
+  addedById String
+  createdAt DateTime @default(now())
+
+  @@unique([guildId, word])
+}
+
+model NicknameRole {
+  id        String   @id @default(cuid())
+  guildId   String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  @@unique([guildId, roleId])
+}
+
+// ─── Tienda del clan ──────────────────────────────────────────────────────────
+
+model ShopUser {
+  id            String   @id @default(cuid())
+  guildId       String
+  discordUserId String
+  username      String
+  displayName   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  ordersAsCustomer ShopOrder[]             @relation("ShopOrderCustomer")
+  ordersAccepted   ShopOrder[]             @relation("ShopOrderAcceptedBy")
+  ordersRejected   ShopOrder[]             @relation("ShopOrderRejectedBy")
+  ordersClosed     ShopOrder[]             @relation("ShopOrderClosedBy")
+  movements        ShopInventoryMovement[]
+  salesAsBuyer     ShopSale[]              @relation("ShopSaleBuyer")
+  salesRegistered  ShopSale[]              @relation("ShopSaleRegisteredBy")
+  withdrawals      ShopWithdrawal[]
+  orderEvents      ShopOrderEvent[]
+  priceChanges     ShopProductPrice[]
+
+  @@unique([guildId, discordUserId])
+}
+
+model ShopMaterial {
+  id        String   @id @default(cuid())
+  guildId   String
+  name      String
+  baseUnit  String   @default("item")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inventory   ShopInventory?
+  components  ShopProductComponent[]
+  movements   ShopInventoryMovement[]
+  withdrawals ShopWithdrawal[]
+
+  @@unique([guildId, name])
+}
+
+model ShopInventory {
+  id            String   @id @default(cuid())
+  guildId       String
+  materialId    String   @unique
+  currentStock  Int      @default(0)
+  reservedStock Int      @default(0)
+  minStockAlert Int      @default(0)
+  updatedAt     DateTime @updatedAt
+
+  material ShopMaterial @relation(fields: [materialId], references: [id])
+}
+
+model ShopProduct {
+  id          String   @id @default(cuid())
+  guildId     String
+  name        String
+  productType String   // single | bulk | kit | service
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  components ShopProductComponent[]
+  prices     ShopProductPrice[]
+  orderItems ShopOrderItem[]
+
+  @@unique([guildId, name])
+}
+
+model ShopProductComponent {
+  id               String @id @default(cuid())
+  productId        String
+  materialId       String
+  quantityRequired Int
+
+  product  ShopProduct  @relation(fields: [productId], references: [id])
+  material ShopMaterial @relation(fields: [materialId], references: [id])
+
+  @@unique([productId, materialId])
+}
+
+model ShopProductPrice {
+  id              String    @id @default(cuid())
+  productId       String
+  price           Decimal
+  currency        String    @default("$")
+  validFrom       DateTime  @default(now())
+  validTo         DateTime?
+  changedByUserId String?
+
+  product       ShopProduct @relation(fields: [productId], references: [id])
+  changedByUser ShopUser?   @relation(fields: [changedByUserId], references: [id])
+}
+
+model ShopOrder {
+  id               String    @id @default(cuid())
+  guildId          String
+  orderCode        String    @unique
+  customerUserId   String
+  status           String    @default("pending")
+  ticketChannelId  String?
+  staffChannelId   String?
+  acceptedByUserId String?
+  rejectedByUserId String?
+  closedByUserId   String?
+  rejectionReason  String?
+  cancelReason     String?
+  subtotalAmount   Decimal   @default(0)
+  totalAmount      Decimal   @default(0)
+  createdAt        DateTime  @default(now())
+  acceptedAt       DateTime?
+  rejectedAt       DateTime?
+  closedAt         DateTime?
+  cancelledAt      DateTime?
+
+  customer   ShopUser  @relation("ShopOrderCustomer",   fields: [customerUserId],   references: [id])
+  acceptedBy ShopUser? @relation("ShopOrderAcceptedBy", fields: [acceptedByUserId], references: [id])
+  rejectedBy ShopUser? @relation("ShopOrderRejectedBy", fields: [rejectedByUserId], references: [id])
+  closedBy   ShopUser? @relation("ShopOrderClosedBy",   fields: [closedByUserId],   references: [id])
+
+  items     ShopOrderItem[]
+  movements ShopInventoryMovement[]
+  sale      ShopSale?
+  events    ShopOrderEvent[]
+}
+
+model ShopOrderItem {
+  id                String  @id @default(cuid())
+  orderId           String
+  productId         String
+  quantity          Int
+  unitPrice         Decimal
+  grossLineTotal    Decimal
+  reservedQuantity  Int     @default(0)
+  deliveredQuantity Int     @default(0)
+  notes             String?
+
+  order   ShopOrder   @relation(fields: [orderId], references: [id])
+  product ShopProduct @relation(fields: [productId], references: [id])
+}
+
+model ShopInventoryMovement {
+  id             String   @id @default(cuid())
+  guildId        String
+  materialId     String
+  movementType   String   // stock_add | stock_remove | reserve | release | sale | manual_adjustment | withdrawal | reversal
+  quantity       Int
+  reason         String?
+  relatedOrderId String?
+  performedById  String?
+  createdAt      DateTime @default(now())
+
+  material     ShopMaterial @relation(fields: [materialId], references: [id])
+  relatedOrder ShopOrder?   @relation(fields: [relatedOrderId], references: [id])
+  performedBy  ShopUser?    @relation(fields: [performedById], references: [id])
+}
+
+model ShopSale {
+  id             String   @id @default(cuid())
+  guildId        String
+  orderId        String   @unique
+  buyerUserId    String
+  registeredById String
+  totalAmount    Decimal
+  soldAt         DateTime @default(now())
+
+  order        ShopOrder @relation(fields: [orderId],        references: [id])
+  buyer        ShopUser  @relation("ShopSaleBuyer",        fields: [buyerUserId],      references: [id])
+  registeredBy ShopUser  @relation("ShopSaleRegisteredBy", fields: [registeredById],   references: [id])
+}
+
+model ShopWithdrawal {
+  id            String   @id @default(cuid())
+  guildId       String
+  materialId    String
+  quantity      Int
+  reason        String
+  performedById String
+  createdAt     DateTime @default(now())
+
+  material    ShopMaterial @relation(fields: [materialId],    references: [id])
+  performedBy ShopUser     @relation(fields: [performedById], references: [id])
+}
+
+model ShopOrderEvent {
+  id            String   @id @default(cuid())
+  orderId       String
+  eventType     String
+  oldStatus     String?
+  newStatus     String?
+  performedById String?
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  order       ShopOrder @relation(fields: [orderId],       references: [id])
+  performedBy ShopUser? @relation(fields: [performedById], references: [id])
+}
