@@ -14,6 +14,7 @@ import {
   getCategoryDefinition,
   getSubcategoryDefinition,
 } from './taxonomy.js';
+import { formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 
 const CATALOG_PAGE_SIZE = 5;
 
@@ -62,15 +63,15 @@ function labelize(value: string): string {
 }
 
 function buildProductLine(product: CatalogProduct): string {
-  const price = product.prices[0];
+  const price    = product.prices[0];
   const priceStr = price
-    ? `💰 **${Number(price.price).toLocaleString('es-ES')} ${price.currency}**`
+    ? `💰 **${formatPrice(price.price, price.currency)}**`
     : '💰 _Sin precio_';
-  const typeStr = `🏷️ ${PRODUCT_TYPE_LABELS[product.productType] ?? labelize(product.productType)}`;
+  const typeStr  = `🏷️ ${PRODUCT_TYPE_LABELS[product.productType] ?? labelize(product.productType)}`;
   const compsStr = product.components.length > 0
-    ? '\n> 🔩 ' + product.components.map(component => `${component.material.name} ×${component.quantityRequired}`).join('  ·  ')
+    ? '\n> 🔩 ' + product.components.map(c => `${c.material.name} ×${c.quantityRequired}`).join('  ·  ')
     : '';
-  const descStr = product.description ? `\n${product.description}` : '';
+  const descStr  = product.description ? `\n${product.description}` : '';
 
   return `### ${product.name}\n${typeStr}  ·  ${priceStr}${descStr}${compsStr}`;
 }
@@ -166,21 +167,26 @@ function buildCatalogEmbed(state: CatalogViewState): EmbedBuilder {
   const subcategoryIndex = state.subcategoryKeys.indexOf(state.currentSubcategory) + 1;
   const lines = state.pageProducts.map(buildProductLine);
 
+  const noProducts = lines.length === 0;
+
   return new EmbedBuilder()
     .setTitle(`🏪 Tienda Aquaris  ·  ${category.emoji} ${category.label}`)
     .setDescription(
       [
-        `**Subcategoría:** ${subcategory.label}`,
-        lines.length > 0 ? lines.join('\n\n') : '_No hay productos en esta subcategoría._',
+        `**${subcategory.label}**`,
+        noProducts
+          ? '_No hay productos en esta subcategoría._'
+          : lines.join('\n\n'),
       ].join('\n\n'),
     )
     .setColor(0x5865f2)
     .setFooter({
       text: [
-        `${state.pageProducts.length} de ${state.totalSubcategoryProducts} producto${state.totalSubcategoryProducts !== 1 ? 's' : ''}`,
-        `Pagina ${state.currentPage} de ${state.totalPages}`,
-        `Categoría ${categoryIndex} de ${state.categoryKeys.length}`,
-        `Subcategoría ${subcategoryIndex} de ${state.subcategoryKeys.length}`,
+        `${state.pageProducts.length}/${state.totalSubcategoryProducts} producto${state.totalSubcategoryProducts !== 1 ? 's' : ''}`,
+        `Pág. ${state.currentPage}/${state.totalPages}`,
+        `Cat. ${categoryIndex}/${state.categoryKeys.length}`,
+        `Sub. ${subcategoryIndex}/${state.subcategoryKeys.length}`,
+        '/pedido crear para comprar',
       ].join('  ·  '),
     })
     .setTimestamp();

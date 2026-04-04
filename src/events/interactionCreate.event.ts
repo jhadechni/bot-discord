@@ -23,9 +23,11 @@ import {
   getOrderFull,
   buildOrderEmbed,
   buildAcceptedButtons,
+  buildPendingButtons,
   reserveOrderStock,
   releaseOrderStock,
   consumeOrderStock,
+  generateOrderCode,
 } from '../shop/order-utils.js';
 import {
   appendVentaToSheet,
@@ -35,6 +37,15 @@ import {
   buildCatalogView,
   queryCatalogProducts,
 } from '../shop/catalog.js';
+import {
+  getCart,
+  setCart,
+  deleteCart,
+  buildCartEmbed,
+  buildCartComponents,
+  buildQtyModal,
+  queryCartProducts,
+} from '../shop/cart.js';
 
 // ── Cooldown de sugerencias (en memoria) ──────────────────────────────────────
 const SUGGEST_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutos
@@ -738,6 +749,218 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       );
 
       await interaction.editReply({ embeds: [embed], components });
+      return;
+    }
+
+    // ── Carrito interactivo: seleccionar producto para agregar ────────────────
+    if (interaction.isStringSelectMenu() && interaction.customId === 'pedido:cart:add') {
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const productName = interaction.values[0]!;
+      const cart        = getCart(guildId, interaction.user.id);
+      if (!cart) {
+        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        return;
+      }
+
+      setCart({ ...cart, pendingProduct: productName });
+      await interaction.showModal(buildQtyModal(productName));
+      return;
+    }
+
+    // ── Carrito interactivo: quitar producto ──────────────────────────────────
+    if (interaction.isStringSelectMenu() && interaction.customId === 'pedido:cart:remove') {
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const idx  = parseInt(interaction.values[0]!, 10);
+      const cart = getCart(guildId, interaction.user.id);
+      if (!cart) {
+        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        return;
+      }
+
+      cart.items.splice(idx, 1);
+      setCart(cart);
+
+      await interaction.deferUpdate();
+      const products   = await queryCartProducts(guildId);
+      const embed      = buildCartEmbed(cart);
+      const components = buildCartComponents(cart, products);
+      await interaction.editReply({ embeds: [embed], components });
+      return;
+    }
+
+    // ── Carrito interactivo: vaciar carrito ───────────────────────────────────
+    if (interaction.isButton() && interaction.customId === 'pedido:cart:clear') {
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const cart = getCart(guildId, interaction.user.id);
+      if (!cart) {
+        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        return;
+      }
+
+      cart.items = [];
+      setCart(cart);
+
+      await interaction.deferUpdate();
+      const products   = await queryCartProducts(guildId);
+      const embed      = buildCartEmbed(cart);
+      const components = buildCartComponents(cart, products);
+      await interaction.editReply({ embeds: [embed], components });
+      return;
+    }
+
+    // ── Carrito interactivo: modal de cantidad ────────────────────────────────
+    if (interaction.isModalSubmit() && interaction.customId === 'pedido:cart:qty_modal') {
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const cart = getCart(guildId, interaction.user.id);
+      if (!cart?.pendingProduct) {
+        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        return;
+      }
+
+      const qtyRaw = interaction.fields.getTextInputValue('qty');
+      const qty    = parseInt(qtyRaw, 10);
+      if (isNaN(qty) || qty < 1) {
+        await interaction.reply({ content: '❌ La cantidad debe ser un número entero mayor a 0.', ephemeral: true });
+        return;
+      }
+
+      const notes       = interaction.fields.getTextInputValue('notes').trim() || null;
+      const productName = cart.pendingProduct;
+
+      const product = await prisma.shopProduct.findUnique({
+        where:   { guildId_name: { guildId, name: productName } },
+        include: { prices: { where: { validTo: null }, take: 1 } },
+      });
+
+      if (!product || !product.isActive) {
+        await interaction.reply({ content: `❌ El producto **${productName}** ya no está disponible.`, ephemeral: true });
+        return;
+      }
+
+      const priceRecord = product.prices[0];
+      if (!priceRecord) {
+        await interaction.reply({ content: `❌ **${productName}** no tiene precio configurado.`, ephemeral: true });
+        return;
+      }
+
+      const unitPrice = priceRecord.price;
+      const lineTotal = unitPrice.mul(qty);
+
+      // Si el producto ya está en el carrito, sumar la cantidad
+      const existing = cart.items.find(i => i.productId === product.id);
+      if (existing) {
+        existing.quantity  += qty;
+        existing.lineTotal  = existing.unitPrice.mul(existing.quantity);
+      } else {
+        cart.items.push({
+          productId:   product.id,
+          productName: product.name,
+          productType: product.productType,
+          quantity:    qty,
+          unitPrice,
+          lineTotal,
+          notes,
+        });
+      }
+
+      cart.pendingProduct = null;
+      setCart(cart);
+
+      await interaction.deferUpdate();
+      const products   = await queryCartProducts(guildId);
+      const embed      = buildCartEmbed(cart);
+      const components = buildCartComponents(cart, products);
+      await interaction.editReply({ embeds: [embed], components });
+      return;
+    }
+
+    // ── Carrito interactivo: confirmar pedido ─────────────────────────────────
+    if (interaction.isButton() && interaction.customId === 'pedido:cart:confirm') {
+      const guildId = interaction.guildId;
+      if (!guildId || !interaction.guild) return;
+
+      const cart = getCart(guildId, interaction.user.id);
+      if (!cart || cart.items.length === 0) {
+        await interaction.reply({ content: '⚠️ El carrito está vacío.', ephemeral: true });
+        return;
+      }
+
+      await interaction.deferUpdate();
+
+      const config    = await getOrCreateGuildConfig(guildId);
+      const customer  = await upsertShopUser(guildId, interaction.user);
+      const orderCode = await generateOrderCode();
+
+      const totalAmount = cart.items.reduce(
+        (sum, item) => sum.add(item.lineTotal),
+        cart.items[0]!.lineTotal.mul(0),
+      );
+
+      const order = await prisma.shopOrder.create({
+        data: {
+          guildId,
+          orderCode,
+          customerUserId: customer.id,
+          subtotalAmount: totalAmount,
+          totalAmount,
+          items: {
+            create: cart.items.map(item => ({
+              productId:      item.productId,
+              quantity:       item.quantity,
+              unitPrice:      item.unitPrice,
+              grossLineTotal: item.lineTotal,
+              notes:          item.notes,
+            })),
+          },
+        },
+      });
+
+      await prisma.shopOrderEvent.create({
+        data: { orderId: order.id, eventType: 'created', newStatus: 'pending', performedById: customer.id },
+      });
+
+      // Notificar al canal de staff
+      const orderFull = await getOrderFull(orderCode);
+      if (orderFull && config.shopStaffChannelId) {
+        const staffCh = interaction.guild.channels.cache.get(config.shopStaffChannelId);
+        if (staffCh?.isTextBased()) {
+          const staffMsg = await staffCh.send({
+            embeds:     [buildOrderEmbed(orderFull)],
+            components: [buildPendingButtons(orderCode)],
+          });
+          await prisma.shopOrder.update({ where: { id: order.id }, data: { staffChannelId: staffMsg.id } });
+        }
+      }
+
+      deleteCart(guildId, interaction.user.id);
+
+      // Actualizar el embed del carrito con confirmación
+      const { COLORS, formatPrice, SHOP_FOOTER } = await import('../utils/ui.js');
+      const { EmbedBuilder } = await import('discord.js');
+      const confirmEmbed = new EmbedBuilder()
+        .setTitle('✅ Pedido confirmado')
+        .setColor(COLORS.success)
+        .setDescription(
+          `Tu pedido **${orderCode}** ha sido registrado.\n` +
+          `El staff lo revisará pronto y recibirás una notificación.`,
+        )
+        .addFields(
+          { name: '🛍️ Productos', value: cart.items.map(i => `${i.productName} × ${i.quantity}`).join('\n') },
+          { name: '💰 Total',     value: `**${formatPrice(Number(totalAmount))}**`, inline: true },
+          { name: '📋 Estado',    value: '🟡 Pendiente',                             inline: true },
+        )
+        .setFooter({ text: `${SHOP_FOOTER.text}  ·  Usa /pedido estado ${orderCode} para consultar` })
+        .setTimestamp();
+
+      await interaction.editReply({ embeds: [confirmEmbed], components: [] });
       return;
     }
 

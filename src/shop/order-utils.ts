@@ -5,6 +5,7 @@ import {
   ButtonStyle,
 } from 'discord.js';
 import { prisma } from '../database/prisma.js';
+import { ORDER_COLORS, ORDER_LABELS, formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -218,40 +219,38 @@ export async function consumeOrderStock(
 
 // ── Embeds y botones ──────────────────────────────────────────────────────────
 
-const STATUS_LABELS: Record<string, string> = {
-  pending:   '🟡 Pendiente',
-  accepted:  '🟢 Aceptado',
-  rejected:  '🔴 Rechazado',
-  closed:    '🔵 Entregado',
-  cancelled: '⚫ Cancelado',
-};
-
-const STATUS_COLORS: Record<string, number> = {
-  pending:   0xfee75c,
-  accepted:  0x57f287,
-  rejected:  0xed4245,
-  closed:    0x5865f2,
-  cancelled: 0x99aab5,
-};
-
 export function buildOrderEmbed(order: OrderFull): EmbedBuilder {
-  const color = STATUS_COLORS[order.status] ?? 0x99aab5;
-  const label = STATUS_LABELS[order.status] ?? order.status;
+  const color = ORDER_COLORS[order.status] ?? 0x99aab5;
+  const label = ORDER_LABELS[order.status] ?? order.status;
 
-  const itemLines = order.items.map(item =>
-    `• **${item.product.name}** × ${item.quantity}  —  ${item.unitPrice} $ c/u  →  **${item.grossLineTotal} $**`,
-  );
+  const itemLines = order.items.map(item => {
+    const lineTotal = formatPrice(item.grossLineTotal);
+    const unitStr   = formatPrice(item.unitPrice);
+    const line = `**${item.product.name}** × ${item.quantity}  —  ${unitStr} c/u  →  **${lineTotal}**`;
+    return item.notes ? `${line}\n  > 📝 ${item.notes}` : line;
+  });
 
-  return new EmbedBuilder()
+  const embed = new EmbedBuilder()
     .setTitle(`🛒 Pedido ${order.orderCode}`)
     .setColor(color)
     .addFields(
-      { name: 'Cliente',    value: `<@${order.customer.discordUserId}>`, inline: true },
-      { name: 'Estado',     value: label,                                 inline: true },
-      { name: 'Productos',  value: itemLines.join('\n') || '—' },
-      { name: 'Total',      value: `**${order.totalAmount} $**`,          inline: true },
+      { name: '👤 Cliente',   value: `<@${order.customer.discordUserId}>`, inline: true },
+      { name: '📋 Estado',    value: label,                                 inline: true },
+      { name: '\u200B',       value: '\u200B',                              inline: true },
+      { name: '🛍️ Productos', value: itemLines.join('\n') || '—' },
+      { name: '💰 Total',     value: `**${formatPrice(order.totalAmount)}**`, inline: true },
     )
+    .setFooter(SHOP_FOOTER)
     .setTimestamp(order.createdAt);
+
+  if (order.rejectionReason) {
+    embed.addFields({ name: '❌ Motivo de rechazo', value: order.rejectionReason });
+  }
+  if (order.cancelReason) {
+    embed.addFields({ name: '🚫 Motivo de cancelación', value: order.cancelReason });
+  }
+
+  return embed;
 }
 
 /** Botones para pedido pendiente (en canal de staff). */

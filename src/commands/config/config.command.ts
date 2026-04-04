@@ -173,36 +173,50 @@ export const configCommand: Command = {
 
     if (sub === 'ver') {
       const config = await getOrCreateGuildConfig(guildId);
-      const ch = (id: string | null) => (id ? `<#${id}>` : '—');
-      const ro = (id: string | null) => (id ? `<@&${id}>` : '—');
+      const ch = (id: string | null | undefined) => (id ? `<#${id}>` : '—');
+      const ro = (id: string | null | undefined) => (id ? `<@&${id}>` : '—');
+      const id = (v: string | null | undefined) => (v ? `\`${v}\`` : '—');
 
-      const embed = new EmbedBuilder()
+      const embedCanales = new EmbedBuilder()
         .setColor(0x57f287)
         .setTitle('⚙️ Configuración del servidor')
+        .setDescription('**📢 Canales principales**')
         .addFields(
-          { name: 'Bienvenida/Despedida', value: ch(config.welcomeChannelId ?? null), inline: true },
-          { name: 'Sugerencias', value: ch(config.suggestionsChannelId ?? null), inline: true },
-          { name: 'Categoría reclutamiento', value: config.recruitmentCategoryId ?? '—', inline: true },
-          { name: '📋 Logs — General (fallback)', value: ch(config.logsChannelId ?? null), inline: true },
-          { name: '🔨 Logs — Moderación', value: ch(config.logsModChannelId ?? null), inline: true },
-          { name: '🤖 Logs — Auto-mod', value: ch(config.logsAutomodChannelId ?? null), inline: true },
-          { name: '📥 Logs — Reclutamiento', value: ch(config.logsRecruitChannelId ?? null), inline: true },
-          { name: '👋 Logs — Entradas', value: ch(config.logsJoinsChannelId ?? null), inline: true },
-          { name: '🚪 Logs — Salidas', value: ch(config.logsLeavesChannelId ?? null), inline: true },
-          { name: '⭐ Canal subida de nivel', value: ch(config.levelUpChannelId ?? null), inline: true },
-          { name: '🚀 Canal boost', value: ch(config.boostChannelId ?? null), inline: true },
-          { name: 'Rol Visitante', value: ro(config.visitorRoleId ?? null), inline: true },
-          { name: 'Rol Aspirante', value: ro(config.aspirantRoleId ?? null), inline: true },
-          { name: 'Rol Lider', value: ro(config.liderRoleId ?? null), inline: true },
-          { name: 'Rol Co-Lider', value: ro(config.coLiderRoleId ?? null), inline: true },
-          { name: 'Rol Aquaris', value: ro(config.aquarisRoleId ?? null), inline: true },
-          { name: 'Rol Staff', value: ro(config.staffRoleId ?? null), inline: true },
-          { name: '🏪 Tienda — Canal staff', value: ch(config.shopStaffChannelId ?? null), inline: true },
-          { name: '🏪 Tienda — Categoría pedidos', value: config.shopCategoryId ?? '—', inline: true },
+          { name: '👋 Bienvenida / Despedida', value: ch(config.welcomeChannelId), inline: true },
+          { name: '💡 Sugerencias',            value: ch(config.suggestionsChannelId), inline: true },
+          { name: '⭐ Subida de nivel',         value: ch(config.levelUpChannelId), inline: true },
+          { name: '🚀 Boost',                   value: ch(config.boostChannelId), inline: true },
+          { name: '🎯 Categoría reclutamiento', value: id(config.recruitmentCategoryId), inline: true },
         )
         .setTimestamp();
 
-      await interaction.editReply({ embeds: [embed] });
+      const embedLogs = new EmbedBuilder()
+        .setColor(0x5865f2)
+        .setDescription('**📋 Canales de logs**')
+        .addFields(
+          { name: '📋 General (fallback)', value: ch(config.logsChannelId),        inline: true },
+          { name: '🔨 Moderación',         value: ch(config.logsModChannelId),     inline: true },
+          { name: '🤖 Auto-moderación',    value: ch(config.logsAutomodChannelId), inline: true },
+          { name: '📥 Reclutamiento',      value: ch(config.logsRecruitChannelId), inline: true },
+          { name: '👤 Entradas (joins)',   value: ch(config.logsJoinsChannelId),   inline: true },
+          { name: '🚪 Salidas (leaves)',   value: ch(config.logsLeavesChannelId),  inline: true },
+        );
+
+      const embedRoles = new EmbedBuilder()
+        .setColor(0xfaa61a)
+        .setDescription('**🎭 Roles  ·  🏪 Tienda**')
+        .addFields(
+          { name: '🟢 Visitante',   value: ro(config.visitorRoleId),  inline: true },
+          { name: '🔵 Aspirante',   value: ro(config.aspirantRoleId), inline: true },
+          { name: '👑 Lider',       value: ro(config.liderRoleId),    inline: true },
+          { name: '🥈 Co-Lider',    value: ro(config.coLiderRoleId),  inline: true },
+          { name: '💧 Aquaris',     value: ro(config.aquarisRoleId),  inline: true },
+          { name: '🛡️ Staff',      value: ro(config.staffRoleId),    inline: true },
+          { name: '📣 Canal staff (pedidos)',    value: ch(config.shopStaffChannelId), inline: true },
+          { name: '🗂️ Categoría tickets pedido', value: id(config.shopCategoryId),    inline: true },
+        );
+
+      await interaction.editReply({ embeds: [embedCanales, embedLogs, embedRoles] });
       return;
     }
 

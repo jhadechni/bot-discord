@@ -347,6 +347,7 @@ export async function importInventarioFromSheet(
 
   for (const row of rows) {
     const nombre    = row[0]?.trim() ?? '';
+    console.log('Procesando inventario para material:', nombre);
     const stockNuevo = parseInt(row[2]?.trim() ?? '0', 10);
     const alertaNueva = parseInt(row[5]?.trim() ?? '0', 10);
 
@@ -358,7 +359,7 @@ export async function importInventarioFromSheet(
 
     try {
       const material = await prisma.shopMaterial.findUnique({
-        where:   { guildId_name: { guildId, name: nombre } },
+        where:   { guildId_name: { guildId, name: nombre } },//
         include: { inventory: true },
       });
 

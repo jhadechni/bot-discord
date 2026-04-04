@@ -17,6 +17,13 @@ import {
   buildPendingButtons,
   getOrderFull,
 } from '../../shop/order-utils.js';
+import { COLORS, formatPrice, SHOP_FOOTER } from '../../utils/ui.js';
+import {
+  queryCartProducts,
+  buildCartEmbed,
+  buildCartComponents,
+  setCart,
+} from '../../shop/cart.js';
 
 function hasStaffPermission(
   interaction: ChatInputCommandInteraction,
@@ -72,6 +79,9 @@ export const pedidoCommand: Command = {
     )
     .addSubcommand(sub =>
       sub.setName('lista').setDescription('[Staff] Lista los pedidos pendientes y aceptados'),
+    )
+    .addSubcommand(sub =>
+      sub.setName('carrito').setDescription('Abre tu carrito interactivo para crear un pedido'),
     ),
 
   async autocomplete(interaction: AutocompleteInteraction) {
@@ -170,11 +180,50 @@ export const pedidoCommand: Command = {
         }
       }
 
-      await interaction.editReply(
-        `✅ Pedido **${orderCode}** creado.\n` +
-        `**${nombreProducto}** × ${cantidad}  →  **${lineTotal} $**\n` +
-        `El staff revisará tu pedido pronto.`,
-      );
+      const confirmEmbed = new EmbedBuilder()
+        .setTitle('✅ Pedido creado')
+        .setColor(COLORS.warning)
+        .setDescription(`Tu pedido **${orderCode}** ha sido registrado.\nEl staff lo revisará pronto y recibirás una notificación.`)
+        .addFields(
+          { name: '🛍️ Producto',  value: `**${nombreProducto}** × ${cantidad}`, inline: true },
+          { name: '💰 Total',     value: `**${formatPrice(lineTotal)}**`,        inline: true },
+          { name: '📋 Estado',    value: '🟡 Pendiente',                          inline: true },
+        )
+        .setFooter({ text: `${SHOP_FOOTER.text}  ·  Usa /pedido estado para consultar` })
+        .setTimestamp();
+
+      if (notas) confirmEmbed.addFields({ name: '📝 Notas', value: notas });
+
+      await interaction.editReply({ embeds: [confirmEmbed] });
+      return;
+    }
+
+    // ── /pedido carrito ──────────────────────────────────────────────────────
+    if (sub === 'carrito') {
+      await interaction.deferReply({ ephemeral: true });
+
+      const products = await queryCartProducts(guildId);
+
+      if (products.length === 0) {
+        await interaction.editReply('🏪 La tienda no tiene productos disponibles en este momento.');
+        return;
+      }
+
+      const session = {
+        guildId,
+        userId:         interaction.user.id,
+        channelId:      interaction.channelId,
+        messageId:      '',   // se rellena después de enviar
+        items:          [],
+        pendingProduct: null,
+      };
+
+      const embed      = buildCartEmbed(session);
+      const components = buildCartComponents(session, products);
+      const reply      = await interaction.editReply({ embeds: [embed], components });
+
+      // Guardar el messageId real para que los handlers del modal puedan recuperarlo
+      setCart({ ...session, messageId: reply.id });
       return;
     }
 
@@ -226,21 +275,35 @@ export const pedidoCommand: Command = {
         return;
       }
 
+      const pending  = orders.filter(o => o.status === 'pending');
+      const accepted = orders.filter(o => o.status === 'accepted');
+
       const embed = new EmbedBuilder()
         .setTitle('📋 Pedidos activos')
-        .setColor(0x5865f2)
+        .setColor(COLORS.blurple)
+        .setDescription(
+          `🟡 **${pending.length}** pendiente${pending.length !== 1 ? 's' : ''}` +
+          `  ·  🟢 **${accepted.length}** aceptado${accepted.length !== 1 ? 's' : ''}`,
+        )
+        .setFooter(SHOP_FOOTER)
         .setTimestamp();
 
-      for (const order of orders) {
-        const statusLabel = order.status === 'pending' ? '🟡 Pendiente' : '🟢 Aceptado';
-        const itemSummary = order.items
-          .map(i => `${i.product.name} ×${i.quantity}`)
-          .join(', ');
+      const addOrderField = (order: typeof orders[0]) => {
+        const items = order.items.map(i => `${i.product.name} ×${i.quantity}`).join(', ');
+        const ts    = `<t:${Math.floor(order.createdAt.getTime() / 1000)}:R>`;
         embed.addFields({
-          name:   `${order.orderCode} — ${statusLabel}`,
-          value:  `<@${order.customer.discordUserId}>: ${itemSummary}  ·  **${order.totalAmount} $**`,
-          inline: false,
+          name:  `${order.status === 'pending' ? '🟡' : '🟢'} ${order.orderCode}`,
+          value: `<@${order.customer.discordUserId}>  ·  ${items}  ·  **${formatPrice(order.totalAmount)}**\n${ts}`,
         });
+      };
+
+      if (pending.length > 0) {
+        embed.addFields({ name: '─── Pendientes ───', value: '\u200B' });
+        pending.forEach(addOrderField);
+      }
+      if (accepted.length > 0) {
+        embed.addFields({ name: '─── Aceptados ───', value: '\u200B' });
+        accepted.forEach(addOrderField);
       }
 
       await interaction.editReply({ embeds: [embed] });
