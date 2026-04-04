@@ -104,6 +104,35 @@ export async function syncProductosToSheet(guildId: string): Promise<void> {
   }
 }
 
+export async function syncComponentesToSheet(guildId: string): Promise<void> {
+  if (!sheetsEnabled()) return;
+  try {
+    const components = await prisma.shopProductComponent.findMany({
+      where: {
+        product: { guildId },
+      },
+      include: {
+        material: true,
+        product: true,
+      },
+      orderBy: [
+        { product: { name: 'asc' } },
+        { material: { name: 'asc' } },
+      ],
+    });
+
+    const rows = components.map(component => [
+      component.product.name,
+      component.material.name,
+      String(component.quantityRequired),
+    ]);
+
+    await writeTab('componentes', rows);
+  } catch (err) {
+    logger.warn({ err }, '[sync] Error exportando componentes a Sheets');
+  }
+}
+
 export async function syncInventarioToSheet(guildId: string): Promise<void> {
   if (!sheetsEnabled()) return;
   try {
@@ -223,6 +252,8 @@ export interface ImportSummary {
   unchanged: number;
   notFound:  number;
   errors:    string[];
+  createdNames?: string[];
+  notFoundNames?: string[];
 }
 
 /**
@@ -235,7 +266,15 @@ export async function importProductosFromSheet(
   guildId:     string,
   staffUserId: string,
 ): Promise<ImportSummary> {
-  const summary: ImportSummary = { created: 0, updated: 0, unchanged: 0, notFound: 0, errors: [] };
+  const summary: ImportSummary = {
+    created: 0,
+    updated: 0,
+    unchanged: 0,
+    notFound: 0,
+    errors: [],
+    createdNames: [],
+    notFoundNames: [],
+  };
 
   const rows = await readTab('productos');
 
@@ -335,20 +374,29 @@ export async function importProductosFromSheet(
  * Lee el tab Inventario y aplica los cambios a la BD:
  * - Stock Total cambiado → ajuste con movimiento `manual_adjustment`.
  * - Alerta Mínima cambiada → actualiza el umbral.
- * - Materiales no encontrados en BD → se reportan (no se crean).
+ * - Materiales no encontrados en BD → se crean junto con su inventario.
+ * - Las columnas Reservado y Disponible del Sheet se tratan como derivadas.
  */
 export async function importInventarioFromSheet(
   guildId:     string,
   staffUserId: string,
 ): Promise<ImportSummary> {
-  const summary: ImportSummary = { created: 0, updated: 0, unchanged: 0, notFound: 0, errors: [] };
+  const summary: ImportSummary = {
+    created: 0,
+    updated: 0,
+    unchanged: 0,
+    notFound: 0,
+    errors: [],
+    createdNames: [],
+    notFoundNames: [],
+  };
 
   const rows = await readTab('inventario');
 
   for (const row of rows) {
-    const nombre    = row[0]?.trim() ?? '';
-    console.log('Procesando inventario para material:', nombre);
-    const stockNuevo = parseInt(row[2]?.trim() ?? '0', 10);
+    const nombre      = row[0]?.trim() ?? '';
+    const unidad      = row[1]?.trim() || 'item';
+    const stockNuevo  = parseInt(row[2]?.trim() ?? '0', 10);
     const alertaNueva = parseInt(row[5]?.trim() ?? '0', 10);
 
     if (!nombre) continue;
@@ -363,13 +411,88 @@ export async function importInventarioFromSheet(
         include: { inventory: true },
       });
 
-      if (!material?.inventory) {
-        summary.notFound++;
+      if (!material) {
+        await prisma.$transaction(async tx => {
+          const createdMaterial = await tx.shopMaterial.create({
+            data: {
+              guildId,
+              name: nombre,
+              baseUnit: unidad,
+              inventory: {
+                create: {
+                  guildId,
+                  currentStock: stockNuevo,
+                  minStockAlert: !isNaN(alertaNueva) ? alertaNueva : 0,
+                },
+              },
+            },
+          });
+
+          if (stockNuevo > 0) {
+            await tx.shopInventoryMovement.create({
+              data: {
+                guildId,
+                materialId: createdMaterial.id,
+                movementType: 'stock_add',
+                quantity: stockNuevo,
+                reason: 'Creado desde Google Sheets',
+                performedById: staffUserId,
+              },
+            });
+          }
+        });
+
+        summary.created++;
+        summary.createdNames?.push(nombre);
         continue;
       }
 
-      const inv     = material.inventory;
-      let   changed = false;
+      if (!material.inventory) {
+        await prisma.$transaction(async tx => {
+          if (material.baseUnit !== unidad) {
+            await tx.shopMaterial.update({
+              where: { id: material.id },
+              data: { baseUnit: unidad },
+            });
+          }
+
+          await tx.shopInventory.create({
+            data: {
+              guildId,
+              materialId: material.id,
+              currentStock: stockNuevo,
+              minStockAlert: !isNaN(alertaNueva) ? alertaNueva : 0,
+            },
+          });
+
+          if (stockNuevo > 0) {
+            await tx.shopInventoryMovement.create({
+              data: {
+                guildId,
+                materialId: material.id,
+                movementType: 'stock_add',
+                quantity: stockNuevo,
+                reason: 'Inventario creado desde Google Sheets',
+                performedById: staffUserId,
+              },
+            });
+          }
+        });
+
+        summary.updated++;
+        continue;
+      }
+
+      const inv = material.inventory;
+      let changed = false;
+
+      if (material.baseUnit !== unidad) {
+        await prisma.shopMaterial.update({
+          where: { id: material.id },
+          data: { baseUnit: unidad },
+        });
+        changed = true;
+      }
 
       if (inv.currentStock !== stockNuevo) {
         if (stockNuevo < inv.reservedStock) {
@@ -411,6 +534,106 @@ export async function importInventarioFromSheet(
     } catch (err) {
       summary.errors.push(
         `Error en "${nombre}": ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  return summary;
+}
+
+/**
+ * Lee el tab Componentes y aplica las recetas a la BD:
+ * - Filas nuevas → crean relación producto-material.
+ * - Cantidad cambiada → actualiza quantityRequired.
+ * - Requiere que producto y material ya existan.
+ */
+export async function importComponentesFromSheet(
+  guildId: string,
+): Promise<ImportSummary> {
+  const summary: ImportSummary = {
+    created: 0,
+    updated: 0,
+    unchanged: 0,
+    notFound: 0,
+    errors: [],
+    createdNames: [],
+    notFoundNames: [],
+  };
+
+  const rows = await readTab('componentes');
+
+  for (const row of rows) {
+    const nombreProducto = row[0]?.trim() ?? '';
+    const nombreMaterial = row[1]?.trim() ?? '';
+    const cantidad = parseInt(row[2]?.trim() ?? '0', 10);
+
+    if (!nombreProducto && !nombreMaterial) continue;
+
+    if (!nombreProducto || !nombreMaterial) {
+      summary.errors.push(
+        `Fila incompleta en Componentes: producto="${nombreProducto}" material="${nombreMaterial}"`,
+      );
+      continue;
+    }
+
+    if (isNaN(cantidad) || cantidad <= 0) {
+      summary.errors.push(
+        `Cantidad inválida para "${nombreProducto}" → "${nombreMaterial}": "${row[2] ?? ''}"`,
+      );
+      continue;
+    }
+
+    try {
+      const [product, material] = await Promise.all([
+        prisma.shopProduct.findUnique({
+          where: { guildId_name: { guildId, name: nombreProducto } },
+        }),
+        prisma.shopMaterial.findUnique({
+          where: { guildId_name: { guildId, name: nombreMaterial } },
+        }),
+      ]);
+
+      if (!product || !material) {
+        summary.notFound++;
+        summary.notFoundNames?.push(`${nombreProducto} -> ${nombreMaterial}`);
+        continue;
+      }
+
+      const existing = await prisma.shopProductComponent.findUnique({
+        where: {
+          productId_materialId: {
+            productId: product.id,
+            materialId: material.id,
+          },
+        },
+      });
+
+      if (!existing) {
+        await prisma.shopProductComponent.create({
+          data: {
+            productId: product.id,
+            materialId: material.id,
+            quantityRequired: cantidad,
+          },
+        });
+        summary.created++;
+        summary.createdNames?.push(`${nombreProducto} -> ${nombreMaterial}`);
+        continue;
+      }
+
+      if (existing.quantityRequired !== cantidad) {
+        await prisma.shopProductComponent.update({
+          where: { id: existing.id },
+          data: { quantityRequired: cantidad },
+        });
+        summary.updated++;
+        continue;
+      }
+
+      summary.unchanged++;
+    } catch (err) {
+      summary.errors.push(
+        `Error en "${nombreProducto}" → "${nombreMaterial}": ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }

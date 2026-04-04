@@ -74,7 +74,14 @@ export type CartProductOption = Awaited<ReturnType<typeof queryCartProducts>>[nu
 
 export async function queryCartProducts(guildId: string) {
   return prisma.shopProduct.findMany({
-    where:   { guildId, isActive: true },
+    where:   {
+      guildId,
+      isActive: true,
+      OR: [
+        { productType: 'service' },
+        { components: { some: {} } },
+      ],
+    },
     include: { prices: { where: { validTo: null }, take: 1 } },
     orderBy: [{ category: 'asc' }, { name: 'asc' }],
   });

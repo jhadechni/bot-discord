@@ -12,9 +12,9 @@ import { prisma } from '../../database/prisma.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import { upsertShopUser } from '../../database/shop-user.js';
 import {
-  generateOrderCode,
   buildOrderEmbed,
   buildPendingButtons,
+  createPendingOrder,
   getOrderFull,
 } from '../../shop/order-utils.js';
 import { COLORS, formatPrice, SHOP_FOOTER } from '../../utils/ui.js';
@@ -90,7 +90,15 @@ export const pedidoCommand: Command = {
 
     const value = interaction.options.getFocused().toLowerCase();
     const products = await prisma.shopProduct.findMany({
-      where:   { guildId, isActive: true, name: { contains: value, mode: 'insensitive' } },
+      where:   {
+        guildId,
+        isActive: true,
+        name: { contains: value, mode: 'insensitive' },
+        OR: [
+          { productType: 'service' },
+          { components: { some: {} } },
+        ],
+      },
       take:    25,
       select:  { name: true },
       orderBy: { name: 'asc' },
@@ -114,68 +122,38 @@ export const pedidoCommand: Command = {
       const notas          = interaction.options.getString('notas') ?? null;
 
       const product = await prisma.shopProduct.findUnique({
-        where:   { guildId_name: { guildId, name: nombreProducto } },
-        include: { prices: { where: { validTo: null }, take: 1 } },
+        where: { guildId_name: { guildId, name: nombreProducto } },
       });
 
       if (!product || !product.isActive) {
         await interaction.editReply(`❌ El producto **${nombreProducto}** no está disponible.`);
         return;
       }
-
-      const priceRecord = product.prices[0];
-      if (!priceRecord) {
-        await interaction.editReply(`❌ **${nombreProducto}** no tiene precio configurado.`);
+      const customer  = await upsertShopUser(guildId, interaction.user);
+      let createdOrder;
+      try {
+        createdOrder = await createPendingOrder({
+          guildId,
+          customerUserId: customer.id,
+          items: [{ productId: product.id, quantity: cantidad, notes: notas }],
+          staffChannelId: config.shopStaffChannelId ?? null,
+        });
+      } catch (err) {
+        await interaction.editReply(
+          `❌ ${err instanceof Error ? err.message : 'No se pudo crear el pedido.'}`,
+        );
         return;
       }
-
-      const unitPrice = priceRecord.price;
-      const lineTotal = unitPrice.mul(cantidad);
-      const orderCode = await generateOrderCode();
-      const customer  = await upsertShopUser(guildId, interaction.user);
-
-      const order = await prisma.shopOrder.create({
-        data: {
-          guildId,
-          orderCode,
-          customerUserId: customer.id,
-          subtotalAmount: lineTotal,
-          totalAmount:    lineTotal,
-          items: {
-            create: {
-              productId:      product.id,
-              quantity:       cantidad,
-              unitPrice,
-              grossLineTotal: lineTotal,
-              notes:          notas,
-            },
-          },
-        },
-      });
-
-      await prisma.shopOrderEvent.create({
-        data: {
-          orderId:      order.id,
-          eventType:    'created',
-          newStatus:    'pending',
-          performedById: customer.id,
-        },
-      });
+      const orderCode = createdOrder.orderCode;
 
       // Publicar notificación en el canal del staff
       const orderFull = await getOrderFull(orderCode);
       if (orderFull && config.shopStaffChannelId) {
         const staffCh = interaction.guild.channels.cache.get(config.shopStaffChannelId);
         if (staffCh?.isTextBased()) {
-          const staffMsg = await staffCh.send({
+          await staffCh.send({
             embeds:     [buildOrderEmbed(orderFull)],
             components: [buildPendingButtons(orderCode)],
-          });
-          // Guardamos el ID del mensaje en staffChannelId para poder actualizarlo
-          // desde acciones slash si fuera necesario
-          await prisma.shopOrder.update({
-            where: { id: order.id },
-            data:  { staffChannelId: staffMsg.id },
           });
         }
       }
@@ -186,11 +164,19 @@ export const pedidoCommand: Command = {
         .setDescription(`Tu pedido **${orderCode}** ha sido registrado.\nEl staff lo revisará pronto y recibirás una notificación.`)
         .addFields(
           { name: '🛍️ Producto',  value: `**${nombreProducto}** × ${cantidad}`, inline: true },
-          { name: '💰 Total',     value: `**${formatPrice(lineTotal)}**`,        inline: true },
+          { name: '💰 Total',     value: `**${formatPrice(orderFull?.totalAmount ?? 0)}**`, inline: true },
           { name: '📋 Estado',    value: '🟡 Pendiente',                          inline: true },
         )
         .setFooter({ text: `${SHOP_FOOTER.text}  ·  Usa /pedido estado para consultar` })
         .setTimestamp();
+
+      if ((orderFull?.totalDiscountAmount ?? 0).toString() !== '0') {
+        confirmEmbed.addFields({
+          name: '🏷️ Descuentos',
+          value: `-${formatPrice(orderFull?.totalDiscountAmount ?? 0)}`,
+          inline: true,
+        });
+      }
 
       if (notas) confirmEmbed.addFields({ name: '📝 Notas', value: notas });
 

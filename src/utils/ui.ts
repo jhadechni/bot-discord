@@ -20,7 +20,7 @@ export const ORDER_COLORS: Record<string, number> = {
   pending:   COLORS.warning,
   accepted:  COLORS.success,
   rejected:  COLORS.danger,
-  closed:    COLORS.blurple,
+  completed: COLORS.blurple,
   cancelled: COLORS.neutral,
 };
 
@@ -28,7 +28,7 @@ export const ORDER_LABELS: Record<string, string> = {
   pending:   '🟡 Pendiente',
   accepted:  '🟢 Aceptado',
   rejected:  '🔴 Rechazado',
-  closed:    '🔵 Entregado',
+  completed: '🔵 Completado',
   cancelled: '⚫ Cancelado',
 };
 

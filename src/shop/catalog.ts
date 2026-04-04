@@ -42,7 +42,14 @@ type CatalogViewState = {
 
 export async function queryCatalogProducts(guildId: string) {
   return prisma.shopProduct.findMany({
-    where:   { guildId, isActive: true },
+    where:   {
+      guildId,
+      isActive: true,
+      OR: [
+        { productType: 'service' },
+        { components: { some: {} } },
+      ],
+    },
     include: {
       prices:     { where: { validTo: null }, take: 1 },
       components: { include: { material: true }, orderBy: { quantityRequired: 'desc' } },

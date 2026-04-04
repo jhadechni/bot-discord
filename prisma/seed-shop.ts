@@ -431,7 +431,7 @@ async function main() {
 
   console.log(`✅ Productos creados: ${createdProducts.length}`);
 
-  // ── 4. Pedidos cerrados + ventas ───────────────────────────────────────────
+  // ── 4. Pedidos completados + ventas ────────────────────────────────────────
   let totalOrderEvents = 0;
   let totalOrderItems = 0;
   let totalSales = 0;
@@ -443,7 +443,7 @@ async function main() {
     const quantity = product.type === 'service' ? 1 : 1 + (index % 2);
     const subtotal = product.price * quantity;
     const acceptedAt = new Date(Date.now() - (TOTAL_CLOSED_ORDERS - index) * 90 * 60_000);
-    const closedAt = new Date(acceptedAt.getTime() + 45 * 60_000);
+    const completedAt = new Date(acceptedAt.getTime() + 45 * 60_000);
     const orderCode = `AQ-TST${String(index + 1).padStart(4, '0')}`;
 
     const order = await prisma.shopOrder.create({
@@ -451,19 +451,21 @@ async function main() {
         guildId:          GUILD_ID,
         orderCode,
         customerUserId:   customer.id,
-        status:           'closed',
+        status:           'completed',
         acceptedByUserId: staff.id,
         closedByUserId:   staff.id,
         subtotalAmount:   subtotal,
+        totalDiscountAmount: 0,
         totalAmount:      subtotal,
         acceptedAt,
-        closedAt,
+        closedAt: completedAt,
         items: {
           create: {
             productId:          product.id,
             quantity,
             unitPrice:          product.price,
             grossLineTotal:     subtotal,
+            netLineTotal:       subtotal,
             reservedQuantity:   product.components.length > 0 ? quantity : 0,
             deliveredQuantity:  quantity,
           },
@@ -476,7 +478,7 @@ async function main() {
     await prisma.shopOrderEvent.create({
       data: {
         orderId:       order.id,
-        eventType:     'created',
+        eventType:     'order_created',
         newStatus:     'pending',
         performedById: customer.id,
       },
@@ -484,7 +486,7 @@ async function main() {
     await prisma.shopOrderEvent.create({
       data: {
         orderId:       order.id,
-        eventType:     'accepted',
+        eventType:     'order_accepted',
         oldStatus:     'pending',
         newStatus:     'accepted',
         performedById: staff.id,
@@ -493,9 +495,9 @@ async function main() {
     await prisma.shopOrderEvent.create({
       data: {
         orderId:       order.id,
-        eventType:     'closed',
+        eventType:     'order_completed',
         oldStatus:     'accepted',
-        newStatus:     'closed',
+        newStatus:     'completed',
         performedById: staff.id,
       },
     });
@@ -513,7 +515,7 @@ async function main() {
           materialId:     materialIdByName[component.mat]!,
           movementType:   'sale',
           quantity:       movementQuantity,
-          reason:         `Venta cerrada del pedido ${orderCode}`,
+          reason:         `Venta completada del pedido ${orderCode}`,
           relatedOrderId: order.id,
           performedById:  staff.id,
         },
@@ -528,13 +530,13 @@ async function main() {
         buyerUserId:    customer.id,
         registeredById: staff.id,
         totalAmount:    subtotal,
-        soldAt:         closedAt,
+        soldAt:         completedAt,
       },
     });
     totalSales += 1;
   }
 
-  console.log(`✅ Pedidos cerrados creados: ${TOTAL_CLOSED_ORDERS}`);
+  console.log(`✅ Pedidos completados creados: ${TOTAL_CLOSED_ORDERS}`);
 
   // ── 5. Retiros de inventario ───────────────────────────────────────────────
   let totalWithdrawals = 0;

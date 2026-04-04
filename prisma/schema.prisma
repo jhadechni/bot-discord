@@ -118,19 +118,22 @@ model ShopUser {
   discordUserId String
   username      String
   displayName   String
+  isStaff       Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  ordersAsCustomer ShopOrder[]             @relation("ShopOrderCustomer")
-  ordersAccepted   ShopOrder[]             @relation("ShopOrderAcceptedBy")
-  ordersRejected   ShopOrder[]             @relation("ShopOrderRejectedBy")
-  ordersClosed     ShopOrder[]             @relation("ShopOrderClosedBy")
-  movements        ShopInventoryMovement[]
-  salesAsBuyer     ShopSale[]              @relation("ShopSaleBuyer")
-  salesRegistered  ShopSale[]              @relation("ShopSaleRegisteredBy")
-  withdrawals      ShopWithdrawal[]
-  orderEvents      ShopOrderEvent[]
-  priceChanges     ShopProductPrice[]
+  ordersAsCustomer       ShopOrder[]             @relation("ShopOrderCustomer")
+  ordersAccepted         ShopOrder[]             @relation("ShopOrderAcceptedBy")
+  ordersRejected         ShopOrder[]             @relation("ShopOrderRejectedBy")
+  ordersClosed           ShopOrder[]             @relation("ShopOrderClosedBy")
+  movements              ShopInventoryMovement[]
+  salesAsBuyer           ShopSale[]              @relation("ShopSaleBuyer")
+  salesRegistered        ShopSale[]              @relation("ShopSaleRegisteredBy")
+  withdrawals            ShopWithdrawal[]
+  orderEvents            ShopOrderEvent[]
+  priceChanges           ShopProductPrice[]
+  discountPolicies       ShopDiscountPolicy[]    @relation("ShopDiscountPolicyCreatedBy")
+  appliedDiscounts       ShopAppliedDiscount[]   @relation("ShopAppliedDiscountAppliedBy")
 
   @@unique([guildId, discordUserId])
 }
@@ -222,6 +225,7 @@ model ShopOrder {
   rejectionReason  String?
   cancelReason     String?
   subtotalAmount   Decimal   @default(0)
+  totalDiscountAmount Decimal @default(0)
   totalAmount      Decimal   @default(0)
   createdAt        DateTime  @default(now())
   acceptedAt       DateTime?
@@ -238,6 +242,7 @@ model ShopOrder {
   movements ShopInventoryMovement[]
   sale      ShopSale?
   events    ShopOrderEvent[]
+  appliedDiscounts ShopAppliedDiscount[]
 }
 
 model ShopOrderItem {
@@ -247,12 +252,14 @@ model ShopOrderItem {
   quantity          Int
   unitPrice         Decimal
   grossLineTotal    Decimal
+  netLineTotal      Decimal  @default(0)
   reservedQuantity  Int     @default(0)
   deliveredQuantity Int     @default(0)
   notes             String?
 
   order   ShopOrder   @relation(fields: [orderId], references: [id])
   product ShopProduct @relation(fields: [productId], references: [id])
+  appliedDiscounts ShopAppliedDiscount[]
 }
 
 model ShopInventoryMovement {
@@ -296,6 +303,45 @@ model ShopWithdrawal {
 
   material    ShopMaterial @relation(fields: [materialId],    references: [id])
   performedBy ShopUser     @relation(fields: [performedById], references: [id])
+}
+
+model ShopDiscountPolicy {
+  id              String   @id @default(cuid())
+  guildId         String
+  name            String
+  description     String?
+  policyType      String
+  scope           String
+  discountType    String
+  discountValue   Decimal
+  isActive        Boolean  @default(true)
+  priority        Int      @default(0)
+  startsAt        DateTime?
+  endsAt          DateTime?
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+
+  createdBy        ShopUser?              @relation("ShopDiscountPolicyCreatedBy", fields: [createdByUserId], references: [id])
+  appliedDiscounts ShopAppliedDiscount[]
+}
+
+model ShopAppliedDiscount {
+  id               String   @id @default(cuid())
+  discountPolicyId String?
+  orderId          String?
+  orderItemId      String?
+  scope            String
+  discountType     String
+  discountValue    Decimal
+  discountAmount   Decimal
+  reason           String?
+  appliedByUserId  String?
+  appliedAt        DateTime @default(now())
+
+  discountPolicy ShopDiscountPolicy? @relation(fields: [discountPolicyId], references: [id])
+  order          ShopOrder?          @relation(fields: [orderId], references: [id])
+  orderItem      ShopOrderItem?      @relation(fields: [orderItemId], references: [id])
+  appliedBy      ShopUser?           @relation("ShopAppliedDiscountAppliedBy", fields: [appliedByUserId], references: [id])
 }
 
 model ShopOrderEvent {

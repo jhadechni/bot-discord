@@ -4,12 +4,20 @@ import {
   ButtonBuilder,
   ButtonStyle,
 } from 'discord.js';
+import { Prisma } from '../generated/prisma/client.js';
 import { prisma } from '../database/prisma.js';
+import { calculateOrderPricing } from './discounts.js';
 import { ORDER_COLORS, ORDER_LABELS, formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
 export type OrderFull = NonNullable<Awaited<ReturnType<typeof getOrderFull>>>;
+
+export interface PendingOrderItemInput {
+  notes: string | null;
+  productId: string;
+  quantity: number;
+}
 
 // ── Helpers de BD ─────────────────────────────────────────────────────────────
 
@@ -18,8 +26,18 @@ export async function getOrderFull(orderCode: string) {
   return prisma.shopOrder.findUnique({
     where:   { orderCode },
     include: {
+      appliedDiscounts: {
+        orderBy: { appliedAt: 'asc' },
+      },
       customer: true,
-      items:    { include: { product: true } },
+      items:    {
+        include: {
+          appliedDiscounts: {
+            orderBy: { appliedAt: 'asc' },
+          },
+          product: true,
+        },
+      },
     },
   });
 }
@@ -36,6 +54,138 @@ export async function generateOrderCode(): Promise<string> {
     if (!existing) return code;
   }
   throw new Error('No se pudo generar un código de pedido único');
+}
+
+/** Crea un pedido pendiente congelando precio y descuentos al momento de crear la orden. */
+export async function createPendingOrder(params: {
+  customerUserId: string;
+  guildId: string;
+  items: PendingOrderItemInput[];
+  staffChannelId?: string | null;
+}) {
+  const { customerUserId, guildId, items, staffChannelId = null } = params;
+
+  if (items.length === 0) {
+    throw new Error('No se puede crear un pedido sin productos.');
+  }
+
+  const orderCode = await generateOrderCode();
+  const products = await prisma.shopProduct.findMany({
+    where: {
+      guildId,
+      id: { in: items.map(item => item.productId) },
+    },
+    include: {
+      components: true,
+      prices: { where: { validTo: null }, take: 1 },
+    },
+  });
+  const productById = new Map(products.map(product => [product.id, product]));
+
+  const pricingInput = items.map(item => {
+    const product = productById.get(item.productId);
+
+    if (!product || !product.isActive) {
+      throw new Error('Uno de los productos del pedido ya no está disponible.');
+    }
+
+    if (product.productType !== 'service' && product.components.length === 0) {
+      throw new Error(`**${product.name}** no tiene materiales configurados.`);
+    }
+
+    const activePrice = product.prices[0];
+    if (!activePrice) {
+      throw new Error(`**${product.name}** no tiene precio configurado.`);
+    }
+
+    return {
+      notes: item.notes,
+      productId: item.productId,
+      quantity: item.quantity,
+      unitPrice: new Prisma.Decimal(activePrice.price),
+    };
+  });
+
+  const pricing = await calculateOrderPricing(guildId, customerUserId, pricingInput);
+
+  return prisma.$transaction(async tx => {
+    const order = await tx.shopOrder.create({
+      data: {
+        guildId,
+        orderCode,
+        customerUserId,
+        staffChannelId,
+        status: 'pending',
+        subtotalAmount: pricing.subtotalAmount,
+        totalDiscountAmount: pricing.totalDiscountAmount,
+        totalAmount: pricing.totalAmount,
+      },
+    });
+
+    const createdItems = [];
+
+    for (const item of pricing.items) {
+      const createdItem = await tx.shopOrderItem.create({
+        data: {
+          orderId: order.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          grossLineTotal: item.grossLineTotal,
+          netLineTotal: item.netLineTotal,
+          notes: item.notes,
+        },
+      });
+      createdItems.push(createdItem);
+    }
+
+    for (const discount of pricing.orderDiscounts) {
+      await tx.shopAppliedDiscount.create({
+        data: {
+          appliedByUserId: discount.appliedByUserId,
+          discountAmount: discount.discountAmount,
+          discountPolicyId: discount.discountPolicyId,
+          discountType: discount.discountType,
+          discountValue: discount.discountValue,
+          orderId: order.id,
+          reason: discount.reason,
+          scope: discount.scope,
+        },
+      });
+    }
+
+    for (const item of pricing.items) {
+      for (const discount of item.itemDiscounts) {
+        const targetItem = createdItems[discount.orderItemIndex ?? -1];
+        if (!targetItem) continue;
+
+        await tx.shopAppliedDiscount.create({
+          data: {
+            appliedByUserId: discount.appliedByUserId,
+            discountAmount: discount.discountAmount,
+            discountPolicyId: discount.discountPolicyId,
+            discountType: discount.discountType,
+            discountValue: discount.discountValue,
+            orderId: order.id,
+            orderItemId: targetItem.id,
+            reason: discount.reason,
+            scope: discount.scope,
+          },
+        });
+      }
+    }
+
+    await tx.shopOrderEvent.create({
+      data: {
+        orderId: order.id,
+        eventType: 'order_created',
+        newStatus: 'pending',
+        performedById: customerUserId,
+      },
+    });
+
+    return order;
+  });
 }
 
 // ── Lógica de stock ───────────────────────────────────────────────────────────
@@ -227,8 +377,28 @@ export function buildOrderEmbed(order: OrderFull): EmbedBuilder {
     const lineTotal = formatPrice(item.grossLineTotal);
     const unitStr   = formatPrice(item.unitPrice);
     const line = `**${item.product.name}** × ${item.quantity}  —  ${unitStr} c/u  →  **${lineTotal}**`;
-    return item.notes ? `${line}\n  > 📝 ${item.notes}` : line;
+    const itemDiscountTotal = item.appliedDiscounts.reduce(
+      (sum, discount) => sum.add(discount.discountAmount),
+      new Prisma.Decimal(0),
+    );
+    const extraLines = [];
+
+    if (itemDiscountTotal.comparedTo(0) > 0) {
+      extraLines.push(
+        `  > 🧾 Descuento línea: -${formatPrice(itemDiscountTotal)}  ·  Neto: **${formatPrice(item.netLineTotal)}**`,
+      );
+    }
+
+    if (item.notes) {
+      extraLines.push(`  > 📝 ${item.notes}`);
+    }
+
+    return extraLines.length > 0 ? `${line}\n${extraLines.join('\n')}` : line;
   });
+
+  const orderDiscountLines = order.appliedDiscounts
+    .filter(discount => discount.scope === 'order')
+    .map(discount => `• ${discount.reason ?? 'Descuento'}: -${formatPrice(discount.discountAmount)}`);
 
   const embed = new EmbedBuilder()
     .setTitle(`🛒 Pedido ${order.orderCode}`)
@@ -238,10 +408,16 @@ export function buildOrderEmbed(order: OrderFull): EmbedBuilder {
       { name: '📋 Estado',    value: label,                                 inline: true },
       { name: '\u200B',       value: '\u200B',                              inline: true },
       { name: '🛍️ Productos', value: itemLines.join('\n') || '—' },
+      { name: '🧮 Subtotal',  value: `**${formatPrice(order.subtotalAmount)}**`, inline: true },
+      { name: '🏷️ Descuentos', value: `**-${formatPrice(order.totalDiscountAmount)}**`, inline: true },
       { name: '💰 Total',     value: `**${formatPrice(order.totalAmount)}**`, inline: true },
     )
     .setFooter(SHOP_FOOTER)
     .setTimestamp(order.createdAt);
+
+  if (orderDiscountLines.length > 0) {
+    embed.addFields({ name: '🏷️ Descuentos del pedido', value: orderDiscountLines.join('\n') });
+  }
 
   if (order.rejectionReason) {
     embed.addFields({ name: '❌ Motivo de rechazo', value: order.rejectionReason });

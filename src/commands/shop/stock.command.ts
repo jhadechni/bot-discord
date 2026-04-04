@@ -223,7 +223,7 @@ export const stockCommand: Command = {
     }
 
     // ── Subcomandos que modifican stock (requieren material + ShopUser) ───────
-    const staffUser     = await upsertShopUser(guildId, interaction.user);
+    const staffUser     = await upsertShopUser(guildId, interaction.user, true);
     const nombreMaterial = interaction.options.getString('material', true);
 
     const material = await prisma.shopMaterial.findUnique({
@@ -286,11 +286,20 @@ export const stockCommand: Command = {
           where: { id: inv.id },
           data:  { currentStock: { decrement: cantidad } },
         }),
+        prisma.shopWithdrawal.create({
+          data: {
+            guildId,
+            materialId: material.id,
+            quantity: cantidad,
+            reason: motivo,
+            performedById: staffUser.id,
+          },
+        }),
         prisma.shopInventoryMovement.create({
           data: {
             guildId,
             materialId:    material.id,
-            movementType:  'stock_remove',
+            movementType:  'withdrawal',
             quantity:      cantidad,
             reason:        motivo,
             performedById: staffUser.id,
@@ -300,7 +309,7 @@ export const stockCommand: Command = {
 
       void syncInventarioToSheet(guildId);
       await interaction.editReply(
-        `✅ **-${cantidad}** ${material.baseUnit} de **${nombreMaterial}**.\n` +
+        `✅ Retiro registrado por **-${cantidad}** ${material.baseUnit} de **${nombreMaterial}**.\n` +
         `Stock total: ${inv.currentStock - cantidad}`,
       );
       return;

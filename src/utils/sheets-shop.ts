@@ -24,21 +24,23 @@ function getSpreadsheetId(): string {
 // ── Nombres de tabs y cabeceras ───────────────────────────────────────────────
 
 export const SHOP_TABS = {
-  categorias: 'Categorías',
-  productos:  'Productos',
-  inventario: 'Inventario',
-  ventas:     'Ventas',
-  pedidos:    'Pedidos',
+  categorias:  'Categorías',
+  productos:   'Productos',
+  componentes: 'Componentes',
+  inventario:  'Inventario',
+  ventas:      'Ventas',
+  pedidos:     'Pedidos',
 } as const;
 
 export type ShopTab = keyof typeof SHOP_TABS;
 
 export const SHOP_HEADERS: Record<ShopTab, string[]> = {
-  categorias: ['Clave Categoría', 'Categoría', 'Clave Subcategoría', 'Subcategoría'],
-  productos:  ['Nombre', 'Tipo', 'Categoría', 'Subcategoría', 'Precio ($)', 'Descripción', 'Activo'],
-  inventario: ['Material', 'Unidad', 'Stock Total', 'Reservado', 'Disponible', 'Alerta Mínima'],
-  ventas:     ['Fecha', 'Código', 'Cliente (Discord)', 'Productos', 'Total ($)'],
-  pedidos:    ['Código', 'Estado', 'Cliente', 'Productos', 'Total ($)', 'Creado'],
+  categorias:  ['Clave Categoría', 'Categoría', 'Clave Subcategoría', 'Subcategoría'],
+  productos:   ['Nombre', 'Tipo', 'Categoría', 'Subcategoría', 'Precio ($)', 'Descripción', 'Activo'],
+  componentes: ['Producto', 'Material', 'Cantidad'],
+  inventario:  ['Material', 'Unidad', 'Stock Total', 'Reservado', 'Disponible', 'Alerta Mínima'],
+  ventas:      ['Fecha', 'Código', 'Cliente (Discord)', 'Productos', 'Total ($)'],
+  pedidos:     ['Código', 'Estado', 'Cliente', 'Productos', 'Total ($)', 'Creado'],
 };
 
 // ── Primitivas de Sheets ──────────────────────────────────────────────────────

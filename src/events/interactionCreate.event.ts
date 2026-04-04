@@ -24,10 +24,10 @@ import {
   buildOrderEmbed,
   buildAcceptedButtons,
   buildPendingButtons,
+  createPendingOrder,
   reserveOrderStock,
   releaseOrderStock,
   consumeOrderStock,
-  generateOrderCode,
 } from '../shop/order-utils.js';
 import {
   appendVentaToSheet,
@@ -485,7 +485,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           return;
         }
 
-        const staffUser = await upsertShopUser(guildId, interaction.user);
+        const staffUser = await upsertShopUser(guildId, interaction.user, true);
 
         try {
           await reserveOrderStock(order.id, guildId, staffUser.id);
@@ -538,9 +538,18 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         await prisma.shopOrderEvent.create({
           data: {
             orderId:       order.id,
-            eventType:     'accepted',
+            eventType:     'order_accepted',
             oldStatus:     'pending',
             newStatus:     'accepted',
+            performedById: staffUser.id,
+          },
+        });
+        await prisma.shopOrderEvent.create({
+          data: {
+            orderId: order.id,
+            eventType: 'stock_reserved',
+            oldStatus: 'pending',
+            newStatus: 'accepted',
             performedById: staffUser.id,
           },
         });
@@ -603,7 +612,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           return;
         }
 
-        const staffUser = await upsertShopUser(guildId, interaction.user);
+        const staffUser = await upsertShopUser(guildId, interaction.user, true);
 
         await consumeOrderStock(order.id, guildId, staffUser.id);
 
@@ -620,7 +629,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         await prisma.shopOrder.update({
           where: { id: order.id },
           data:  {
-            status:         'closed',
+            status:         'completed',
             closedByUserId: staffUser.id,
             closedAt:       new Date(),
           },
@@ -628,9 +637,18 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         await prisma.shopOrderEvent.create({
           data: {
             orderId:       order.id,
-            eventType:     'closed',
+            eventType:     'delivery_completed',
             oldStatus:     'accepted',
-            newStatus:     'closed',
+            newStatus:     'completed',
+            performedById: staffUser.id,
+          },
+        });
+        await prisma.shopOrderEvent.create({
+          data: {
+            orderId:       order.id,
+            eventType:     'order_completed',
+            oldStatus:     'accepted',
+            newStatus:     'completed',
             performedById: staffUser.id,
           },
         });
@@ -837,11 +855,22 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const product = await prisma.shopProduct.findUnique({
         where:   { guildId_name: { guildId, name: productName } },
-        include: { prices: { where: { validTo: null }, take: 1 } },
+        include: {
+          components: { select: { id: true } },
+          prices: { where: { validTo: null }, take: 1 },
+        },
       });
 
       if (!product || !product.isActive) {
         await interaction.reply({ content: `❌ El producto **${productName}** ya no está disponible.`, ephemeral: true });
+        return;
+      }
+
+      if (product.productType !== 'service' && product.components.length === 0) {
+        await interaction.reply({
+          content: `❌ **${productName}** no tiene materiales configurados y no se puede vender todavía.`,
+          ephemeral: true,
+        });
         return;
       }
 
@@ -896,47 +925,37 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       await interaction.deferUpdate();
 
       const config    = await getOrCreateGuildConfig(guildId);
-      const customer  = await upsertShopUser(guildId, interaction.user);
-      const orderCode = await generateOrderCode();
-
-      const totalAmount = cart.items.reduce(
-        (sum, item) => sum.add(item.lineTotal),
-        cart.items[0]!.lineTotal.mul(0),
-      );
-
-      const order = await prisma.shopOrder.create({
-        data: {
+      const customer = await upsertShopUser(guildId, interaction.user);
+      let order;
+      try {
+        order = await createPendingOrder({
           guildId,
-          orderCode,
           customerUserId: customer.id,
-          subtotalAmount: totalAmount,
-          totalAmount,
-          items: {
-            create: cart.items.map(item => ({
-              productId:      item.productId,
-              quantity:       item.quantity,
-              unitPrice:      item.unitPrice,
-              grossLineTotal: item.lineTotal,
-              notes:          item.notes,
-            })),
-          },
-        },
-      });
-
-      await prisma.shopOrderEvent.create({
-        data: { orderId: order.id, eventType: 'created', newStatus: 'pending', performedById: customer.id },
-      });
+          items: cart.items.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            notes: item.notes,
+          })),
+          staffChannelId: config.shopStaffChannelId ?? null,
+        });
+      } catch (err) {
+        await interaction.followUp({
+          content: `❌ ${err instanceof Error ? err.message : 'No se pudo crear el pedido.'}`,
+          ephemeral: true,
+        });
+        return;
+      }
+      const orderCode = order.orderCode;
 
       // Notificar al canal de staff
       const orderFull = await getOrderFull(orderCode);
       if (orderFull && config.shopStaffChannelId) {
         const staffCh = interaction.guild.channels.cache.get(config.shopStaffChannelId);
         if (staffCh?.isTextBased()) {
-          const staffMsg = await staffCh.send({
+          await staffCh.send({
             embeds:     [buildOrderEmbed(orderFull)],
             components: [buildPendingButtons(orderCode)],
           });
-          await prisma.shopOrder.update({ where: { id: order.id }, data: { staffChannelId: staffMsg.id } });
         }
       }
 
@@ -954,11 +973,19 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         )
         .addFields(
           { name: '🛍️ Productos', value: cart.items.map(i => `${i.productName} × ${i.quantity}`).join('\n') },
-          { name: '💰 Total',     value: `**${formatPrice(Number(totalAmount))}**`, inline: true },
+          { name: '💰 Total',     value: `**${formatPrice(orderFull?.totalAmount ?? 0)}**`, inline: true },
           { name: '📋 Estado',    value: '🟡 Pendiente',                             inline: true },
         )
         .setFooter({ text: `${SHOP_FOOTER.text}  ·  Usa /pedido estado ${orderCode} para consultar` })
         .setTimestamp();
+
+      if (orderFull && orderFull.totalDiscountAmount.toString() !== '0') {
+        confirmEmbed.addFields({
+          name: '🏷️ Descuentos',
+          value: `-${formatPrice(orderFull.totalDiscountAmount)}`,
+          inline: true,
+        });
+      }
 
       await interaction.editReply({ embeds: [confirmEmbed], components: [] });
       return;
@@ -1058,7 +1085,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         return;
       }
 
-      const staffUser = await upsertShopUser(guildId, interaction.user);
+      const staffUser = await upsertShopUser(guildId, interaction.user, true);
 
       await prisma.shopOrder.update({
         where: { id: order.id },
@@ -1072,7 +1099,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       await prisma.shopOrderEvent.create({
         data: {
           orderId:       order.id,
-          eventType:     'rejected',
+          eventType:     'order_rejected',
           oldStatus:     'pending',
           newStatus:     'rejected',
           performedById: staffUser.id,
@@ -1129,10 +1156,20 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         return;
       }
 
-      const staffUser = await upsertShopUser(guildId, interaction.user);
+      const staffUser = await upsertShopUser(guildId, interaction.user, true);
 
       if (order.status === 'accepted') {
         await releaseOrderStock(order.id, guildId, staffUser.id);
+        await prisma.shopOrderEvent.create({
+          data: {
+            orderId: order.id,
+            eventType: 'stock_released',
+            oldStatus: 'accepted',
+            newStatus: 'cancelled',
+            performedById: staffUser.id,
+            notes: reason,
+          },
+        });
       }
 
       await prisma.shopOrder.update({
@@ -1146,7 +1183,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       await prisma.shopOrderEvent.create({
         data: {
           orderId:       order.id,
-          eventType:     'cancelled',
+          eventType:     'order_cancelled',
           oldStatus:     order.status,
           newStatus:     'cancelled',
           performedById: staffUser.id,

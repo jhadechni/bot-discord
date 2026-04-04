@@ -343,7 +343,7 @@ export const tiendaCommand: Command = {
     }
 
     await interaction.deferReply({ ephemeral: true });
-    const staffUser = await upsertShopUser(guildId, interaction.user);
+    const staffUser = await upsertShopUser(guildId, interaction.user, true);
 
     // ── /tienda material-agregar ─────────────────────────────────────────────
     if (sub === 'material-agregar') {
@@ -381,7 +381,12 @@ export const tiendaCommand: Command = {
 
       const material = await prisma.shopMaterial.findUnique({
         where:   { guildId_name: { guildId, name: nombre } },
-        include: { components: true, inventory: true },
+        include: {
+          components: true,
+          inventory: true,
+          movements: { take: 1 },
+          withdrawals: { take: 1 },
+        },
       });
       if (!material) {
         await interaction.editReply(`❌ No existe un material llamado **${nombre}**.`);
@@ -396,6 +401,18 @@ export const tiendaCommand: Command = {
       if ((material.inventory?.currentStock ?? 0) > 0) {
         await interaction.editReply(
           `❌ **${nombre}** tiene ${material.inventory?.currentStock} en stock. Retíralo antes de eliminar.`,
+        );
+        return;
+      }
+      if ((material.inventory?.reservedStock ?? 0) > 0) {
+        await interaction.editReply(
+          `❌ **${nombre}** tiene stock reservado. Libera los pedidos activos antes de eliminarlo.`,
+        );
+        return;
+      }
+      if (material.movements.length > 0 || material.withdrawals.length > 0) {
+        await interaction.editReply(
+          `❌ **${nombre}** ya tiene historial de inventario. No se puede eliminar sin perder trazabilidad.`,
         );
         return;
       }
@@ -440,6 +457,7 @@ export const tiendaCommand: Command = {
           category:    taxonomy.category,
           subcategory: taxonomy.subcategory,
           description: descripcion,
+          isActive: tipo === 'service',
           prices: {
             create: { price: precio, changedByUserId: staffUser.id },
           },
@@ -450,7 +468,11 @@ export const tiendaCommand: Command = {
       await interaction.editReply(
         `✅ Producto **${nombre}** creado a **${precio} $**.\n` +
         `Clasificación: **${categoryLabel} / ${subcategoryLabel}**.\n` +
-        `Usa \`/tienda producto-componente\` para definir sus materiales.`,
+        (
+          tipo === 'service'
+            ? 'Quedó activo porque es un servicio sin inventario base.'
+            : 'Quedó inactivo hasta que definas sus materiales y lo actives.'
+        ),
       );
       return;
     }
@@ -512,6 +534,22 @@ export const tiendaCommand: Command = {
         return;
       }
 
+      const activeOrders = await prisma.shopOrderItem.count({
+        where: {
+          productId: product.id,
+          order: {
+            guildId,
+            status: { in: ['pending', 'accepted'] },
+          },
+        },
+      });
+      if (activeOrders > 0) {
+        await interaction.editReply(
+          `❌ **${nombreProducto}** tiene pedidos activos. No cambies su receta hasta que se resuelvan.`,
+        );
+        return;
+      }
+
       await prisma.shopProductComponent.upsert({
         where:  { productId_materialId: { productId: product.id, materialId: material.id } },
         update: { quantityRequired: cantidad },
@@ -563,7 +601,8 @@ export const tiendaCommand: Command = {
       const activar        = sub === 'producto-activar';
 
       const product = await prisma.shopProduct.findUnique({
-        where: { guildId_name: { guildId, name: nombreProducto } },
+        where:   { guildId_name: { guildId, name: nombreProducto } },
+        include: { components: { take: 1 } },
       });
       if (!product) {
         await interaction.editReply(`❌ Producto **${nombreProducto}** no encontrado.`);
@@ -572,6 +611,12 @@ export const tiendaCommand: Command = {
       if (product.isActive === activar) {
         await interaction.editReply(
           `ℹ️ **${nombreProducto}** ya está ${activar ? 'activo' : 'desactivado'}.`,
+        );
+        return;
+      }
+      if (activar && product.productType !== 'service' && product.components.length === 0) {
+        await interaction.editReply(
+          `❌ **${nombreProducto}** no se puede activar porque no tiene materiales configurados.`,
         );
         return;
       }
@@ -603,7 +648,11 @@ export const tiendaCommand: Command = {
         return;
       }
 
-      await prisma.shopProduct.delete({ where: { id: product.id } });
+      await prisma.$transaction([
+        prisma.shopProductPrice.deleteMany({ where: { productId: product.id } }),
+        prisma.shopProductComponent.deleteMany({ where: { productId: product.id } }),
+        prisma.shopProduct.delete({ where: { id: product.id } }),
+      ]);
       void syncProductosToSheet(guildId);
       await interaction.editReply(`✅ Producto **${nombreProducto}** eliminado.`);
       return;
