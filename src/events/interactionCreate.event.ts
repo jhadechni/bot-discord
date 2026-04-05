@@ -47,8 +47,7 @@ import {
   getCart,
   setCart,
   deleteCart,
-  buildCartEmbed,
-  buildCartComponents,
+  buildCartView,
   buildQtyModal,
   queryCartProducts,
 } from '../shop/cart.js';
@@ -591,12 +590,40 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         });
 
         const updatedOrder = await getOrderFull(orderCode);
+        let movedToTicketChannel = false;
+        let managementChannelId = interaction.channelId;
+        let managementMessageId = interaction.message.id;
         if (updatedOrder) {
-          const stockAssessment = await getOrderStockAssessment(updatedOrder.id).catch(() => null);
-          await interaction.message.edit({
-            embeds:     [buildOrderEmbed(updatedOrder, stockAssessment)],
-            components: [buildAcceptedButtons(orderCode)],
-          });
+          if (ticketChannelId) {
+            const ticketCh = guild.channels.cache.get(ticketChannelId);
+            if (ticketCh?.isTextBased()) {
+              try {
+                const managementMessage = await ticketCh.send({
+                  content:
+                    `📦 Pedido **${orderCode}** aceptado por <@${interaction.user.id}>.\n` +
+                    `<@${order.customer.discordUserId}> — toda la gestión de este pedido continuará en este canal.`,
+                  embeds: [buildOrderEmbed(updatedOrder)],
+                  components: [buildAcceptedButtons(orderCode)],
+                });
+                managementChannelId = ticketCh.id;
+                managementMessageId = managementMessage.id;
+                await interaction.message.delete().catch(err => {
+                  logger.warn({ err }, 'No se pudo borrar el embed original del canal de pedidos');
+                });
+                movedToTicketChannel = true;
+              } catch (err) {
+                logger.warn({ err }, 'No se pudo publicar el embed de gestión en el canal temporal');
+              }
+            }
+          }
+
+          if (!movedToTicketChannel) {
+            const stockAssessment = await getOrderStockAssessment(updatedOrder.id).catch(() => null);
+            await interaction.message.edit({
+              embeds:     [buildOrderEmbed(updatedOrder, stockAssessment)],
+              components: [buildAcceptedButtons(orderCode)],
+            });
+          }
         }
 
         try {
@@ -612,13 +639,20 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           await interaction.followUp({
             ...buildManualDiscountPrompt({
               orderCode,
-              channelId: interaction.channelId,
-              messageId: interaction.message.id,
+              channelId: managementChannelId,
+              messageId: managementMessageId,
               options: eligibleDiscounts,
             }),
             ephemeral: true,
           });
         }
+
+        await interaction.followUp({
+          content: movedToTicketChannel && ticketChannelId
+            ? `✅ Pedido aceptado y movido a <#${ticketChannelId}> para su gestión.`
+            : '✅ Pedido aceptado. La gestión se mantiene en el canal de pedidos porque no se pudo mover al canal temporal.',
+          ephemeral: true,
+        });
 
         void syncPedidosToSheet(guildId);
         return;
@@ -955,20 +989,102 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       return;
     }
 
-    // ── Carrito interactivo: seleccionar producto para agregar ────────────────
-    if (interaction.isStringSelectMenu() && interaction.customId === 'pedido:cart:add') {
+    // ── Carrito interactivo: cambiar categoría ────────────────────────────────
+    if (interaction.isStringSelectMenu() && interaction.customId === 'pedido:cart:category') {
       const guildId = interaction.guildId;
       if (!guildId) return;
 
-      const productName = interaction.values[0]!;
-      const cart        = getCart(guildId, interaction.user.id);
+      const cart = getCart(guildId, interaction.user.id);
       if (!cart) {
         await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
         return;
       }
 
-      setCart({ ...cart, pendingProduct: productName });
-      await interaction.showModal(buildQtyModal(productName));
+      cart.currentCategory = interaction.values[0] ?? null;
+      cart.currentSubcategory = null;
+      cart.currentPage = 1;
+      setCart(cart);
+
+      await interaction.deferUpdate();
+      const products = await queryCartProducts(guildId);
+      const view = buildCartView(cart, products);
+      await interaction.editReply({ embeds: view.embeds, components: view.components });
+      return;
+    }
+
+    // ── Carrito interactivo: cambiar subcategoría ────────────────────────────
+    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('pedido:cart:subcategory:')) {
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const cart = getCart(guildId, interaction.user.id);
+      if (!cart) {
+        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        return;
+      }
+
+      const parts = interaction.customId.split(':');
+      cart.currentCategory = parts[3] ?? cart.currentCategory;
+      cart.currentSubcategory = interaction.values[0] ?? null;
+      cart.currentPage = 1;
+      setCart(cart);
+
+      await interaction.deferUpdate();
+      const products = await queryCartProducts(guildId);
+      const view = buildCartView(cart, products);
+      await interaction.editReply({ embeds: view.embeds, components: view.components });
+      return;
+    }
+
+    // ── Carrito interactivo: paginación ──────────────────────────────────────
+    if (interaction.isButton() && interaction.customId.startsWith('pedido:cart:page:')) {
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const cart = getCart(guildId, interaction.user.id);
+      if (!cart) {
+        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        return;
+      }
+
+      const parts = interaction.customId.split(':');
+      cart.currentCategory = parts[3] ?? cart.currentCategory;
+      cart.currentSubcategory = parts[4] ?? cart.currentSubcategory;
+      const requestedPage = Number.parseInt(parts[5] ?? '1', 10);
+      cart.currentPage = Number.isNaN(requestedPage) ? 1 : requestedPage;
+      setCart(cart);
+
+      await interaction.deferUpdate();
+      const products = await queryCartProducts(guildId);
+      const view = buildCartView(cart, products);
+      await interaction.editReply({ embeds: view.embeds, components: view.components });
+      return;
+    }
+
+    // ── Carrito interactivo: seleccionar producto visible para agregar ───────
+    if (interaction.isButton() && interaction.customId.startsWith('pedido:cart:add:')) {
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const cart = getCart(guildId, interaction.user.id);
+      if (!cart) {
+        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        return;
+      }
+
+      const products = await queryCartProducts(guildId);
+      const view = buildCartView(cart, products);
+      const parts = interaction.customId.split(':');
+      const productIndex = Number.parseInt(parts[3] ?? '-1', 10);
+      const product = view.state.pageProducts[productIndex];
+
+      if (!product) {
+        await interaction.reply({ content: '⚠️ Ese producto ya no está disponible en esta página.', ephemeral: true });
+        return;
+      }
+
+      setCart({ ...cart, pendingProductId: product.id });
+      await interaction.showModal(buildQtyModal(product.name));
       return;
     }
 
@@ -988,10 +1104,9 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       setCart(cart);
 
       await interaction.deferUpdate();
-      const products   = await queryCartProducts(guildId);
-      const embed      = buildCartEmbed(cart);
-      const components = buildCartComponents(cart, products);
-      await interaction.editReply({ embeds: [embed], components });
+      const products = await queryCartProducts(guildId);
+      const view = buildCartView(cart, products);
+      await interaction.editReply({ embeds: view.embeds, components: view.components });
       return;
     }
 
@@ -1010,10 +1125,9 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       setCart(cart);
 
       await interaction.deferUpdate();
-      const products   = await queryCartProducts(guildId);
-      const embed      = buildCartEmbed(cart);
-      const components = buildCartComponents(cart, products);
-      await interaction.editReply({ embeds: [embed], components });
+      const products = await queryCartProducts(guildId);
+      const view = buildCartView(cart, products);
+      await interaction.editReply({ embeds: view.embeds, components: view.components });
       return;
     }
 
@@ -1023,7 +1137,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       if (!guildId) return;
 
       const cart = getCart(guildId, interaction.user.id);
-      if (!cart?.pendingProduct) {
+      if (!cart?.pendingProductId) {
         await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
         return;
       }
@@ -1036,10 +1150,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       }
 
       const notes       = interaction.fields.getTextInputValue('notes').trim() || null;
-      const productName = cart.pendingProduct;
+      const productId   = cart.pendingProductId;
 
       const product = await prisma.shopProduct.findUnique({
-        where:   { guildId_name: { guildId, name: productName } },
+        where:   { id: productId },
         include: {
           components: { select: { id: true } },
           prices: { where: { validTo: null }, take: 1 },
@@ -1047,13 +1161,13 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       });
 
       if (!product || !product.isActive) {
-        await interaction.reply({ content: `❌ El producto **${productName}** ya no está disponible.`, ephemeral: true });
+        await interaction.reply({ content: '❌ Ese producto ya no está disponible.', ephemeral: true });
         return;
       }
 
       if (product.productType !== 'service' && product.components.length === 0) {
         await interaction.reply({
-          content: `❌ **${productName}** no tiene materiales configurados y no se puede vender todavía.`,
+          content: `❌ **${product.name}** no tiene materiales configurados y no se puede vender todavía.`,
           ephemeral: true,
         });
         return;
@@ -1061,7 +1175,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const priceRecord = product.prices[0];
       if (!priceRecord) {
-        await interaction.reply({ content: `❌ **${productName}** no tiene precio configurado.`, ephemeral: true });
+        await interaction.reply({ content: `❌ **${product.name}** no tiene precio configurado.`, ephemeral: true });
         return;
       }
 
@@ -1085,14 +1199,13 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         });
       }
 
-      cart.pendingProduct = null;
+      cart.pendingProductId = null;
       setCart(cart);
 
       await interaction.deferUpdate();
-      const products   = await queryCartProducts(guildId);
-      const embed      = buildCartEmbed(cart);
-      const components = buildCartComponents(cart, products);
-      await interaction.editReply({ embeds: [embed], components });
+      const products = await queryCartProducts(guildId);
+      const view = buildCartView(cart, products);
+      await interaction.editReply({ embeds: view.embeds, components: view.components });
       return;
     }
 

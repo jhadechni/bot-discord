@@ -23,8 +23,7 @@ import { COLORS, formatPrice, SHOP_FOOTER } from '../../utils/ui.js';
 import { syncPedidosToSheet } from '../../shop/sync.js';
 import {
   queryCartProducts,
-  buildCartEmbed,
-  buildCartComponents,
+  buildCartView,
   setCart,
 } from '../../shop/cart.js';
 
@@ -210,16 +209,24 @@ export const pedidoCommand: Command = {
         userId:         interaction.user.id,
         channelId:      interaction.channelId,
         messageId:      '',   // se rellena después de enviar
+        currentCategory: null,
+        currentPage: 1,
+        currentSubcategory: null,
         items:          [],
-        pendingProduct: null,
+        pendingProductId: null,
       };
 
-      const embed      = buildCartEmbed(session);
-      const components = buildCartComponents(session, products);
-      const reply      = await interaction.editReply({ embeds: [embed], components });
+      const view  = buildCartView(session, products);
+      const reply = await interaction.editReply({ embeds: view.embeds, components: view.components });
 
       // Guardar el messageId real para que los handlers del modal puedan recuperarlo
-      setCart({ ...session, messageId: reply.id });
+      setCart({
+        ...session,
+        currentCategory: view.state.currentCategory,
+        currentPage: view.state.currentPage,
+        currentSubcategory: view.state.currentSubcategory,
+        messageId: reply.id,
+      });
       return;
     }
 
