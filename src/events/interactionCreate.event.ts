@@ -203,36 +203,6 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       return;
     }
 
-    // --- Select menu: navegación del catálogo de tienda ---
-    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('tienda:catalog:')) {
-      const guildId = interaction.guildId;
-      if (!guildId) return;
-
-      await interaction.deferUpdate();
-
-      const products = await queryCatalogProducts(guildId);
-
-      if (interaction.customId === 'tienda:catalog:category') {
-        const selectedCategory = interaction.values[0];
-        const { embed, components } = buildCatalogView(products, selectedCategory, null, 1);
-        await interaction.editReply({ embeds: [embed], components });
-        return;
-      }
-
-      if (interaction.customId.startsWith('tienda:catalog:subcategory:')) {
-        const selectedCategory = interaction.customId.split(':')[3];
-        const selectedSubcategory = interaction.values[0];
-        const { embed, components } = buildCatalogView(
-          products,
-          selectedCategory,
-          selectedSubcategory,
-          1,
-        );
-        await interaction.editReply({ embeds: [embed], components });
-        return;
-      }
-    }
-
     // --- Select menu: selección de rol(es) en reclutamiento ---
     if (interaction.isStringSelectMenu() && interaction.customId === 'apply_role_select') {
       if (interaction.values.length === 0) return;
@@ -962,6 +932,43 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const guildId = interaction.guildId;
       if (!guildId) return;
 
+      if (parts[2] === 'open_cart') {
+        await interaction.deferUpdate();
+
+        const products = await queryCartProducts(guildId);
+        if (products.length === 0) {
+          await interaction.editReply({ content: '🏪 La tienda no tiene productos disponibles en este momento.', embeds: [], components: [] });
+          return;
+        }
+
+        const requestedPage = Number.parseInt(parts[5] ?? '1', 10);
+        const existingCart = getCart(guildId, interaction.user.id);
+        const session = existingCart ?? {
+          guildId,
+          userId: interaction.user.id,
+          channelId: interaction.channelId,
+          messageId: interaction.message.id,
+          currentCategory: null,
+          currentPage: 1,
+          currentSubcategory: null,
+          items: [],
+          pendingProductId: null,
+          viewMode: 'browse' as const,
+        };
+
+        session.channelId = interaction.channelId;
+        session.messageId = interaction.message.id;
+        session.currentCategory = parts[3] ?? session.currentCategory;
+        session.currentSubcategory = parts[4] ?? session.currentSubcategory;
+        session.currentPage = Number.isNaN(requestedPage) ? 1 : requestedPage;
+        session.viewMode = 'browse';
+        setCart(session);
+
+        const view = buildCartView(session, products);
+        await interaction.editReply({ embeds: view.embeds, components: view.components });
+        return;
+      }
+
       let category: string | undefined;
       let subcategory: string | undefined;
       let rawPage: string | undefined;
@@ -1003,6 +1010,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       cart.currentCategory = interaction.values[0] ?? null;
       cart.currentSubcategory = null;
       cart.currentPage = 1;
+      cart.viewMode = 'browse';
       setCart(cart);
 
       await interaction.deferUpdate();
@@ -1013,7 +1021,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
     }
 
     // ── Carrito interactivo: cambiar subcategoría ────────────────────────────
-    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('pedido:cart:subcategory:')) {
+    if (interaction.isStringSelectMenu() && interaction.customId === 'pedido:cart:subcategory') {
       const guildId = interaction.guildId;
       if (!guildId) return;
 
@@ -1023,10 +1031,9 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         return;
       }
 
-      const parts = interaction.customId.split(':');
-      cart.currentCategory = parts[3] ?? cart.currentCategory;
       cart.currentSubcategory = interaction.values[0] ?? null;
       cart.currentPage = 1;
+      cart.viewMode = 'browse';
       setCart(cart);
 
       await interaction.deferUpdate();
@@ -1047,11 +1054,32 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         return;
       }
 
-      const parts = interaction.customId.split(':');
-      cart.currentCategory = parts[3] ?? cart.currentCategory;
-      cart.currentSubcategory = parts[4] ?? cart.currentSubcategory;
-      const requestedPage = Number.parseInt(parts[5] ?? '1', 10);
-      cart.currentPage = Number.isNaN(requestedPage) ? 1 : requestedPage;
+      const action = interaction.customId.split(':')[3];
+      cart.currentPage += action === 'prev' ? -1 : 1;
+      if (cart.currentPage < 1) cart.currentPage = 1;
+      cart.viewMode = 'browse';
+      setCart(cart);
+
+      await interaction.deferUpdate();
+      const products = await queryCartProducts(guildId);
+      const view = buildCartView(cart, products);
+      await interaction.editReply({ embeds: view.embeds, components: view.components });
+      return;
+    }
+
+    // ── Carrito interactivo: cambiar modo de vista ───────────────────────────
+    if (interaction.isButton() && interaction.customId.startsWith('pedido:cart:view:')) {
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const cart = getCart(guildId, interaction.user.id);
+      if (!cart) {
+        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        return;
+      }
+
+      const mode = interaction.customId.split(':')[3];
+      cart.viewMode = mode === 'cart' ? 'cart' : 'browse';
       setCart(cart);
 
       await interaction.deferUpdate();

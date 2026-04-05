@@ -1,14 +1,16 @@
 // ── Tipos públicos ─────────────────────────────────────────────────────────────
 
 export interface ShopSubcategoryDefinition {
-  key:   string;
-  label: string;
+  key:      string;
+  label:    string;
+  imageUrl: string | null;
 }
 
 export interface ShopCategoryDefinition {
   key:           string;
   label:         string;
   emoji:         string;
+  imageUrl:      string | null;
   subcategories: ShopSubcategoryDefinition[];
 }
 
@@ -21,7 +23,13 @@ export interface ShopTaxonomySelection {
 
 // Taxonomía mínima de arranque. Se reemplaza al importar desde el tab Categorías.
 const FALLBACK_TAXONOMY: ShopCategoryDefinition[] = [
-  { key: 'general', label: 'General', emoji: '🧭', subcategories: [{ key: 'otros', label: 'Otros' }] },
+  {
+    key: 'general',
+    label: 'General',
+    emoji: '🧭',
+    imageUrl: null,
+    subcategories: [{ key: 'otros', label: 'Otros', imageUrl: null }],
+  },
 ];
 
 let _taxonomy:         ShopCategoryDefinition[]    = [...FALLBACK_TAXONOMY];
@@ -61,39 +69,65 @@ function extractEmoji(raw: string): { emoji: string; label: string } {
   return { emoji: '🧭', label: raw.trim() };
 }
 
+function parseImageUrl(raw: string | undefined): string | null {
+  const normalized = raw?.trim();
+  if (!normalized) return null;
+  if (!/^https?:\/\//i.test(normalized)) return null;
+  return normalized;
+}
+
 /**
  * Convierte filas del tab Categorías en un array de ShopCategoryDefinition.
- * Formato de fila: [claveCategoria, nombreCategoria, claveSubcategoría, nombreSubcategoría]
+ * Formato nuevo:
+ * [claveCategoria, nombreCategoria, imagenCategoria, claveSubcategoría, nombreSubcategoría, imagenSubcategoría]
+ * Formato legado:
+ * [claveCategoria, nombreCategoria, claveSubcategoría, nombreSubcategoría]
  * Las filas con la misma claveCategoria se agrupan bajo la misma categoría,
  * manteniendo el orden de primera aparición.
  */
 export function parseTaxonomyRows(rows: string[][]): ShopCategoryDefinition[] {
-  const order = new Map<string, { label: string; emoji: string; subs: Map<string, string> }>();
+  const order = new Map<string, {
+    imageUrl: string | null;
+    label: string;
+    emoji: string;
+    subs: Map<string, ShopSubcategoryDefinition>;
+  }>();
 
   for (const row of rows) {
-    const catKey   = normalizeShopTaxonomyKey(row[0]);
-    const catRaw   = row[1]?.trim() ?? '';
-    const subKey   = normalizeShopTaxonomyKey(row[2]);
-    const subLabel = row[3]?.trim() ?? '';
+    const hasCategoryImageColumn = parseImageUrl(row[2]) !== null;
+    const isExtendedRow = row.length >= 5 || hasCategoryImageColumn;
+    const catKey = normalizeShopTaxonomyKey(row[0]);
+    const catRaw = row[1]?.trim() ?? '';
+    const catImageUrl = parseImageUrl(isExtendedRow ? row[2] : undefined);
+    const subKey = normalizeShopTaxonomyKey(isExtendedRow ? row[3] : row[2]);
+    const subLabel = (isExtendedRow ? row[4] : row[3])?.trim() ?? '';
+    const subImageUrl = parseImageUrl(isExtendedRow ? row[5] : undefined);
 
     if (!catKey) continue;
 
     if (!order.has(catKey)) {
       const { emoji, label } = extractEmoji(catRaw);
-      order.set(catKey, { label: label || labelize(catKey), emoji, subs: new Map() });
+      order.set(catKey, {
+        label: label || labelize(catKey),
+        emoji,
+        imageUrl: catImageUrl,
+        subs: new Map(),
+      });
+    } else if (catImageUrl && !order.get(catKey)!.imageUrl) {
+      order.get(catKey)!.imageUrl = catImageUrl;
     }
 
     if (subKey && subLabel) {
-      order.get(catKey)!.subs.set(subKey, subLabel);
+      order.get(catKey)!.subs.set(subKey, { key: subKey, label: subLabel, imageUrl: subImageUrl });
     }
   }
 
-  return [...order.entries()].map(([key, { label, emoji, subs }]) => {
+  return [...order.entries()].map(([key, { label, emoji, imageUrl, subs }]) => {
     const subcategories: ShopSubcategoryDefinition[] =
       subs.size > 0
-        ? [...subs.entries()].map(([k, l]) => ({ key: k, label: l }))
-        : [{ key: 'otros', label: 'Otros' }];
-    return { key, label, emoji, subcategories };
+        ? [...subs.values()]
+        : [{ key: 'otros', label: 'Otros', imageUrl: null }];
+    return { key, label, emoji, imageUrl, subcategories };
   });
 }
 
@@ -138,7 +172,8 @@ export function getCategoryDefinition(categoryKey: string | null | undefined): S
     key:           normalized || 'general',
     label:         labelize(normalized || 'general'),
     emoji:         '🧭',
-    subcategories: [{ key: 'otros', label: 'Otros' }],
+    imageUrl:      null,
+    subcategories: [{ key: 'otros', label: 'Otros', imageUrl: null }],
   };
 }
 
@@ -149,7 +184,7 @@ export function getSubcategoryDefinition(
   const category   = getCategoryDefinition(categoryKey);
   const normalized = normalizeShopTaxonomyKey(subcategoryKey);
   return category.subcategories.find(s => s.key === normalized)
-    ?? { key: normalized || 'otros', label: labelize(normalized || 'otros') };
+    ?? { key: normalized || 'otros', label: labelize(normalized || 'otros'), imageUrl: null };
 }
 
 export function getFirstSubcategoryKey(categoryKey: string | null | undefined): string {

@@ -36,7 +36,7 @@ export const SHOP_TABS = {
 export type ShopTab = keyof typeof SHOP_TABS;
 
 export const SHOP_HEADERS: Record<ShopTab, string[]> = {
-  categorias:  ['Clave Categoría', 'Categoría', 'Clave Subcategoría', 'Subcategoría'],
+  categorias:  ['Clave Categoría', 'Categoría', 'Imagen Categoría', 'Clave Subcategoría', 'Subcategoría', 'Imagen Subcategoría'],
   productos:   ['Nombre', 'Tipo', 'Categoría', 'Subcategoría', 'Precio ($)', 'Descripción', 'Activo'],
   componentes: ['Producto', 'Material', 'Cantidad'],
   descuentos:  ['ID', 'Nombre', 'Tipo Política', 'Producto', 'Cantidad Mínima', 'Scope', 'Tipo Descuento', 'Valor', 'Prioridad', 'Inicio', 'Fin', 'Activo', 'Descripción'],
@@ -136,7 +136,7 @@ export async function applyProductosDropdowns(
 
   function makeRangeValidation(
     productosCol: number,   // columna en Productos (0-indexed)
-    sourceCol:    number,   // columna en Categorías (0-indexed: 0=claveCateg, 2=claveSub)
+    sourceCol:    number,   // columna en Categorías (0-indexed: 0=claveCateg, 3=claveSub)
     staticValues: string[], // fallback si no existe el tab Categorías
   ): sheets_v4.Schema$Request {
     const range = {
@@ -149,7 +149,7 @@ export async function applyProductosDropdowns(
 
     if (categoriasSheetId !== null) {
       // ONE_OF_RANGE referencia el tab Categorías directamente
-      const colLetter = sourceCol === 0 ? 'A' : 'C';
+      const colLetter = sourceCol === 0 ? 'A' : 'D';
       const rangeRef  = `'${SHOP_TABS.categorias}'!${colLetter}2:${colLetter}${totalRows}`;
       return {
         setDataValidation: {
@@ -181,7 +181,7 @@ export async function applyProductosDropdowns(
     requestBody:   {
       requests: [
         makeRangeValidation(2, 0, categoryKeys),    // columna C → clave categoría
-        makeRangeValidation(3, 2, subcategoryKeys), // columna D → clave subcategoría
+        makeRangeValidation(3, 3, subcategoryKeys), // columna D → clave subcategoría
       ],
     },
   });

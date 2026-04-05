@@ -214,6 +214,7 @@ export const pedidoCommand: Command = {
         currentSubcategory: null,
         items:          [],
         pendingProductId: null,
+        viewMode: 'browse' as const,
       };
 
       const view  = buildCartView(session, products);

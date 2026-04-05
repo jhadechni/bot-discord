@@ -49,7 +49,14 @@ export async function syncCategoriasToSheet(): Promise<void> {
     const rows: string[][] = [];
     for (const cat of taxonomy) {
       for (const sub of cat.subcategories) {
-        rows.push([cat.key, `${cat.emoji} ${cat.label}`, sub.key, sub.label]);
+        rows.push([
+          cat.key,
+          `${cat.emoji} ${cat.label}`,
+          cat.imageUrl ?? '',
+          sub.key,
+          sub.label,
+          sub.imageUrl ?? '',
+        ]);
       }
     }
     await writeTab('categorias', rows);
