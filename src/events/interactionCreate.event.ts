@@ -6,6 +6,7 @@ import {
   ChannelType,
   PermissionFlagsBits,
   ModalBuilder,
+  StringSelectMenuBuilder,
   TextInputBuilder,
   TextInputStyle,
 } from 'discord.js';
@@ -20,17 +21,22 @@ import { appendMember } from '../utils/registry.js';
 import { logger } from '../core/logger.js';
 import { upsertShopUser } from '../database/shop-user.js';
 import {
+  applyManualVolumeDiscounts,
+  getEligibleManualVolumeDiscounts,
+} from '../shop/discounts.js';
+import {
   getOrderFull,
   buildOrderEmbed,
   buildAcceptedButtons,
   buildPendingButtons,
   createPendingOrder,
-  reserveOrderStock,
+  getOrderStockAssessment,
   releaseOrderStock,
   consumeOrderStock,
 } from '../shop/order-utils.js';
 import {
   appendVentaToSheet,
+  syncInventarioToSheet,
   syncPedidosToSheet,
 } from '../shop/sync.js';
 import {
@@ -50,6 +56,55 @@ import {
 // ── Cooldown de sugerencias (en memoria) ──────────────────────────────────────
 const SUGGEST_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutos
 const suggestCooldown = new Map<string, number>(); // key: guildId-userId → last timestamp
+
+function formatDiscountLabel(
+  discountType: string,
+  value: { toString(): string },
+): string {
+  const numericValue = Number(value.toString());
+  if (discountType === 'percent') {
+    return `${numericValue.toLocaleString('es-ES')}%`;
+  }
+  return numericValue.toLocaleString('es-ES');
+}
+
+function buildManualDiscountPrompt(params: {
+  channelId: string;
+  messageId: string;
+  options: Awaited<ReturnType<typeof getEligibleManualVolumeDiscounts>>;
+  orderCode: string;
+}) {
+  const embed = new EmbedBuilder()
+    .setTitle(`🏷️ Descuentos elegibles para ${params.orderCode}`)
+    .setDescription(
+      'Selecciona los descuentos manuales que quieres aplicar. Solo se ofrece el tramo más alto elegible por producto.',
+    )
+    .addFields({
+      name: '📋 Opciones',
+      value: params.options.slice(0, 25).map(option =>
+        `• **${option.productName}**: ${formatDiscountLabel(option.discountType, option.discountValue)} ` +
+        `(cantidad ${option.aggregatedQuantity}, tramo ${option.minQuantity}+)`,
+      ).join('\n'),
+    });
+
+  const select = new StringSelectMenuBuilder()
+    .setCustomId(`shop:discount_select:${params.orderCode}:${params.channelId}:${params.messageId}`)
+    .setPlaceholder('Selecciona descuentos para aplicar')
+    .setMinValues(1)
+    .setMaxValues(Math.min(params.options.length, 25))
+    .addOptions(
+      params.options.slice(0, 25).map(option => ({
+        label: `${option.productName} · ${formatDiscountLabel(option.discountType, option.discountValue)}`,
+        description: `Cantidad ${option.aggregatedQuantity} · tramo ${option.minQuantity}+`,
+        value: option.policyId,
+      })),
+    );
+
+  return {
+    embeds: [embed],
+    components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select)],
+  };
+}
 
 const interactionCreateEvent: BotEvent<'interactionCreate'> = {
   name: 'interactionCreate',
@@ -487,16 +542,6 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
         const staffUser = await upsertShopUser(guildId, interaction.user, true);
 
-        try {
-          await reserveOrderStock(order.id, guildId, staffUser.id);
-        } catch (err) {
-          await interaction.followUp({
-            content:   `❌ No se puede aceptar: ${err instanceof Error ? err.message : 'Error al reservar stock.'}`,
-            ephemeral: true,
-          });
-          return;
-        }
-
         let ticketChannelId: string | null = null;
         if (cfg.shopCategoryId) {
           try {
@@ -544,20 +589,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
             performedById: staffUser.id,
           },
         });
-        await prisma.shopOrderEvent.create({
-          data: {
-            orderId: order.id,
-            eventType: 'stock_reserved',
-            oldStatus: 'pending',
-            newStatus: 'accepted',
-            performedById: staffUser.id,
-          },
-        });
 
         const updatedOrder = await getOrderFull(orderCode);
         if (updatedOrder) {
+          const stockAssessment = await getOrderStockAssessment(updatedOrder.id).catch(() => null);
           await interaction.message.edit({
-            embeds:     [buildOrderEmbed(updatedOrder)],
+            embeds:     [buildOrderEmbed(updatedOrder, stockAssessment)],
             components: [buildAcceptedButtons(orderCode)],
           });
         }
@@ -569,7 +606,53 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
             (ticketChannelId ? `Se ha creado un canal temporal para coordinar la entrega.` : ''),
           );
         } catch { /* DMs desactivados */ }
+
+        const eligibleDiscounts = await getEligibleManualVolumeDiscounts(order.id).catch(() => []);
+        if (eligibleDiscounts.length > 0) {
+          await interaction.followUp({
+            ...buildManualDiscountPrompt({
+              orderCode,
+              channelId: interaction.channelId,
+              messageId: interaction.message.id,
+              options: eligibleDiscounts,
+            }),
+            ephemeral: true,
+          });
+        }
+
         void syncPedidosToSheet(guildId);
+        return;
+      }
+
+      // ── Aplicar descuento manual ───────────────────────────────────────────
+      if (action === 'discount') {
+        const order = await prisma.shopOrder.findUnique({ where: { orderCode } });
+        if (!order || order.status !== 'accepted') {
+          await interaction.reply({
+            content: '⚠️ Solo se pueden aplicar descuentos a pedidos aceptados.',
+            ephemeral: true,
+          });
+          return;
+        }
+
+        const eligibleDiscounts = await getEligibleManualVolumeDiscounts(order.id);
+        if (eligibleDiscounts.length === 0) {
+          await interaction.reply({
+            content: 'ℹ️ No hay descuentos manuales elegibles para este pedido.',
+            ephemeral: true,
+          });
+          return;
+        }
+
+        await interaction.reply({
+          ...buildManualDiscountPrompt({
+            orderCode,
+            channelId: interaction.channelId,
+            messageId: interaction.message.id,
+            options: eligibleDiscounts,
+          }),
+          ephemeral: true,
+        });
         return;
       }
 
@@ -614,7 +697,34 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
         const staffUser = await upsertShopUser(guildId, interaction.user, true);
 
-        await consumeOrderStock(order.id, guildId, staffUser.id);
+        try {
+          const didReserve = await consumeOrderStock(order.id, guildId, staffUser.id);
+          if (didReserve) {
+            await prisma.shopOrderEvent.create({
+              data: {
+                orderId:       order.id,
+                eventType:     'stock_reserved',
+                oldStatus:     'accepted',
+                newStatus:     'accepted',
+                performedById: staffUser.id,
+              },
+            });
+          }
+        } catch (err) {
+          const stockAssessment = await getOrderStockAssessment(order.id).catch(() => null);
+          const shortageLines = stockAssessment?.shortages.slice(0, 6).map(shortage =>
+            `• ${shortage.materialName}: faltan ${shortage.shortfallQuantity} (necesario ${shortage.requiredQuantity}, disponible ${shortage.availableStock})`,
+          ) ?? [];
+          await interaction.followUp({
+            content: [
+              `❌ No se puede marcar como entregado: ${err instanceof Error ? err.message : 'Error al consumir stock.'}`,
+              'Repón o prepara los materiales faltantes antes de cerrar el pedido.',
+              ...shortageLines,
+            ].join('\n'),
+            ephemeral: true,
+          });
+          return;
+        }
 
         await prisma.shopSale.create({
           data: {
@@ -669,6 +779,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         } catch { /* DMs desactivados */ }
 
         void appendVentaToSheet(order.id, guildId);
+        void syncInventarioToSheet(guildId);
         void syncPedidosToSheet(guildId);
 
         if (order.ticketChannelId) {
@@ -707,6 +818,80 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         await interaction.showModal(cancelModal);
         return;
       }
+    }
+
+    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('shop:discount_select:')) {
+      await interaction.deferReply({ ephemeral: true });
+
+      const guild = interaction.guild;
+      const guildId = interaction.guildId;
+      if (!guild || !guildId) return;
+
+      const parts = interaction.customId.split(':');
+      const orderCode = parts[2]!;
+      const channelId = parts[3]!;
+      const messageId = parts[4]!;
+
+      const actor = await guild.members.fetch(interaction.user.id);
+      const cfg = await getOrCreateGuildConfig(guildId);
+      const hasPermission =
+        actor.permissions.has(PermissionFlagsBits.ManageGuild) ||
+        (cfg.staffRoleId != null && actor.roles.cache.has(cfg.staffRoleId));
+
+      if (!hasPermission) {
+        await interaction.editReply('❌ Solo el staff puede aplicar descuentos.');
+        return;
+      }
+
+      const order = await prisma.shopOrder.findUnique({ where: { orderCode } });
+      if (!order || order.status !== 'accepted') {
+        await interaction.editReply('⚠️ Este pedido ya no admite descuentos manuales.');
+        return;
+      }
+
+      const staffUser = await upsertShopUser(guildId, interaction.user, true);
+
+      try {
+        const appliedDiscounts = await applyManualVolumeDiscounts({
+          orderId: order.id,
+          appliedByUserId: staffUser.id,
+          selectedPolicyIds: interaction.values,
+        });
+
+        if (appliedDiscounts.length === 0) {
+          await interaction.editReply('ℹ️ No había descuentos nuevos para aplicar.');
+          return;
+        }
+
+        const updatedOrder = await getOrderFull(orderCode);
+        if (updatedOrder) {
+          const stockAssessment = await getOrderStockAssessment(updatedOrder.id).catch(() => null);
+          const originalChannel = guild.channels.cache.get(channelId);
+          if (originalChannel?.isTextBased()) {
+            const originalMessage = await originalChannel.messages.fetch(messageId).catch(() => null);
+            if (originalMessage) {
+              await originalMessage.edit({
+                embeds: [buildOrderEmbed(updatedOrder, stockAssessment)],
+                components: [buildAcceptedButtons(orderCode)],
+              });
+            }
+          }
+        }
+
+        void syncPedidosToSheet(guildId);
+
+        await interaction.editReply(
+          `✅ Descuentos aplicados:\n${appliedDiscounts.map(discount =>
+            `• ${discount.productName}: ${formatDiscountLabel(discount.discountType, discount.discountValue)} (${discount.minQuantity}+)`,
+          ).join('\n')}`,
+        );
+      } catch (err) {
+        await interaction.editReply(
+          `❌ ${err instanceof Error ? err.message : 'No se pudieron aplicar los descuentos.'}`,
+        );
+      }
+
+      return;
     }
 
     // --- Select menus de categoría/subcategoría del catálogo ---
@@ -949,11 +1134,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       // Notificar al canal de staff
       const orderFull = await getOrderFull(orderCode);
+      const stockAssessment = orderFull ? await getOrderStockAssessment(orderFull.id) : null;
       if (orderFull && config.shopStaffChannelId) {
         const staffCh = interaction.guild.channels.cache.get(config.shopStaffChannelId);
         if (staffCh?.isTextBased()) {
           await staffCh.send({
-            embeds:     [buildOrderEmbed(orderFull)],
+            embeds:     [buildOrderEmbed(orderFull, stockAssessment)],
             components: [buildPendingButtons(orderCode)],
           });
         }
@@ -964,17 +1150,19 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       // Actualizar el embed del carrito con confirmación
       const { COLORS, formatPrice, SHOP_FOOTER } = await import('../utils/ui.js');
       const { EmbedBuilder } = await import('discord.js');
+      const isFullyAvailable = stockAssessment?.isFullyAvailable ?? true;
       const confirmEmbed = new EmbedBuilder()
-        .setTitle('✅ Pedido confirmado')
-        .setColor(COLORS.success)
+        .setTitle('📝 Pedido recibido')
+        .setColor(COLORS.warning)
         .setDescription(
-          `Tu pedido **${orderCode}** ha sido registrado.\n` +
-          `El staff lo revisará pronto y recibirás una notificación.`,
+          isFullyAvailable
+            ? `Tu pedido **${orderCode}** fue recibido y quedó pendiente de revisión por el staff.`
+            : `Tu pedido **${orderCode}** fue recibido.\nEl staff preparará tu pedido lo antes posible y te avisará cuando haya novedades.`,
         )
         .addFields(
           { name: '🛍️ Productos', value: cart.items.map(i => `${i.productName} × ${i.quantity}`).join('\n') },
           { name: '💰 Total',     value: `**${formatPrice(orderFull?.totalAmount ?? 0)}**`, inline: true },
-          { name: '📋 Estado',    value: '🟡 Pendiente',                             inline: true },
+          { name: '📋 Estado',    value: '🟡 En revisión del staff',                 inline: true },
         )
         .setFooter({ text: `${SHOP_FOOTER.text}  ·  Usa /pedido estado ${orderCode} para consultar` })
         .setTimestamp();
@@ -988,6 +1176,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       }
 
       await interaction.editReply({ embeds: [confirmEmbed], components: [] });
+      void syncPedidosToSheet(guildId);
       return;
     }
 
@@ -1212,6 +1401,9 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       } catch { /* DMs desactivados */ }
 
       void syncPedidosToSheet(guildId);
+      if (order.status === 'accepted') {
+        void syncInventarioToSheet(guildId);
+      }
 
       if (order.ticketChannelId) {
         const ticketCh = guild.channels.cache.get(order.ticketChannelId);

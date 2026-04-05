@@ -19,6 +19,22 @@ export interface PendingOrderItemInput {
   quantity: number;
 }
 
+export interface OrderMaterialStockStatus {
+  availableStock: number;
+  currentStock: number;
+  materialId: string;
+  materialName: string;
+  requiredQuantity: number;
+  reservedStock: number;
+  shortfallQuantity: number;
+}
+
+export interface OrderStockAssessment {
+  isFullyAvailable: boolean;
+  requirements: OrderMaterialStockStatus[];
+  shortages: OrderMaterialStockStatus[];
+}
+
 // ── Helpers de BD ─────────────────────────────────────────────────────────────
 
 /** Carga un pedido completo con cliente e ítems para mostrar en embed. */
@@ -106,7 +122,7 @@ export async function createPendingOrder(params: {
     };
   });
 
-  const pricing = await calculateOrderPricing(guildId, customerUserId, pricingInput);
+  const pricing = await calculateOrderPricing(guildId, pricingInput);
 
   return prisma.$transaction(async tx => {
     const order = await tx.shopOrder.create({
@@ -188,6 +204,113 @@ export async function createPendingOrder(params: {
   });
 }
 
+/** Calcula el estado actual de stock para un pedido pendiente sin reservar inventario. */
+export async function getOrderStockAssessment(orderId: string): Promise<OrderStockAssessment> {
+  const order = await prisma.shopOrder.findUniqueOrThrow({
+    where: { id: orderId },
+    include: {
+      items: {
+        include: {
+          product: {
+            include: {
+              components: {
+                include: {
+                  material: { include: { inventory: true } },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const requirements = new Map<string, OrderMaterialStockStatus>();
+
+  for (const item of order.items) {
+    for (const component of item.product.components) {
+      const inventory = component.material.inventory;
+      const currentStock = inventory?.currentStock ?? 0;
+      const reservedStock = inventory?.reservedStock ?? 0;
+      const availableStock = currentStock - reservedStock;
+      const requiredQuantity = component.quantityRequired * item.quantity;
+      const existing = requirements.get(component.materialId);
+
+      if (existing) {
+        existing.requiredQuantity += requiredQuantity;
+        existing.shortfallQuantity = Math.max(0, existing.requiredQuantity - existing.availableStock);
+        continue;
+      }
+
+      requirements.set(component.materialId, {
+        availableStock,
+        currentStock,
+        materialId: component.materialId,
+        materialName: component.material.name,
+        requiredQuantity,
+        reservedStock,
+        shortfallQuantity: Math.max(0, requiredQuantity - availableStock),
+      });
+    }
+  }
+
+  const values = [...requirements.values()].sort((left, right) =>
+    right.shortfallQuantity - left.shortfallQuantity || left.materialName.localeCompare(right.materialName, 'es'),
+  );
+
+  return {
+    isFullyAvailable: values.every(value => value.shortfallQuantity === 0),
+    requirements: values,
+    shortages: values.filter(value => value.shortfallQuantity > 0),
+  };
+}
+
+function buildStockStatusValue(stockAssessment: OrderStockAssessment): string {
+  if (stockAssessment.isFullyAvailable) {
+    return 'Stock suficiente para completar el pedido en este momento.';
+  }
+
+  return [
+    'Falta stock para reservar el pedido completo en este momento.',
+    ...stockAssessment.shortages.slice(0, 6).map(shortage =>
+      `• ${shortage.materialName}: faltan ${shortage.shortfallQuantity} (necesario ${shortage.requiredQuantity}, disponible ${shortage.availableStock})`,
+    ),
+  ].join('\n');
+}
+
+function getCustomerOrderDescription(order: OrderFull): string {
+  switch (order.status) {
+    case 'pending':
+      return 'Tu pedido fue recibido y está en revisión por el staff.';
+    case 'accepted':
+      return 'Tu pedido fue aceptado y el staff está preparando la entrega.';
+    case 'completed':
+      return 'Tu pedido fue completado.';
+    case 'rejected':
+      return 'Tu pedido no pudo ser aceptado.';
+    case 'cancelled':
+      return 'Tu pedido fue cancelado.';
+    default:
+      return 'Tu pedido está siendo gestionado por el staff.';
+  }
+}
+
+function getCustomerNextStep(order: OrderFull): string {
+  switch (order.status) {
+    case 'pending':
+      return 'Te avisaremos cuando el staff revise el pedido y haya una actualización.';
+    case 'accepted':
+      return 'El staff continuará con la preparación y te avisará cuando corresponda.';
+    case 'completed':
+      return 'Si necesitas soporte, comparte tu código de pedido con el staff.';
+    case 'rejected':
+    case 'cancelled':
+      return 'Si necesitas más información, contacta al staff indicando tu código de pedido.';
+    default:
+      return 'Consulta de nuevo más tarde si aún no ves cambios.';
+  }
+}
+
 // ── Lógica de stock ───────────────────────────────────────────────────────────
 
 /** Reserva los materiales necesarios para un pedido pendiente. */
@@ -195,8 +318,8 @@ export async function reserveOrderStock(
   orderId:       string,
   guildId:       string,
   performedById: string,
-): Promise<void> {
-  await prisma.$transaction(async tx => {
+): Promise<boolean> {
+  return prisma.$transaction(async tx => {
     const order = await tx.shopOrder.findUniqueOrThrow({
       where:   { id: orderId },
       include: {
@@ -213,11 +336,14 @@ export async function reserveOrderStock(
         },
       },
     });
+    let didReserve = false;
 
-    // Validación previa: suficiente stock disponible para todos los ítems
+    // Validación previa: suficiente stock disponible para lo que falte por reservar
     for (const item of order.items) {
+      const unitsToReserve = item.quantity - item.reservedQuantity;
+      if (unitsToReserve <= 0) continue;
       for (const comp of item.product.components) {
-        const needed    = comp.quantityRequired * item.quantity;
+        const needed    = comp.quantityRequired * unitsToReserve;
         const inv       = comp.material.inventory;
         if (!inv) throw new Error(`Sin inventario para ${comp.material.name}`);
         const available = inv.currentStock - inv.reservedStock;
@@ -232,8 +358,10 @@ export async function reserveOrderStock(
 
     // Reserva real
     for (const item of order.items) {
+      const unitsToReserve = item.quantity - item.reservedQuantity;
+      if (unitsToReserve <= 0) continue;
       for (const comp of item.product.components) {
-        const needed = comp.quantityRequired * item.quantity;
+        const needed = comp.quantityRequired * unitsToReserve;
         const inv    = comp.material.inventory!;
         await tx.shopInventory.update({
           where: { id: inv.id },
@@ -250,12 +378,15 @@ export async function reserveOrderStock(
             performedById,
           },
         });
+        didReserve = true;
       }
       await tx.shopOrderItem.update({
         where: { id: item.id },
         data:  { reservedQuantity: item.quantity },
       });
     }
+
+    return didReserve;
   });
 }
 
@@ -312,13 +443,13 @@ export async function releaseOrderStock(
   });
 }
 
-/** Consume el stock cuando un pedido se cierra (entregado al cliente). */
+/** Reserva lo faltante y consume el stock cuando un pedido se cierra (entregado al cliente). */
 export async function consumeOrderStock(
   orderId:       string,
   guildId:       string,
   performedById: string,
-): Promise<void> {
-  await prisma.$transaction(async tx => {
+): Promise<boolean> {
+  return prisma.$transaction(async tx => {
     const order = await tx.shopOrder.findUniqueOrThrow({
       where:   { id: orderId },
       include: {
@@ -335,13 +466,62 @@ export async function consumeOrderStock(
         },
       },
     });
+    let didReserve = false;
 
     for (const item of order.items) {
+      const unitsToReserve = item.quantity - item.reservedQuantity;
+      if (unitsToReserve <= 0) continue;
+
+      for (const comp of item.product.components) {
+        const needed    = comp.quantityRequired * unitsToReserve;
+        const inv       = comp.material.inventory;
+        if (!inv) throw new Error(`Sin inventario para ${comp.material.name}`);
+        const available = inv.currentStock - inv.reservedStock;
+        if (available < needed) {
+          throw new Error(
+            `Stock insuficiente de **${comp.material.name}**: ` +
+            `necesario ${needed}, disponible ${available}`,
+          );
+        }
+      }
+    }
+
+    for (const item of order.items) {
+      const unitsToReserve = item.quantity - item.reservedQuantity;
+      if (unitsToReserve > 0) {
+        for (const comp of item.product.components) {
+          const needed = comp.quantityRequired * unitsToReserve;
+          if (needed === 0) continue;
+
+          await tx.shopInventory.update({
+            where: { id: comp.material.inventory!.id },
+            data:  { reservedStock: { increment: needed } },
+          });
+          await tx.shopInventoryMovement.create({
+            data: {
+              guildId,
+              materialId:     comp.materialId,
+              movementType:   'reserve',
+              quantity:       needed,
+              reason:         `Pedido ${order.orderCode}`,
+              relatedOrderId: order.id,
+              performedById,
+            },
+          });
+          didReserve = true;
+        }
+
+        await tx.shopOrderItem.update({
+          where: { id: item.id },
+          data:  { reservedQuantity: item.quantity },
+        });
+      }
+
       for (const comp of item.product.components) {
         const qty = comp.quantityRequired * item.quantity;
-        const inv = comp.material.inventory!;
+        if (qty === 0) continue;
         await tx.shopInventory.update({
-          where: { id: inv.id },
+          where: { id: comp.material.inventory!.id },
           data:  {
             currentStock:  { decrement: qty },
             reservedStock: { decrement: qty },
@@ -364,12 +544,17 @@ export async function consumeOrderStock(
         data:  { deliveredQuantity: item.quantity, reservedQuantity: 0 },
       });
     }
+
+    return didReserve;
   });
 }
 
 // ── Embeds y botones ──────────────────────────────────────────────────────────
 
-export function buildOrderEmbed(order: OrderFull): EmbedBuilder {
+export function buildOrderEmbed(
+  order: OrderFull,
+  stockAssessment?: OrderStockAssessment | null,
+): EmbedBuilder {
   const color = ORDER_COLORS[order.status] ?? 0x99aab5;
   const label = ORDER_LABELS[order.status] ?? order.status;
 
@@ -419,11 +604,46 @@ export function buildOrderEmbed(order: OrderFull): EmbedBuilder {
     embed.addFields({ name: '🏷️ Descuentos del pedido', value: orderDiscountLines.join('\n') });
   }
 
+  if ((order.status === 'pending' || order.status === 'accepted') && stockAssessment) {
+    embed.addFields({
+      name: stockAssessment.isFullyAvailable ? '📦 Stock actual' : '⏳ Preparación',
+      value: buildStockStatusValue(stockAssessment),
+    });
+  }
+
   if (order.rejectionReason) {
     embed.addFields({ name: '❌ Motivo de rechazo', value: order.rejectionReason });
   }
   if (order.cancelReason) {
     embed.addFields({ name: '🚫 Motivo de cancelación', value: order.cancelReason });
+  }
+
+  return embed;
+}
+
+export function buildCustomerOrderEmbed(order: OrderFull): EmbedBuilder {
+  const color = ORDER_COLORS[order.status] ?? 0x99aab5;
+  const label = ORDER_LABELS[order.status] ?? order.status;
+  const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
+
+  const embed = new EmbedBuilder()
+    .setTitle(`🧾 Estado de tu pedido ${order.orderCode}`)
+    .setColor(color)
+    .setDescription(getCustomerOrderDescription(order))
+    .addFields(
+      { name: '📋 Estado', value: label, inline: true },
+      { name: '🧮 Artículos', value: `**${totalItems}**`, inline: true },
+      { name: '💰 Total', value: `**${formatPrice(order.totalAmount)}**`, inline: true },
+      { name: '📨 Siguiente paso', value: getCustomerNextStep(order) },
+    )
+    .setFooter({ text: `${SHOP_FOOTER.text}  ·  Guarda tu código de pedido` })
+    .setTimestamp(order.createdAt);
+
+  if (order.rejectionReason) {
+    embed.addFields({ name: 'ℹ️ Motivo informado', value: order.rejectionReason });
+  }
+  if (order.cancelReason) {
+    embed.addFields({ name: 'ℹ️ Motivo informado', value: order.cancelReason });
   }
 
   return embed;
@@ -446,6 +666,10 @@ export function buildPendingButtons(orderCode: string) {
 /** Botones para pedido aceptado (en canal de staff). */
 export function buildAcceptedButtons(orderCode: string) {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`shop:discount:${orderCode}`)
+      .setLabel('🏷️ Aplicar descuento')
+      .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`shop:close:${orderCode}`)
       .setLabel('📦 Marcar entregado')

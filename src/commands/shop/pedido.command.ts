@@ -12,12 +12,15 @@ import { prisma } from '../../database/prisma.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import { upsertShopUser } from '../../database/shop-user.js';
 import {
+  buildCustomerOrderEmbed,
   buildOrderEmbed,
   buildPendingButtons,
   createPendingOrder,
   getOrderFull,
+  getOrderStockAssessment,
 } from '../../shop/order-utils.js';
 import { COLORS, formatPrice, SHOP_FOOTER } from '../../utils/ui.js';
+import { syncPedidosToSheet } from '../../shop/sync.js';
 import {
   queryCartProducts,
   buildCartEmbed,
@@ -148,24 +151,30 @@ export const pedidoCommand: Command = {
 
       // Publicar notificación en el canal del staff
       const orderFull = await getOrderFull(orderCode);
+      const stockAssessment = orderFull ? await getOrderStockAssessment(orderFull.id) : null;
       if (orderFull && config.shopStaffChannelId) {
         const staffCh = interaction.guild.channels.cache.get(config.shopStaffChannelId);
         if (staffCh?.isTextBased()) {
           await staffCh.send({
-            embeds:     [buildOrderEmbed(orderFull)],
+            embeds:     [buildOrderEmbed(orderFull, stockAssessment)],
             components: [buildPendingButtons(orderCode)],
           });
         }
       }
 
+      const isFullyAvailable = stockAssessment?.isFullyAvailable ?? true;
       const confirmEmbed = new EmbedBuilder()
-        .setTitle('✅ Pedido creado')
+        .setTitle('📝 Pedido recibido')
         .setColor(COLORS.warning)
-        .setDescription(`Tu pedido **${orderCode}** ha sido registrado.\nEl staff lo revisará pronto y recibirás una notificación.`)
+        .setDescription(
+          isFullyAvailable
+            ? `Tu pedido **${orderCode}** fue recibido y quedó pendiente de revisión por el staff.`
+            : `Tu pedido **${orderCode}** fue recibido.\nEl staff revisará tu pedido lo antes posible y te avisará cuando haya novedades.`,
+        )
         .addFields(
           { name: '🛍️ Producto',  value: `**${nombreProducto}** × ${cantidad}`, inline: true },
           { name: '💰 Total',     value: `**${formatPrice(orderFull?.totalAmount ?? 0)}**`, inline: true },
-          { name: '📋 Estado',    value: '🟡 Pendiente',                          inline: true },
+          { name: '📋 Estado',    value: '🟡 En revisión del staff',              inline: true },
         )
         .setFooter({ text: `${SHOP_FOOTER.text}  ·  Usa /pedido estado para consultar` })
         .setTimestamp();
@@ -181,6 +190,7 @@ export const pedidoCommand: Command = {
       if (notas) confirmEmbed.addFields({ name: '📝 Notas', value: notas });
 
       await interaction.editReply({ embeds: [confirmEmbed] });
+      void syncPedidosToSheet(guildId);
       return;
     }
 
@@ -233,7 +243,13 @@ export const pedidoCommand: Command = {
         return;
       }
 
-      await interaction.editReply({ embeds: [buildOrderEmbed(order)] });
+      const stockAssessment = isStaff && ['pending', 'accepted'].includes(order.status)
+        ? await getOrderStockAssessment(order.id)
+        : null;
+
+      await interaction.editReply({
+        embeds: [isStaff ? buildOrderEmbed(order, stockAssessment) : buildCustomerOrderEmbed(order)],
+      });
       return;
     }
 

@@ -18,6 +18,19 @@ import {
   parseTaxonomyRows,
 } from './taxonomy.js';
 
+function parseSheetBoolean(value: string | undefined, fallback = true): boolean {
+  const normalized = value?.trim().toUpperCase();
+  if (!normalized) return fallback;
+  return normalized === 'TRUE' || normalized === '1' || normalized === 'VERDADERO' || normalized === 'SI';
+}
+
+function parseOptionalDate(value: string | undefined): Date | null {
+  const normalized = value?.trim();
+  if (!normalized) return null;
+  const parsed = new Date(normalized);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 /** Devuelve true si Google Sheets está configurado en el entorno. */
 export function sheetsEnabled(): boolean {
   return !!process.env.GOOGLE_SHEETS_ID;
@@ -130,6 +143,42 @@ export async function syncComponentesToSheet(guildId: string): Promise<void> {
     await writeTab('componentes', rows);
   } catch (err) {
     logger.warn({ err }, '[sync] Error exportando componentes a Sheets');
+  }
+}
+
+export async function syncDescuentosToSheet(guildId: string): Promise<void> {
+  if (!sheetsEnabled()) return;
+  try {
+    const policies = await prisma.shopDiscountPolicy.findMany({
+      where: { guildId },
+      include: { product: true },
+      orderBy: [
+        { policyType: 'asc' },
+        { product: { name: 'asc' } },
+        { minQuantity: 'asc' },
+        { name: 'asc' },
+      ],
+    });
+
+    const rows = policies.map(policy => [
+      policy.id,
+      policy.name,
+      policy.policyType,
+      policy.product?.name ?? '',
+      policy.minQuantity != null ? String(policy.minQuantity) : '',
+      policy.scope,
+      policy.discountType,
+      String(policy.discountValue),
+      String(policy.priority),
+      policy.startsAt?.toISOString() ?? '',
+      policy.endsAt?.toISOString() ?? '',
+      policy.isActive ? 'TRUE' : 'FALSE',
+      policy.description ?? '',
+    ]);
+
+    await writeTab('descuentos', rows);
+  } catch (err) {
+    logger.warn({ err }, '[sync] Error exportando descuentos a Sheets');
   }
 }
 
@@ -634,6 +683,189 @@ export async function importComponentesFromSheet(
     } catch (err) {
       summary.errors.push(
         `Error en "${nombreProducto}" → "${nombreMaterial}": ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  return summary;
+}
+
+export async function importDescuentosFromSheet(
+  guildId: string,
+  staffUserId: string,
+): Promise<ImportSummary> {
+  const summary: ImportSummary = {
+    created: 0,
+    updated: 0,
+    unchanged: 0,
+    notFound: 0,
+    errors: [],
+    createdNames: [],
+    notFoundNames: [],
+  };
+
+  const rows = await readTab('descuentos');
+
+  for (const row of rows) {
+    const id = row[0]?.trim() ?? '';
+    const name = row[1]?.trim() ?? '';
+    const policyType = row[2]?.trim().toLowerCase() ?? '';
+    const productName = row[3]?.trim() ?? '';
+    const minQuantityRaw = row[4]?.trim() ?? '';
+    const scope = (row[5]?.trim().toLowerCase() || 'order');
+    const discountType = (row[6]?.trim().toLowerCase() || 'percent');
+    const discountValueRaw = (row[7] ?? '0').replace(',', '.');
+    const priorityRaw = row[8]?.trim() ?? '0';
+    const startsAt = parseOptionalDate(row[9]);
+    const endsAt = parseOptionalDate(row[10]);
+    const isActive = parseSheetBoolean(row[11], true);
+    const description = row[12]?.trim() || null;
+
+    if (!name && !policyType && !productName && !minQuantityRaw) continue;
+
+    if (!name) {
+      summary.errors.push('Fila de descuento sin nombre.');
+      continue;
+    }
+
+    if (!['seasonal', 'volume'].includes(policyType)) {
+      summary.errors.push(`"${name}": tipo de política inválido "${row[2] ?? ''}"`);
+      continue;
+    }
+
+    if (!['item', 'order'].includes(scope)) {
+      summary.errors.push(`"${name}": scope inválido "${row[5] ?? ''}"`);
+      continue;
+    }
+
+    if (!['percent', 'fixed'].includes(discountType)) {
+      summary.errors.push(`"${name}": tipo de descuento inválido "${row[6] ?? ''}"`);
+      continue;
+    }
+
+    const discountValue = parseFloat(discountValueRaw);
+    if (!Number.isFinite(discountValue) || discountValue < 0) {
+      summary.errors.push(`"${name}": valor de descuento inválido "${row[7] ?? ''}"`);
+      continue;
+    }
+
+    const priority = parseInt(priorityRaw, 10);
+    if (!Number.isFinite(priority)) {
+      summary.errors.push(`"${name}": prioridad inválida "${row[8] ?? ''}"`);
+      continue;
+    }
+
+    let minQuantity: number | null = null;
+    if (minQuantityRaw) {
+      minQuantity = parseInt(minQuantityRaw, 10);
+      if (!Number.isFinite(minQuantity) || minQuantity <= 0) {
+        summary.errors.push(`"${name}": cantidad mínima inválida "${row[4] ?? ''}"`);
+        continue;
+      }
+    }
+
+    if (policyType === 'volume' && scope !== 'item') {
+      summary.errors.push(`"${name}": los descuentos por volumen deben usar scope "item".`);
+      continue;
+    }
+
+    if (policyType === 'volume' && minQuantity == null) {
+      summary.errors.push(`"${name}": falta la cantidad mínima para el descuento por volumen.`);
+      continue;
+    }
+
+    let productId: string | null = null;
+    if (productName) {
+      const product = await prisma.shopProduct.findUnique({
+        where: { guildId_name: { guildId, name: productName } },
+      });
+
+      if (!product) {
+        summary.notFound++;
+        summary.notFoundNames?.push(productName);
+        continue;
+      }
+
+      productId = product.id;
+    }
+
+    if (policyType === 'volume' && !productId) {
+      summary.errors.push(`"${name}": los descuentos por volumen requieren un producto.`);
+      continue;
+    }
+
+    try {
+      const existing = id
+        ? await prisma.shopDiscountPolicy.findFirst({
+            where: { guildId, id },
+          })
+        : await prisma.shopDiscountPolicy.findFirst({
+            where: {
+              guildId,
+              name,
+              policyType,
+              productId,
+              minQuantity,
+              scope,
+            },
+          });
+
+      const data = {
+        description,
+        discountType,
+        discountValue,
+        endsAt,
+        guildId,
+        isActive,
+        minQuantity: policyType === 'volume' ? minQuantity : null,
+        name,
+        policyType,
+        priority,
+        productId: policyType === 'volume' ? productId : null,
+        scope,
+        startsAt,
+      };
+
+      if (!existing) {
+        await prisma.shopDiscountPolicy.create({
+          data: {
+            ...data,
+            createdByUserId: staffUserId,
+            ...(id ? { id } : {}),
+          },
+        });
+        summary.created++;
+        summary.createdNames?.push(name);
+        continue;
+      }
+
+      const unchanged =
+        existing.name === data.name &&
+        existing.description === data.description &&
+        existing.policyType === data.policyType &&
+        existing.productId === data.productId &&
+        existing.minQuantity === data.minQuantity &&
+        existing.scope === data.scope &&
+        existing.discountType === data.discountType &&
+        existing.discountValue.toString() === String(data.discountValue) &&
+        existing.priority === data.priority &&
+        (existing.startsAt?.toISOString() ?? null) === (data.startsAt?.toISOString() ?? null) &&
+        (existing.endsAt?.toISOString() ?? null) === (data.endsAt?.toISOString() ?? null) &&
+        existing.isActive === data.isActive;
+
+      if (unchanged) {
+        summary.unchanged++;
+        continue;
+      }
+
+      await prisma.shopDiscountPolicy.update({
+        where: { id: existing.id },
+        data,
+      });
+      summary.updated++;
+    } catch (err) {
+      summary.errors.push(
+        `Error en descuento "${name}": ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }

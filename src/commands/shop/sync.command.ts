@@ -12,6 +12,7 @@ import { sheetsEnabled } from '../../shop/sync.js';
 import {
   syncProductosToSheet,
   syncComponentesToSheet,
+  syncDescuentosToSheet,
   syncInventarioToSheet,
   syncCategoriasToSheet,
   syncVentasToSheet,
@@ -19,6 +20,7 @@ import {
   importCategoriasFromSheet,
   importProductosFromSheet,
   importComponentesFromSheet,
+  importDescuentosFromSheet,
   importInventarioFromSheet,
   type ImportSummary,
 } from '../../shop/sync.js';
@@ -83,6 +85,9 @@ export const syncCommand: Command = {
           sub.setName('componentes').setDescription('Exporta las recetas producto-material a Sheets'),
         )
         .addSubcommand(sub =>
+          sub.setName('descuentos').setDescription('Exporta las políticas de descuentos a Sheets'),
+        )
+        .addSubcommand(sub =>
           sub.setName('inventario').setDescription('Exporta el inventario de materiales a Sheets'),
         )
         .addSubcommand(sub =>
@@ -92,7 +97,7 @@ export const syncCommand: Command = {
           sub.setName('pedidos').setDescription('Exporta los pedidos activos a Sheets'),
         )
         .addSubcommand(sub =>
-          sub.setName('todo').setDescription('Exporta categorías, productos, componentes, inventario, ventas y pedidos a Sheets'),
+          sub.setName('todo').setDescription('Exporta categorías, productos, componentes, descuentos, inventario, ventas y pedidos a Sheets'),
         ),
     )
     .addSubcommandGroup(group =>
@@ -109,10 +114,13 @@ export const syncCommand: Command = {
           sub.setName('componentes').setDescription('Importa recetas desde el tab Componentes de Sheets'),
         )
         .addSubcommand(sub =>
+          sub.setName('descuentos').setDescription('Importa políticas desde el tab Descuentos de Sheets'),
+        )
+        .addSubcommand(sub =>
           sub.setName('inventario').setDescription('Importa stock desde el tab Inventario de Sheets'),
         )
         .addSubcommand(sub =>
-          sub.setName('todo').setDescription('Importa categorías, productos, componentes e inventario desde Sheets'),
+          sub.setName('todo').setDescription('Importa categorías, productos, componentes, descuentos e inventario desde Sheets'),
         ),
     ),
 
@@ -146,6 +154,7 @@ export const syncCommand: Command = {
       if (sub === 'categorias' || sub === 'todo') tasks.push(() => syncCategoriasToSheet());
       if (sub === 'productos'  || sub === 'todo') tasks.push(() => syncProductosToSheet(guildId));
       if (sub === 'componentes' || sub === 'todo') tasks.push(() => syncComponentesToSheet(guildId));
+      if (sub === 'descuentos' || sub === 'todo') tasks.push(() => syncDescuentosToSheet(guildId));
       if (sub === 'inventario' || sub === 'todo') tasks.push(() => syncInventarioToSheet(guildId));
       if (sub === 'ventas'     || sub === 'todo') tasks.push(() => syncVentasToSheet(guildId));
       if (sub === 'pedidos'    || sub === 'todo') tasks.push(() => syncPedidosToSheet(guildId));
@@ -204,6 +213,18 @@ export const syncCommand: Command = {
         return;
       }
 
+      if (sub === 'descuentos') {
+        summary = await importDescuentosFromSheet(guildId, staffUser.id);
+        const embed = new EmbedBuilder()
+          .setTitle('📥 Importación de Descuentos')
+          .setDescription(summaryText(summary))
+          .setColor(summary.errors.length > 0 ? 0xffa500 : 0x57f287)
+          .setTimestamp();
+        await interaction.editReply({ embeds: [embed] });
+        void syncDescuentosToSheet(guildId);
+        return;
+      }
+
       if (sub === 'inventario') {
         summary = await importInventarioFromSheet(guildId, staffUser.id);
         const embed = new EmbedBuilder()
@@ -224,12 +245,15 @@ export const syncCommand: Command = {
         const sumInventario = await importInventarioFromSheet(guildId, staffUser.id);
         // 4. Componentes, ya con productos y materiales cargados
         const sumComponentes = await importComponentesFromSheet(guildId);
+        // 5. Descuentos, ya con productos existentes
+        const sumDescuentos = await importDescuentosFromSheet(guildId, staffUser.id);
 
         const hasErrors =
           sumCategorias.errors.length > 0 ||
           sumProductos.errors.length > 0 ||
           sumInventario.errors.length > 0 ||
-          sumComponentes.errors.length > 0;
+          sumComponentes.errors.length > 0 ||
+          sumDescuentos.errors.length > 0;
         const catLabel = `✅ ${sumCategorias.created} categorías cargadas`;
         const embed = new EmbedBuilder()
           .setTitle('📥 Importación Completa desde Sheets')
@@ -237,11 +261,13 @@ export const syncCommand: Command = {
             { name: '🗂️ Categorías',  value: sumCategorias.errors.length > 0 ? summaryText(sumCategorias) : catLabel, inline: false },
             { name: '📦 Productos',   value: summaryText(sumProductos),  inline: false },
             { name: '🧩 Componentes', value: summaryText(sumComponentes), inline: false },
+            { name: '🏷️ Descuentos', value: summaryText(sumDescuentos), inline: false },
             { name: '🗃️ Inventario',  value: summaryText(sumInventario), inline: false },
           )
           .setColor(hasErrors ? 0xffa500 : 0x57f287)
           .setTimestamp();
         await interaction.editReply({ embeds: [embed] });
+        void syncDescuentosToSheet(guildId);
         return;
       }
     }

@@ -3,6 +3,7 @@ import { prisma } from '../database/prisma.js';
 
 const ZERO = new Prisma.Decimal(0);
 const ONE_HUNDRED = new Prisma.Decimal(100);
+type DiscountTx = Prisma.TransactionClient;
 
 export interface PendingOrderPricingItemInput {
   productId: string;
@@ -34,6 +35,18 @@ export interface CalculatedOrderPricing {
   subtotalAmount: Prisma.Decimal;
   totalAmount: Prisma.Decimal;
   totalDiscountAmount: Prisma.Decimal;
+}
+
+export interface EligibleManualVolumeDiscount {
+  aggregatedQuantity: number;
+  discountType: string;
+  discountValue: Prisma.Decimal;
+  minQuantity: number;
+  policyId: string;
+  policyName: string;
+  priority: number;
+  productId: string;
+  productName: string;
 }
 
 function clampDiscountAmount(
@@ -73,22 +86,152 @@ function isPolicyInWindow(
 
 function isAutoApplicablePolicy(
   policyType: string,
-  isFirstCompletedOrder: boolean,
 ): boolean {
-  if (policyType === 'first_order' || policyType === 'new_customer') {
-    return isFirstCompletedOrder;
+  return policyType === 'seasonal';
+}
+
+function sumDiscountAmounts(
+  discounts: Array<{ discountAmount: Prisma.Decimal }>,
+): Prisma.Decimal {
+  return discounts.reduce((sum, discount) => sum.add(discount.discountAmount), ZERO);
+}
+
+function pickBestEligibleVolumePolicies(params: {
+  items: Array<{
+    appliedDiscounts: Array<{ discountPolicyId: string | null }>;
+    product: { name: string };
+    productId: string;
+    quantity: number;
+  }>;
+  policies: Array<{
+    createdAt: Date;
+    discountType: string;
+    discountValue: Prisma.Decimal;
+    id: string;
+    minQuantity: number | null;
+    name: string;
+    policyType: string;
+    priority: number;
+    productId: string | null;
+    scope: string;
+  }>;
+}): EligibleManualVolumeDiscount[] {
+  const quantityByProduct = new Map<string, number>();
+  const productNameById   = new Map<string, string>();
+  const appliedPolicyIds  = new Set<string>();
+
+  for (const item of params.items) {
+    quantityByProduct.set(item.productId, (quantityByProduct.get(item.productId) ?? 0) + item.quantity);
+    productNameById.set(item.productId, item.product.name);
+    for (const discount of item.appliedDiscounts) {
+      if (discount.discountPolicyId) {
+        appliedPolicyIds.add(discount.discountPolicyId);
+      }
+    }
   }
 
-  if (policyType === 'seasonal') {
-    return true;
+  const bestByProduct = new Map<string, EligibleManualVolumeDiscount>();
+
+  for (const policy of params.policies) {
+    if (policy.policyType !== 'volume' || policy.scope !== 'item') continue;
+    if (!policy.productId || policy.minQuantity == null) continue;
+    if (appliedPolicyIds.has(policy.id)) continue;
+
+    const aggregatedQuantity = quantityByProduct.get(policy.productId) ?? 0;
+    if (aggregatedQuantity < policy.minQuantity) continue;
+
+    const current = bestByProduct.get(policy.productId);
+    const candidate: EligibleManualVolumeDiscount = {
+      aggregatedQuantity,
+      discountType: policy.discountType,
+      discountValue: policy.discountValue,
+      minQuantity: policy.minQuantity,
+      policyId: policy.id,
+      policyName: policy.name,
+      priority: policy.priority,
+      productId: policy.productId,
+      productName: productNameById.get(policy.productId) ?? 'Producto',
+    };
+
+    if (!current) {
+      bestByProduct.set(policy.productId, candidate);
+      continue;
+    }
+
+    if (candidate.minQuantity > current.minQuantity) {
+      bestByProduct.set(policy.productId, candidate);
+      continue;
+    }
+
+    if (candidate.minQuantity === current.minQuantity && candidate.priority > current.priority) {
+      bestByProduct.set(policy.productId, candidate);
+      continue;
+    }
+
+    if (
+      candidate.minQuantity === current.minQuantity &&
+      candidate.priority === current.priority &&
+      candidate.discountValue.comparedTo(current.discountValue) > 0
+    ) {
+      bestByProduct.set(policy.productId, candidate);
+    }
   }
 
-  return false;
+  return Array.from(bestByProduct.values()).sort((a, b) => {
+    if (a.productName === b.productName) return a.minQuantity - b.minQuantity;
+    return a.productName.localeCompare(b.productName, 'es');
+  });
+}
+
+async function recalculateOrderDiscountState(
+  tx: DiscountTx,
+  orderId: string,
+): Promise<void> {
+  const order = await tx.shopOrder.findUniqueOrThrow({
+    where: { id: orderId },
+    include: {
+      appliedDiscounts: true,
+      items: {
+        include: {
+          appliedDiscounts: true,
+        },
+      },
+    },
+  });
+
+  let subtotalAmount = ZERO;
+  let itemDiscountTotal = ZERO;
+
+  for (const item of order.items) {
+    subtotalAmount = subtotalAmount.add(item.grossLineTotal);
+    const itemDiscountAmount = sumDiscountAmounts(item.appliedDiscounts);
+    itemDiscountTotal = itemDiscountTotal.add(itemDiscountAmount);
+
+    await tx.shopOrderItem.update({
+      where: { id: item.id },
+      data: {
+        netLineTotal: item.grossLineTotal.sub(itemDiscountAmount),
+      },
+    });
+  }
+
+  const orderDiscountTotal = sumDiscountAmounts(
+    order.appliedDiscounts.filter(discount => discount.scope === 'order'),
+  );
+  const totalDiscountAmount = itemDiscountTotal.add(orderDiscountTotal);
+
+  await tx.shopOrder.update({
+    where: { id: order.id },
+    data: {
+      subtotalAmount,
+      totalAmount: subtotalAmount.sub(totalDiscountAmount),
+      totalDiscountAmount,
+    },
+  });
 }
 
 export async function calculateOrderPricing(
   guildId: string,
-  customerUserId: string,
   items: PendingOrderPricingItemInput[],
 ): Promise<CalculatedOrderPricing> {
   const calculatedItems: CalculatedOrderItemDraft[] = items.map(item => {
@@ -118,30 +261,24 @@ export async function calculateOrderPricing(
   }
 
   const now = new Date();
-  const [completedOrdersCount, policies] = await Promise.all([
-    prisma.shopOrder.count({
-      where: {
-        guildId,
-        customerUserId,
-        status: 'completed',
-      },
-    }),
-    prisma.shopDiscountPolicy.findMany({
-      where: { guildId, isActive: true },
-      orderBy: [
-        { priority: 'desc' },
-        { createdAt: 'asc' },
-      ],
-    }),
-  ]);
+  const policies = await prisma.shopDiscountPolicy.findMany({
+    where: {
+      guildId,
+      isActive: true,
+      policyType: 'seasonal',
+    },
+    orderBy: [
+      { priority: 'desc' },
+      { createdAt: 'asc' },
+    ],
+  });
 
   const activePolicies = policies.filter(policy =>
     isPolicyInWindow(now, policy.startsAt ?? null, policy.endsAt ?? null),
   );
-  const isFirstCompletedOrder = completedOrdersCount === 0;
 
   for (const policy of activePolicies) {
-    if (!isAutoApplicablePolicy(policy.policyType, isFirstCompletedOrder)) {
+    if (!isAutoApplicablePolicy(policy.policyType)) {
       continue;
     }
 
@@ -191,7 +328,7 @@ export async function calculateOrderPricing(
   const orderDiscounts: CalculatedDiscountDraft[] = [];
 
   for (const policy of activePolicies) {
-    if (!isAutoApplicablePolicy(policy.policyType, isFirstCompletedOrder)) {
+    if (!isAutoApplicablePolicy(policy.policyType)) {
       continue;
     }
 
@@ -238,4 +375,161 @@ export async function calculateOrderPricing(
     totalAmount,
     totalDiscountAmount,
   };
+}
+
+export async function getEligibleManualVolumeDiscounts(
+  orderId: string,
+): Promise<EligibleManualVolumeDiscount[]> {
+  const order = await prisma.shopOrder.findUniqueOrThrow({
+    where: { id: orderId },
+    include: {
+      items: {
+        include: {
+          appliedDiscounts: true,
+          product: true,
+        },
+      },
+    },
+  });
+
+  const productIds = Array.from(new Set(order.items.map(item => item.productId)));
+  if (productIds.length === 0) {
+    return [];
+  }
+
+  const now = new Date();
+  const policies = await prisma.shopDiscountPolicy.findMany({
+    where: {
+      guildId: order.guildId,
+      isActive: true,
+      policyType: 'volume',
+      productId: { in: productIds },
+    },
+    orderBy: [
+      { productId: 'asc' },
+      { minQuantity: 'desc' },
+      { priority: 'desc' },
+      { createdAt: 'asc' },
+    ],
+  });
+
+  const activePolicies = policies.filter(policy =>
+    isPolicyInWindow(now, policy.startsAt ?? null, policy.endsAt ?? null),
+  );
+
+  return pickBestEligibleVolumePolicies({
+    items: order.items,
+    policies: activePolicies,
+  });
+}
+
+export async function applyManualVolumeDiscounts(params: {
+  appliedByUserId: string;
+  orderId: string;
+  selectedPolicyIds: string[];
+}): Promise<EligibleManualVolumeDiscount[]> {
+  const selectedPolicyIds = Array.from(new Set(params.selectedPolicyIds));
+  if (selectedPolicyIds.length === 0) {
+    return [];
+  }
+
+  return prisma.$transaction(async tx => {
+    const order = await tx.shopOrder.findUniqueOrThrow({
+      where: { id: params.orderId },
+      include: {
+        items: {
+          include: {
+            appliedDiscounts: true,
+            product: true,
+          },
+        },
+      },
+    });
+
+    if (order.status !== 'accepted') {
+      throw new Error('Solo se pueden aplicar descuentos a pedidos aceptados.');
+    }
+
+    const now = new Date();
+    const policies = await tx.shopDiscountPolicy.findMany({
+      where: {
+        guildId: order.guildId,
+        id: { in: selectedPolicyIds },
+        isActive: true,
+        policyType: 'volume',
+      },
+      orderBy: [
+        { productId: 'asc' },
+        { minQuantity: 'desc' },
+        { priority: 'desc' },
+        { createdAt: 'asc' },
+      ],
+    });
+
+    const activePolicies = policies.filter(policy =>
+      isPolicyInWindow(now, policy.startsAt ?? null, policy.endsAt ?? null),
+    );
+    const eligibleDiscounts = pickBestEligibleVolumePolicies({
+      items: order.items,
+      policies: activePolicies,
+    });
+    const eligibleByPolicyId = new Map(
+      eligibleDiscounts.map(discount => [discount.policyId, discount]),
+    );
+
+    const appliedDiscounts: EligibleManualVolumeDiscount[] = [];
+
+    for (const selectedPolicyId of selectedPolicyIds) {
+      const eligible = eligibleByPolicyId.get(selectedPolicyId);
+      if (!eligible) continue;
+
+      const targetItems = order.items.filter(item => item.productId === eligible.productId);
+      if (targetItems.length === 0) continue;
+
+      for (const item of targetItems) {
+        const currentItemDiscountTotal = sumDiscountAmounts(item.appliedDiscounts);
+        const currentNetLineTotal = item.grossLineTotal.sub(currentItemDiscountTotal);
+        const discountAmount = calculateDiscountAmount(
+          currentNetLineTotal,
+          eligible.discountType,
+          eligible.discountValue,
+        );
+
+        if (discountAmount.comparedTo(ZERO) <= 0) continue;
+
+        await tx.shopAppliedDiscount.create({
+          data: {
+            appliedByUserId: params.appliedByUserId,
+            discountAmount,
+            discountPolicyId: eligible.policyId,
+            discountType: eligible.discountType,
+            discountValue: eligible.discountValue,
+            orderId: order.id,
+            orderItemId: item.id,
+            reason: eligible.policyName,
+            scope: 'item',
+          },
+        });
+      }
+
+      await tx.shopOrderEvent.create({
+        data: {
+          orderId: order.id,
+          eventType: 'manual_discount_applied',
+          oldStatus: 'accepted',
+          newStatus: 'accepted',
+          performedById: params.appliedByUserId,
+          notes: `${eligible.productName}: ${eligible.policyName}`,
+        },
+      });
+
+      appliedDiscounts.push(eligible);
+    }
+
+    if (appliedDiscounts.length > 0) {
+      await recalculateOrderDiscountState(tx, order.id);
+    }
+
+    return appliedDiscounts;
+  });
 }
