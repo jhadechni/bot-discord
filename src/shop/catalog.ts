@@ -15,6 +15,8 @@ import {
   getSubcategoryDefinition,
 } from './taxonomy.js';
 import { COLORS, formatPrice, SHOP_FOOTER } from '../utils/ui.js';
+import { resolvePresentationLabel } from './quantities.js';
+import { buildProductContentsSummary } from './product-contents.js';
 
 const CATALOG_PAGE_SIZE = 6;
 
@@ -25,6 +27,7 @@ export const PRODUCT_TYPE_LABELS: Record<string, string> = {
   service: 'Servicio',
 };
 
+//TODO: change for new categories and sizes, and add icons
 export const PRODUCT_TYPE_ICONS: Record<string, string> = {
   single:  '📦',
   bulk:    '🗃️',
@@ -63,10 +66,12 @@ export async function queryCatalogProducts(guildId: string) {
       isActive: true,
       OR: [
         { productType: 'service' },
+        { baseMaterialId: { not: null } },
         { components: { some: {} } },
       ],
     },
     include: {
+      baseMaterial: true,
       prices:     { where: { validTo: null }, take: 1 },
       components: { include: { material: true }, orderBy: { quantityRequired: 'desc' } },
     },
@@ -95,12 +100,22 @@ function buildProductCardValue(product: CatalogProduct): string {
   const priceStr = price
     ? `💰 **${formatPrice(price.price, price.currency)}**`
     : '💰 _Sin precio_';
-  const typeStr = `🏷️ ${PRODUCT_TYPE_LABELS[product.productType] ?? labelize(product.productType)}`;
+  const presentationStr = product.productType === 'service'
+    ? null
+    : `📐 ${product.presentationLabel ?? resolvePresentationLabel({
+      presentationQuantity: product.presentationQuantity,
+      presentationType: product.presentationType as Parameters<typeof resolvePresentationLabel>[0]['presentationType'],
+      stackSize: product.baseMaterial?.stackSize ?? 64,
+    })}`;
   const description = product.description
     ? truncateText(product.description, 120)
     : '_Sin descripción_';
+  const contentsSummary = buildProductContentsSummary(product);
+  const contentsStr = contentsSummary
+    ? `🎁 ${truncateText(contentsSummary, 120)}`
+    : null;
 
-  return [priceStr, typeStr, description].join('\n');
+  return [priceStr, presentationStr, contentsStr, description].filter(Boolean).join('\n');
 }
 
 function applyTaxonomyImages(

@@ -11,6 +11,7 @@ import { upsertShopUser } from '../../database/shop-user.js';
 import { sheetsEnabled } from '../../shop/sync.js';
 import {
   syncProductosToSheet,
+  syncMaterialesToSheet,
   syncComponentesToSheet,
   syncDescuentosToSheet,
   syncInventarioToSheet,
@@ -18,6 +19,7 @@ import {
   syncVentasToSheet,
   syncPedidosToSheet,
   importCategoriasFromSheet,
+  importMaterialesFromSheet,
   importProductosFromSheet,
   importComponentesFromSheet,
   importDescuentosFromSheet,
@@ -79,6 +81,9 @@ export const syncCommand: Command = {
           sub.setName('categorias').setDescription('Exporta la taxonomía de categorías/subcategorías a Sheets y aplica dropdowns'),
         )
         .addSubcommand(sub =>
+          sub.setName('materiales').setDescription('Exporta la definición de materiales a Sheets'),
+        )
+        .addSubcommand(sub =>
           sub.setName('productos').setDescription('Exporta el catálogo de productos a Sheets'),
         )
         .addSubcommand(sub =>
@@ -97,7 +102,7 @@ export const syncCommand: Command = {
           sub.setName('pedidos').setDescription('Exporta los pedidos activos a Sheets'),
         )
         .addSubcommand(sub =>
-          sub.setName('todo').setDescription('Exporta categorías, productos, componentes, descuentos, inventario, ventas y pedidos a Sheets'),
+          sub.setName('todo').setDescription('Exporta todos los tabs de la tienda a Sheets'),
         ),
     )
     .addSubcommandGroup(group =>
@@ -106,6 +111,9 @@ export const syncCommand: Command = {
         .setDescription('Importa datos de Google Sheets a la BD')
         .addSubcommand(sub =>
           sub.setName('categorias').setDescription('Carga la taxonomía de categorías desde el tab Categorías de Sheets'),
+        )
+        .addSubcommand(sub =>
+          sub.setName('materiales').setDescription('Importa materiales desde el tab Materiales de Sheets'),
         )
         .addSubcommand(sub =>
           sub.setName('productos').setDescription('Importa productos desde el tab Productos de Sheets'),
@@ -120,7 +128,7 @@ export const syncCommand: Command = {
           sub.setName('inventario').setDescription('Importa stock desde el tab Inventario de Sheets'),
         )
         .addSubcommand(sub =>
-          sub.setName('todo').setDescription('Importa categorías, productos, componentes, descuentos e inventario desde Sheets'),
+          sub.setName('todo').setDescription('Importa todos los tabs editables desde Sheets'),
         ),
     ),
 
@@ -152,6 +160,7 @@ export const syncCommand: Command = {
       const tasks: Array<() => Promise<void>> = [];
 
       if (sub === 'categorias' || sub === 'todo') tasks.push(() => syncCategoriasToSheet());
+      if (sub === 'materiales' || sub === 'todo') tasks.push(() => syncMaterialesToSheet(guildId));
       if (sub === 'productos'  || sub === 'todo') tasks.push(() => syncProductosToSheet(guildId));
       if (sub === 'componentes' || sub === 'todo') tasks.push(() => syncComponentesToSheet(guildId));
       if (sub === 'descuentos' || sub === 'todo') tasks.push(() => syncDescuentosToSheet(guildId));
@@ -202,6 +211,18 @@ export const syncCommand: Command = {
         return;
       }
 
+      if (sub === 'materiales') {
+        summary = await importMaterialesFromSheet(guildId);
+        const embed = new EmbedBuilder()
+          .setTitle('📥 Importación de Materiales')
+          .setDescription(summaryText(summary))
+          .setColor(summary.errors.length > 0 ? 0xffa500 : 0x57f287)
+          .setTimestamp();
+        await interaction.editReply({ embeds: [embed] });
+        void syncMaterialesToSheet(guildId);
+        return;
+      }
+
       if (sub === 'componentes') {
         summary = await importComponentesFromSheet(guildId);
         const embed = new EmbedBuilder()
@@ -239,17 +260,20 @@ export const syncCommand: Command = {
       if (sub === 'todo') {
         // 1. Categorías primero — los productos necesitan la taxonomía para clasificarse
         const sumCategorias = await importCategoriasFromSheet();
-        // 2. Productos
+        // 2. Materiales — productos e inventario dependen de ellos
+        const sumMateriales = await importMaterialesFromSheet(guildId);
+        // 3. Productos
         const sumProductos = await importProductosFromSheet(guildId, staffUser.id);
-        // 3. Inventario / materiales base
+        // 4. Inventario / stock base
         const sumInventario = await importInventarioFromSheet(guildId, staffUser.id);
-        // 4. Componentes, ya con productos y materiales cargados
+        // 5. Componentes, ya con productos y materiales cargados
         const sumComponentes = await importComponentesFromSheet(guildId);
-        // 5. Descuentos, ya con productos existentes
+        // 6. Descuentos, ya con productos existentes
         const sumDescuentos = await importDescuentosFromSheet(guildId, staffUser.id);
 
         const hasErrors =
           sumCategorias.errors.length > 0 ||
+          sumMateriales.errors.length > 0 ||
           sumProductos.errors.length > 0 ||
           sumInventario.errors.length > 0 ||
           sumComponentes.errors.length > 0 ||
@@ -259,6 +283,7 @@ export const syncCommand: Command = {
           .setTitle('📥 Importación Completa desde Sheets')
           .addFields(
             { name: '🗂️ Categorías',  value: sumCategorias.errors.length > 0 ? summaryText(sumCategorias) : catLabel, inline: false },
+            { name: '🧱 Materiales', value: summaryText(sumMateriales), inline: false },
             { name: '📦 Productos',   value: summaryText(sumProductos),  inline: false },
             { name: '🧩 Componentes', value: summaryText(sumComponentes), inline: false },
             { name: '🏷️ Descuentos', value: summaryText(sumDescuentos), inline: false },

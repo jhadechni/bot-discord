@@ -7,6 +7,8 @@ import {
 import { Prisma } from '../generated/prisma/client.js';
 import { prisma } from '../database/prisma.js';
 import { calculateOrderPricing } from './discounts.js';
+import { buildProductContentsLines, buildProductContentsSummary } from './product-contents.js';
+import { hasProductInventoryDefinition } from './quantities.js';
 import { ORDER_COLORS, ORDER_LABELS, formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
@@ -35,6 +37,54 @@ export interface OrderStockAssessment {
   shortages: OrderMaterialStockStatus[];
 }
 
+type ProductComponentLike = {
+  materialId: string;
+  quantityRequired: number;
+  material: {
+    id: string;
+    inventory?: {
+      currentStock: number;
+      id: string;
+      reservedStock: number;
+    } | null;
+    name: string;
+  };
+};
+
+type ProductWithResolvedComponents = {
+  baseMaterial?: {
+    id: string;
+    inventory?: {
+      currentStock: number;
+      id: string;
+      reservedStock: number;
+    } | null;
+    name: string;
+  } | null;
+  baseMaterialId?: string | null;
+  components: ProductComponentLike[];
+  presentationQuantity?: number;
+};
+
+function resolveProductComponents(product: ProductWithResolvedComponents): ProductComponentLike[] {
+  if (!product.baseMaterialId || !product.baseMaterial || !product.presentationQuantity) {
+    return product.components;
+  }
+
+  if (product.components.some(component => component.materialId === product.baseMaterialId)) {
+    return product.components;
+  }
+
+  return [
+    {
+      materialId: product.baseMaterialId,
+      quantityRequired: product.presentationQuantity,
+      material: product.baseMaterial,
+    },
+    ...product.components,
+  ];
+}
+
 // ── Helpers de BD ─────────────────────────────────────────────────────────────
 
 /** Carga un pedido completo con cliente e ítems para mostrar en embed. */
@@ -51,7 +101,19 @@ export async function getOrderFull(orderCode: string) {
           appliedDiscounts: {
             orderBy: { appliedAt: 'asc' },
           },
-          product: true,
+          product: {
+            include: {
+              components: {
+                include: {
+                  material: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -92,6 +154,7 @@ export async function createPendingOrder(params: {
       id: { in: items.map(item => item.productId) },
     },
     include: {
+      baseMaterial: true,
       components: true,
       prices: { where: { validTo: null }, take: 1 },
     },
@@ -105,8 +168,8 @@ export async function createPendingOrder(params: {
       throw new Error('Uno de los productos del pedido ya no está disponible.');
     }
 
-    if (product.productType !== 'service' && product.components.length === 0) {
-      throw new Error(`**${product.name}** no tiene materiales configurados.`);
+    if (!hasProductInventoryDefinition(product)) {
+      throw new Error(`**${product.name}** no tiene una definición de inventario configurada.`);
     }
 
     const activePrice = product.prices[0];
@@ -213,6 +276,7 @@ export async function getOrderStockAssessment(orderId: string): Promise<OrderSto
         include: {
           product: {
             include: {
+              baseMaterial: { include: { inventory: true } },
               components: {
                 include: {
                   material: { include: { inventory: true } },
@@ -228,7 +292,7 @@ export async function getOrderStockAssessment(orderId: string): Promise<OrderSto
   const requirements = new Map<string, OrderMaterialStockStatus>();
 
   for (const item of order.items) {
-    for (const component of item.product.components) {
+    for (const component of resolveProductComponents(item.product)) {
       const inventory = component.material.inventory;
       const currentStock = inventory?.currentStock ?? 0;
       const reservedStock = inventory?.reservedStock ?? 0;
@@ -325,10 +389,11 @@ export async function reserveOrderStock(
       include: {
         items: {
           include: {
-            product: {
-              include: {
-                components: {
-                  include: { material: { include: { inventory: true } } },
+          product: {
+            include: {
+              baseMaterial: { include: { inventory: true } },
+              components: {
+                include: { material: { include: { inventory: true } } },
                 },
               },
             },
@@ -342,7 +407,7 @@ export async function reserveOrderStock(
     for (const item of order.items) {
       const unitsToReserve = item.quantity - item.reservedQuantity;
       if (unitsToReserve <= 0) continue;
-      for (const comp of item.product.components) {
+      for (const comp of resolveProductComponents(item.product)) {
         const needed    = comp.quantityRequired * unitsToReserve;
         const inv       = comp.material.inventory;
         if (!inv) throw new Error(`Sin inventario para ${comp.material.name}`);
@@ -360,7 +425,7 @@ export async function reserveOrderStock(
     for (const item of order.items) {
       const unitsToReserve = item.quantity - item.reservedQuantity;
       if (unitsToReserve <= 0) continue;
-      for (const comp of item.product.components) {
+      for (const comp of resolveProductComponents(item.product)) {
         const needed = comp.quantityRequired * unitsToReserve;
         const inv    = comp.material.inventory!;
         await tx.shopInventory.update({
@@ -402,10 +467,11 @@ export async function releaseOrderStock(
       include: {
         items: {
           include: {
-            product: {
-              include: {
-                components: {
-                  include: { material: { include: { inventory: true } } },
+          product: {
+            include: {
+              baseMaterial: { include: { inventory: true } },
+              components: {
+                include: { material: { include: { inventory: true } } },
                 },
               },
             },
@@ -416,7 +482,7 @@ export async function releaseOrderStock(
 
     for (const item of order.items) {
       if (item.reservedQuantity === 0) continue;
-      for (const comp of item.product.components) {
+      for (const comp of resolveProductComponents(item.product)) {
         const qty = comp.quantityRequired * item.reservedQuantity;
         const inv = comp.material.inventory!;
         await tx.shopInventory.update({
@@ -455,10 +521,11 @@ export async function consumeOrderStock(
       include: {
         items: {
           include: {
-            product: {
-              include: {
-                components: {
-                  include: { material: { include: { inventory: true } } },
+          product: {
+            include: {
+              baseMaterial: { include: { inventory: true } },
+              components: {
+                include: { material: { include: { inventory: true } } },
                 },
               },
             },
@@ -472,7 +539,7 @@ export async function consumeOrderStock(
       const unitsToReserve = item.quantity - item.reservedQuantity;
       if (unitsToReserve <= 0) continue;
 
-      for (const comp of item.product.components) {
+      for (const comp of resolveProductComponents(item.product)) {
         const needed    = comp.quantityRequired * unitsToReserve;
         const inv       = comp.material.inventory;
         if (!inv) throw new Error(`Sin inventario para ${comp.material.name}`);
@@ -489,7 +556,7 @@ export async function consumeOrderStock(
     for (const item of order.items) {
       const unitsToReserve = item.quantity - item.reservedQuantity;
       if (unitsToReserve > 0) {
-        for (const comp of item.product.components) {
+        for (const comp of resolveProductComponents(item.product)) {
           const needed = comp.quantityRequired * unitsToReserve;
           if (needed === 0) continue;
 
@@ -517,7 +584,7 @@ export async function consumeOrderStock(
         });
       }
 
-      for (const comp of item.product.components) {
+      for (const comp of resolveProductComponents(item.product)) {
         const qty = comp.quantityRequired * item.quantity;
         if (qty === 0) continue;
         await tx.shopInventory.update({
@@ -578,6 +645,11 @@ export function buildOrderEmbed(
       extraLines.push(`  > 📝 ${item.notes}`);
     }
 
+    const contentsLines = buildProductContentsLines(item.product, 5);
+    if (contentsLines.length > 0) {
+      extraLines.push(`  > 🎁 Trae:\n  > ${contentsLines.join('\n  > ')}`);
+    }
+
     return extraLines.length > 0 ? `${line}\n${extraLines.join('\n')}` : line;
   });
 
@@ -625,6 +697,12 @@ export function buildCustomerOrderEmbed(order: OrderFull): EmbedBuilder {
   const color = ORDER_COLORS[order.status] ?? 0x99aab5;
   const label = ORDER_LABELS[order.status] ?? order.status;
   const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
+  const productLines = order.items.map(item => {
+    const contentsSummary = buildProductContentsSummary(item.product, 3);
+    return contentsSummary
+      ? `• **${item.product.name}** × ${item.quantity}\n  ${contentsSummary}`
+      : `• **${item.product.name}** × ${item.quantity}`;
+  });
 
   const embed = new EmbedBuilder()
     .setTitle(`🧾 Estado de tu pedido ${order.orderCode}`)
@@ -638,6 +716,13 @@ export function buildCustomerOrderEmbed(order: OrderFull): EmbedBuilder {
     )
     .setFooter({ text: `${SHOP_FOOTER.text}  ·  Guarda tu código de pedido` })
     .setTimestamp(order.createdAt);
+
+  if (productLines.length > 0) {
+    embed.addFields({
+      name: '🛍️ Productos',
+      value: productLines.join('\n').slice(0, 1024),
+    });
+  }
 
   if (order.rejectionReason) {
     embed.addFields({ name: 'ℹ️ Motivo informado', value: order.rejectionReason });

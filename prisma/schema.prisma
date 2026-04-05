@@ -143,14 +143,16 @@ model ShopMaterial {
   guildId   String
   name      String
   baseUnit  String   @default("item")
+  stackSize Int      @default(64)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  inventory   ShopInventory?
-  components  ShopProductComponent[]
-  movements   ShopInventoryMovement[]
-  withdrawals ShopWithdrawal[]
+  inventory      ShopInventory?
+  components     ShopProductComponent[]
+  directProducts ShopProduct[]          @relation("ShopProductBaseMaterial")
+  movements      ShopInventoryMovement[]
+  withdrawals    ShopWithdrawal[]
 
   @@unique([guildId, name])
 }
@@ -168,20 +170,25 @@ model ShopInventory {
 }
 
 model ShopProduct {
-  id          String   @id @default(cuid())
-  guildId     String
-  name        String
-  productType String   // single | bulk | kit | service
-  category    String   @default("general")
-  subcategory String   @default("otros")
-  description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  guildId              String
+  name                 String
+  productType          String   // single | bulk | kit | service
+  category             String   @default("general")
+  subcategory          String   @default("otros")
+  description          String?
+  baseMaterialId       String?
+  presentationType     String   @default("custom") // unit | stack | chest | double_chest | custom
+  presentationQuantity Int      @default(1)
+  presentationLabel    String?
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
-  components ShopProductComponent[]
-  prices     ShopProductPrice[]
-  orderItems ShopOrderItem[]
+  baseMaterial ShopMaterial?           @relation("ShopProductBaseMaterial", fields: [baseMaterialId], references: [id])
+  components   ShopProductComponent[]
+  prices       ShopProductPrice[]
+  orderItems   ShopOrderItem[]
   discountPolicies ShopDiscountPolicy[]
 
   @@unique([guildId, name])

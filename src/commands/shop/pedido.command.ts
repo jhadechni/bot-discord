@@ -98,6 +98,7 @@ export const pedidoCommand: Command = {
         name: { contains: value, mode: 'insensitive' },
         OR: [
           { productType: 'service' },
+          { baseMaterialId: { not: null } },
           { components: { some: {} } },
         ],
       },

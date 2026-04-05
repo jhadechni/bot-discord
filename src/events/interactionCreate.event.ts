@@ -51,6 +51,8 @@ import {
   buildQtyModal,
   queryCartProducts,
 } from '../shop/cart.js';
+import { buildProductContentsSummary } from '../shop/product-contents.js';
+import { hasProductInventoryDefinition } from '../shop/quantities.js';
 
 // ── Cooldown de sugerencias (en memoria) ──────────────────────────────────────
 const SUGGEST_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutos
@@ -1183,7 +1185,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const product = await prisma.shopProduct.findUnique({
         where:   { id: productId },
         include: {
-          components: { select: { id: true } },
+          components: {
+            include: {
+              material: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
           prices: { where: { validTo: null }, take: 1 },
         },
       });
@@ -1193,9 +1203,9 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         return;
       }
 
-      if (product.productType !== 'service' && product.components.length === 0) {
+      if (!hasProductInventoryDefinition(product)) {
         await interaction.reply({
-          content: `❌ **${product.name}** no tiene materiales configurados y no se puede vender todavía.`,
+          content: `❌ **${product.name}** no tiene una definición de inventario válida y no se puede vender todavía.`,
           ephemeral: true,
         });
         return;
@@ -1209,14 +1219,17 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const unitPrice = priceRecord.price;
       const lineTotal = unitPrice.mul(qty);
+      const contentsSummary = buildProductContentsSummary(product);
 
       // Si el producto ya está en el carrito, sumar la cantidad
       const existing = cart.items.find(i => i.productId === product.id);
       if (existing) {
         existing.quantity  += qty;
         existing.lineTotal  = existing.unitPrice.mul(existing.quantity);
+        existing.contentsSummary ??= contentsSummary;
       } else {
         cart.items.push({
+          contentsSummary,
           productId:   product.id,
           productName: product.name,
           productType: product.productType,

@@ -25,6 +25,7 @@ function getSpreadsheetId(): string {
 
 export const SHOP_TABS = {
   categorias:  'Categorías',
+  materiales:  'Materiales',
   productos:   'Productos',
   componentes: 'Componentes',
   descuentos:  'Descuentos',
@@ -37,10 +38,11 @@ export type ShopTab = keyof typeof SHOP_TABS;
 
 export const SHOP_HEADERS: Record<ShopTab, string[]> = {
   categorias:  ['Clave Categoría', 'Categoría', 'Imagen Categoría', 'Clave Subcategoría', 'Subcategoría', 'Imagen Subcategoría'],
-  productos:   ['Nombre', 'Tipo', 'Categoría', 'Subcategoría', 'Precio ($)', 'Descripción', 'Activo'],
-  componentes: ['Producto', 'Material', 'Cantidad'],
+  materiales:  ['Material', 'Unidad visual', 'Stack Max', 'Activo'],
+  productos:   ['Nombre', 'Tipo', 'Categoría', 'Subcategoría', 'Precio ($)', 'Material Base', 'Presentación', 'Cantidad Base', 'Etiqueta Presentación', 'Descripción', 'Activo'],
+  componentes: ['Producto', 'Material', 'Cantidad Base'],
   descuentos:  ['ID', 'Nombre', 'Tipo Política', 'Producto', 'Cantidad Mínima', 'Scope', 'Tipo Descuento', 'Valor', 'Prioridad', 'Inicio', 'Fin', 'Activo', 'Descripción'],
-  inventario:  ['Material', 'Unidad', 'Stock Total', 'Reservado', 'Disponible', 'Alerta Mínima'],
+  inventario:  ['Material', 'Unidad visual', 'Stack Max', 'Stock Base', 'Reservado Base', 'Disponible Base', 'Alerta Mínima'],
   ventas:      ['Fecha', 'Código', 'Cliente (Discord)', 'Productos', 'Total ($)'],
   pedidos:     ['Código', 'Estado', 'Cliente', 'Productos', 'Total ($)', 'Creado'],
 };
@@ -113,6 +115,86 @@ export async function appendRow(tab: ShopTab, row: string[]): Promise<void> {
  * Si se actualiza la taxonomía y se re-exporta Categorías, los dropdowns reflejan
  * los nuevos valores automáticamente sin necesidad de hardcodear las listas.
  */
+function makeValidationRange(sheetId: number, columnIndex: number) {
+  return {
+    sheetId,
+    startRowIndex: 1,
+    endRowIndex: 1000,
+    startColumnIndex: columnIndex,
+    endColumnIndex: columnIndex + 1,
+  };
+}
+
+function makeListValidationRequest(
+  sheetId: number,
+  columnIndex: number,
+  values: string[],
+): sheets_v4.Schema$Request {
+  return {
+    setDataValidation: {
+      range: makeValidationRange(sheetId, columnIndex),
+      rule: {
+        condition:    { type: 'ONE_OF_LIST', values: values.map(value => ({ userEnteredValue: value })) },
+        showCustomUi: true,
+        strict:       false,
+      },
+    },
+  };
+}
+
+function makeRangeValidationRequest(
+  targetSheetId: number,
+  targetColumnIndex: number,
+  rangeRef: string,
+): sheets_v4.Schema$Request {
+  return {
+    setDataValidation: {
+      range: makeValidationRange(targetSheetId, targetColumnIndex),
+      rule: {
+        condition:    { type: 'ONE_OF_RANGE', values: [{ userEnteredValue: `=${rangeRef}` }] },
+        showCustomUi: true,
+        strict:       false,
+      },
+    },
+  };
+}
+
+async function getSheetIds(
+  api: ReturnType<typeof google.sheets>,
+  spreadsheetId: string,
+): Promise<Record<string, number | null>> {
+  const meta = await api.spreadsheets.get({ spreadsheetId, fields: 'sheets.properties' });
+  const sheets = meta.data.sheets ?? [];
+
+  return Object.fromEntries(
+    Object.values(SHOP_TABS).map(name => [
+      name,
+      sheets.find(sheet => sheet.properties?.title === name)?.properties?.sheetId ?? null,
+    ]),
+  );
+}
+
+export async function applyMaterialesDropdowns(): Promise<void> {
+  const auth = await getAuth();
+  const api = google.sheets({ version: 'v4', auth });
+  const id = getSpreadsheetId();
+
+  await ensureTab(api, id, SHOP_TABS.materiales);
+
+  const sheetIds = await getSheetIds(api, id);
+  const materialesSheetId = sheetIds[SHOP_TABS.materiales] ?? 0;
+
+  await api.spreadsheets.batchUpdate({
+    spreadsheetId: id,
+    requestBody: {
+      requests: [
+        makeListValidationRequest(materialesSheetId, 2, ['1', '16', '64']),
+        makeListValidationRequest(materialesSheetId, 3, ['TRUE', 'FALSE']),
+      ],
+    },
+  });
+}
+
 export async function applyProductosDropdowns(
   categoryKeys:    string[],
   subcategoryKeys: string[],
@@ -123,66 +205,75 @@ export async function applyProductosDropdowns(
 
   await ensureTab(api, id, SHOP_TABS.productos);
 
-  // Obtener sheetIds numéricos de Productos y Categorías
-  const meta = await api.spreadsheets.get({ spreadsheetId: id, fields: 'sheets.properties' });
-  const sheets = meta.data.sheets ?? [];
-
-  const productosSheetId  = sheets.find(s => s.properties?.title === SHOP_TABS.productos)?.properties?.sheetId  ?? 0;
-  const categoriasSheetId = sheets.find(s => s.properties?.title === SHOP_TABS.categorias)?.properties?.sheetId ?? null;
+  const sheetIds = await getSheetIds(api, id);
+  const productosSheetId = sheetIds[SHOP_TABS.productos] ?? 0;
+  const categoriasSheetId = sheetIds[SHOP_TABS.categorias];
+  const materialesSheetId = sheetIds[SHOP_TABS.materiales];
 
   // Si el tab Categorías existe, usamos referencias a rango para que sea dinámico.
   // Si no, caemos en lista estática como respaldo.
-  const totalRows = Math.max(categoryKeys.length, subcategoryKeys.length) + 1; // +1 por la cabecera
+  const totalRows = Math.max(categoryKeys.length, subcategoryKeys.length, 1) + 1; // +1 por la cabecera
 
-  function makeRangeValidation(
-    productosCol: number,   // columna en Productos (0-indexed)
-    sourceCol:    number,   // columna en Categorías (0-indexed: 0=claveCateg, 3=claveSub)
-    staticValues: string[], // fallback si no existe el tab Categorías
-  ): sheets_v4.Schema$Request {
-    const range = {
-      sheetId:          productosSheetId,
-      startRowIndex:    1,
-      endRowIndex:      1000,
-      startColumnIndex: productosCol,
-      endColumnIndex:   productosCol + 1,
-    };
+  const requests: sheets_v4.Schema$Request[] = [
+    makeListValidationRequest(productosSheetId, 1, ['material', 'kit', 'servicio']),
+    makeListValidationRequest(productosSheetId, 6, ['unidad', 'stack', 'cofre', 'cofre_doble', 'personalizada']),
+    makeListValidationRequest(productosSheetId, 10, ['TRUE', 'FALSE']),
+  ];
 
-    if (categoriasSheetId !== null) {
-      // ONE_OF_RANGE referencia el tab Categorías directamente
-      const colLetter = sourceCol === 0 ? 'A' : 'D';
-      const rangeRef  = `'${SHOP_TABS.categorias}'!${colLetter}2:${colLetter}${totalRows}`;
-      return {
-        setDataValidation: {
-          range,
-          rule: {
-            condition:    { type: 'ONE_OF_RANGE', values: [{ userEnteredValue: `=${rangeRef}` }] },
-            showCustomUi: true,
-            strict:       false,
-          },
-        },
-      };
-    }
+  if (categoriasSheetId !== null) {
+    requests.push(
+      makeRangeValidationRequest(productosSheetId, 2, `'${SHOP_TABS.categorias}'!A2:A${totalRows}`),
+      makeRangeValidationRequest(productosSheetId, 3, `'${SHOP_TABS.categorias}'!D2:D${totalRows}`),
+    );
+  } else {
+    requests.push(
+      makeListValidationRequest(productosSheetId, 2, categoryKeys),
+      makeListValidationRequest(productosSheetId, 3, subcategoryKeys),
+    );
+  }
 
-    // Fallback: lista estática
-    return {
-      setDataValidation: {
-        range,
-        rule: {
-          condition:    { type: 'ONE_OF_LIST', values: staticValues.map(v => ({ userEnteredValue: v })) },
-          showCustomUi: true,
-          strict:       false,
-        },
-      },
-    };
+  if (materialesSheetId !== null) {
+    requests.push(
+      makeRangeValidationRequest(productosSheetId, 5, `'${SHOP_TABS.materiales}'!A2:A1000`),
+    );
   }
 
   await api.spreadsheets.batchUpdate({
     spreadsheetId: id,
     requestBody:   {
-      requests: [
-        makeRangeValidation(2, 0, categoryKeys),    // columna C → clave categoría
-        makeRangeValidation(3, 3, subcategoryKeys), // columna D → clave subcategoría
-      ],
+      requests,
+    },
+  });
+}
+
+export async function applyDescuentosDropdowns(): Promise<void> {
+  const auth = await getAuth();
+  const api = google.sheets({ version: 'v4', auth });
+  const id = getSpreadsheetId();
+
+  await ensureTab(api, id, SHOP_TABS.descuentos);
+
+  const sheetIds = await getSheetIds(api, id);
+  const descuentosSheetId = sheetIds[SHOP_TABS.descuentos] ?? 0;
+  const productosSheetId = sheetIds[SHOP_TABS.productos];
+
+  const requests: sheets_v4.Schema$Request[] = [
+    makeListValidationRequest(descuentosSheetId, 2, ['seasonal', 'volume']),
+    makeListValidationRequest(descuentosSheetId, 5, ['order', 'item']),
+    makeListValidationRequest(descuentosSheetId, 6, ['percent', 'fixed']),
+    makeListValidationRequest(descuentosSheetId, 11, ['TRUE', 'FALSE']),
+  ];
+
+  if (productosSheetId !== null) {
+    requests.push(
+      makeRangeValidationRequest(descuentosSheetId, 3, `'${SHOP_TABS.productos}'!A2:A1000`),
+    );
+  }
+
+  await api.spreadsheets.batchUpdate({
+    spreadsheetId: id,
+    requestBody: {
+      requests,
     },
   });
 }

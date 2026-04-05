@@ -10,11 +10,17 @@ import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import { upsertShopUser } from '../../database/shop-user.js';
-import { syncProductosToSheet, syncInventarioToSheet } from '../../shop/sync.js';
+import { syncComponentesToSheet, syncProductosToSheet, syncInventarioToSheet } from '../../shop/sync.js';
 import {
   buildCatalogView,
   queryCatalogProducts,
 } from '../../shop/catalog.js';
+import {
+  PRESENTATION_TYPE_CHOICES,
+  hasProductInventoryDefinition,
+  resolvePresentationLabel,
+  resolvePresentationQuantity,
+} from '../../shop/quantities.js';
 import {
   assertShopTaxonomy,
   getCategoryDefinition,
@@ -33,6 +39,44 @@ function hasStaffPermission(
     return member.roles.cache.has(staffRoleId);
   }
   return false;
+}
+
+async function resolveMaterialPresentation(params: {
+  cantidadBase?: number | null;
+  etiquetaPresentacion?: string | null;
+  guildId: string;
+  materialName?: string | null;
+  presentationType?: string | null;
+}) {
+  if (!params.materialName) {
+    return null;
+  }
+
+  const material = await prisma.shopMaterial.findUnique({
+    where: { guildId_name: { guildId: params.guildId, name: params.materialName } },
+  });
+
+  if (!material) {
+    throw new Error(`Material **${params.materialName}** no encontrado.`);
+  }
+
+  const presentationType = (params.presentationType ?? 'unit') as typeof PRESENTATION_TYPE_CHOICES[number]['value'];
+  const presentationQuantity = resolvePresentationQuantity({
+    customQuantity: params.cantidadBase ?? null,
+    presentationType,
+    stackSize: material.stackSize,
+  });
+
+  return {
+    material,
+    presentationLabel: params.etiquetaPresentacion?.trim() || resolvePresentationLabel({
+      presentationQuantity,
+      presentationType,
+      stackSize: material.stackSize,
+    }),
+    presentationQuantity,
+    presentationType,
+  };
 }
 
 export const tiendaCommand: Command = {
@@ -57,6 +101,17 @@ export const tiendaCommand: Command = {
             .setName('unidad')
             .setDescription('Unidad de medida (por defecto: item)')
             .setRequired(false),
+        )
+        .addIntegerOption(opt =>
+          opt
+            .setName('stack_max')
+            .setDescription('Máximo stack del material')
+            .setRequired(false)
+            .addChoices(
+              { name: '1', value: 1 },
+              { name: '16', value: 16 },
+              { name: '64', value: 64 },
+            ),
         ),
     )
     .addSubcommand(sub =>
@@ -69,6 +124,35 @@ export const tiendaCommand: Command = {
             .setDescription('Nombre del material')
             .setRequired(true)
             .setAutocomplete(true),
+        ),
+    )
+    .addSubcommand(sub =>
+      sub
+        .setName('material-configurar')
+        .setDescription('[Staff] Ajusta la unidad visual y el stack máximo de un material')
+        .addStringOption(opt =>
+          opt
+            .setName('nombre')
+            .setDescription('Nombre del material')
+            .setRequired(true)
+            .setAutocomplete(true),
+        )
+        .addStringOption(opt =>
+          opt
+            .setName('unidad')
+            .setDescription('Unidad visual (ej: item, bloque, poción)')
+            .setRequired(false),
+        )
+        .addIntegerOption(opt =>
+          opt
+            .setName('stack_max')
+            .setDescription('Máximo stack del material')
+            .setRequired(false)
+            .addChoices(
+              { name: '1', value: 1 },
+              { name: '16', value: 16 },
+              { name: '64', value: 64 },
+            ),
         ),
     )
     .addSubcommand(sub =>
@@ -115,6 +199,76 @@ export const tiendaCommand: Command = {
           opt
             .setName('descripcion')
             .setDescription('Descripción opcional del producto')
+            .setRequired(false),
+        )
+        .addStringOption(opt =>
+          opt
+            .setName('material_base')
+            .setDescription('Material base si esta oferta vende un material directamente')
+            .setRequired(false)
+            .setAutocomplete(true),
+        )
+        .addStringOption(opt =>
+          opt
+            .setName('presentacion')
+            .setDescription('Cómo se vende el material base')
+            .setRequired(false)
+            .addChoices(
+              ...PRESENTATION_TYPE_CHOICES.map(choice => ({ name: choice.label, value: choice.value })),
+            ),
+        )
+        .addIntegerOption(opt =>
+          opt
+            .setName('cantidad_base')
+            .setDescription('Cantidad base si la presentación es personalizada')
+            .setRequired(false)
+            .setMinValue(1),
+        )
+        .addStringOption(opt =>
+          opt
+            .setName('etiqueta_presentacion')
+            .setDescription('Texto visible para la presentación (opcional)')
+            .setRequired(false),
+        ),
+    )
+    .addSubcommand(sub =>
+      sub
+        .setName('producto-presentacion')
+        .setDescription('[Staff] Configura una presentación estandarizada para una oferta de material')
+        .addStringOption(opt =>
+          opt
+            .setName('producto')
+            .setDescription('Nombre del producto')
+            .setRequired(true)
+            .setAutocomplete(true),
+        )
+        .addStringOption(opt =>
+          opt
+            .setName('material_base')
+            .setDescription('Material base que representa la oferta')
+            .setRequired(true)
+            .setAutocomplete(true),
+        )
+        .addStringOption(opt =>
+          opt
+            .setName('presentacion')
+            .setDescription('Forma de venta')
+            .setRequired(true)
+            .addChoices(
+              ...PRESENTATION_TYPE_CHOICES.map(choice => ({ name: choice.label, value: choice.value })),
+            ),
+        )
+        .addIntegerOption(opt =>
+          opt
+            .setName('cantidad_base')
+            .setDescription('Cantidad base si la presentación es personalizada')
+            .setRequired(false)
+            .setMinValue(1),
+        )
+        .addStringOption(opt =>
+          opt
+            .setName('etiqueta_presentacion')
+            .setDescription('Texto visible para la presentación (opcional)')
             .setRequired(false),
         ),
     )
@@ -283,7 +437,7 @@ export const tiendaCommand: Command = {
 
     // 'nombre' autocomplete → materiales (solo en subcomandos que lo necesitan)
     // 'material' autocomplete → materiales
-    if (focused.name === 'nombre' || focused.name === 'material') {
+    if (focused.name === 'nombre' || focused.name === 'material' || focused.name === 'material_base') {
       const materials = await prisma.shopMaterial.findMany({
         where:  { guildId, name: { contains: value, mode: 'insensitive' } },
         take:   25,
@@ -349,6 +503,7 @@ export const tiendaCommand: Command = {
     if (sub === 'material-agregar') {
       const nombre = interaction.options.getString('nombre', true).trim();
       const unidad = interaction.options.getString('unidad') ?? 'item';
+      const stackMax = interaction.options.getInteger('stack_max') ?? 64;
 
       const existing = await prisma.shopMaterial.findUnique({
         where: { guildId_name: { guildId, name: nombre } },
@@ -363,13 +518,14 @@ export const tiendaCommand: Command = {
           guildId,
           name:     nombre,
           baseUnit: unidad,
+          stackSize: stackMax,
           inventory: { create: { guildId } },
         },
       });
 
       void syncInventarioToSheet(guildId);
       await interaction.editReply(
-        `✅ Material **${nombre}** registrado (unidad: \`${unidad}\`, stock inicial: 0).\n` +
+        `✅ Material **${nombre}** registrado (unidad: \`${unidad}\`, stack max: \`${stackMax}\`, stock inicial: 0).\n` +
         `Usa \`/stock sumar\` para agregar stock.`,
       );
       return;
@@ -383,6 +539,7 @@ export const tiendaCommand: Command = {
         where:   { guildId_name: { guildId, name: nombre } },
         include: {
           components: true,
+          directProducts: { take: 1 },
           inventory: true,
           movements: { take: 1 },
           withdrawals: { take: 1 },
@@ -395,6 +552,12 @@ export const tiendaCommand: Command = {
       if (material.components.length > 0) {
         await interaction.editReply(
           `❌ **${nombre}** es componente de ${material.components.length} producto(s). Elimínalos primero.`,
+        );
+        return;
+      }
+      if (material.directProducts.length > 0) {
+        await interaction.editReply(
+          `❌ **${nombre}** está configurado como material base de una oferta en la tienda. Elimínala o cambia su presentación primero.`,
         );
         return;
       }
@@ -423,12 +586,51 @@ export const tiendaCommand: Command = {
       return;
     }
 
+    // ── /tienda material-configurar ─────────────────────────────────────────
+    if (sub === 'material-configurar') {
+      const nombre = interaction.options.getString('nombre', true);
+      const unidad = interaction.options.getString('unidad');
+      const stackMax = interaction.options.getInteger('stack_max');
+
+      if (!unidad && !stackMax) {
+        await interaction.editReply('❌ Debes indicar al menos `unidad` o `stack_max`.');
+        return;
+      }
+
+      const material = await prisma.shopMaterial.findUnique({
+        where: { guildId_name: { guildId, name: nombre } },
+      });
+
+      if (!material) {
+        await interaction.editReply(`❌ No existe un material llamado **${nombre}**.`);
+        return;
+      }
+
+      await prisma.shopMaterial.update({
+        where: { id: material.id },
+        data: {
+          baseUnit: unidad ?? material.baseUnit,
+          stackSize: stackMax ?? material.stackSize,
+        },
+      });
+
+      void syncInventarioToSheet(guildId);
+      await interaction.editReply(
+        `✅ **${nombre}** actualizado.\nUnidad: \`${unidad ?? material.baseUnit}\` · Stack max: \`${stackMax ?? material.stackSize}\``,
+      );
+      return;
+    }
+
     // ── /tienda producto-agregar ─────────────────────────────────────────────
     if (sub === 'producto-agregar') {
       const nombre     = interaction.options.getString('nombre', true).trim();
       const tipo       = interaction.options.getString('tipo', true);
       const precio     = interaction.options.getNumber('precio', true);
       const descripcion = interaction.options.getString('descripcion') ?? null;
+      const materialBaseName = interaction.options.getString('material_base');
+      const presentationType = interaction.options.getString('presentacion');
+      const cantidadBase = interaction.options.getInteger('cantidad_base');
+      const etiquetaPresentacion = interaction.options.getString('etiqueta_presentacion');
       const categoriaRaw = interaction.options.getString('categoria', true);
       const subcategoriaRaw = interaction.options.getString('subcategoria', true);
       let taxonomy: ReturnType<typeof assertShopTaxonomy>;
@@ -449,6 +651,25 @@ export const tiendaCommand: Command = {
         return;
       }
 
+      if (tipo === 'service' && materialBaseName) {
+        await interaction.editReply('❌ Un servicio no debe tener material base ni presentación de inventario.');
+        return;
+      }
+
+      let presentationConfig = null;
+      try {
+        presentationConfig = await resolveMaterialPresentation({
+          cantidadBase,
+          etiquetaPresentacion,
+          guildId,
+          materialName: materialBaseName,
+          presentationType,
+        });
+      } catch (err) {
+        await interaction.editReply(`❌ ${err instanceof Error ? err.message : 'Presentación inválida.'}`);
+        return;
+      }
+
       await prisma.shopProduct.create({
         data: {
           guildId,
@@ -457,7 +678,21 @@ export const tiendaCommand: Command = {
           category:    taxonomy.category,
           subcategory: taxonomy.subcategory,
           description: descripcion,
-          isActive: tipo === 'service',
+          baseMaterialId: presentationConfig?.material.id ?? null,
+          presentationType: presentationConfig?.presentationType ?? 'custom',
+          presentationQuantity: presentationConfig?.presentationQuantity ?? 1,
+          presentationLabel: presentationConfig?.presentationLabel ?? null,
+          isActive: tipo === 'service' || !!presentationConfig,
+          ...(presentationConfig
+            ? {
+                components: {
+                  create: {
+                    materialId: presentationConfig.material.id,
+                    quantityRequired: presentationConfig.presentationQuantity,
+                  },
+                },
+              }
+            : {}),
           prices: {
             create: { price: precio, changedByUserId: staffUser.id },
           },
@@ -465,14 +700,124 @@ export const tiendaCommand: Command = {
       });
 
       void syncProductosToSheet(guildId);
+      if (presentationConfig) {
+        void syncComponentesToSheet(guildId);
+      }
       await interaction.editReply(
         `✅ Producto **${nombre}** creado a **${precio} $**.\n` +
         `Clasificación: **${categoryLabel} / ${subcategoryLabel}**.\n` +
         (
           tipo === 'service'
             ? 'Quedó activo porque es un servicio sin inventario base.'
-            : 'Quedó inactivo hasta que definas sus materiales y lo actives.'
+            : presentationConfig
+              ? `Quedó activo como oferta de **${presentationConfig.presentationLabel}** de **${presentationConfig.material.name}**.`
+              : 'Quedó inactivo hasta que definas sus materiales y lo actives.'
         ),
+      );
+      return;
+    }
+
+    // ── /tienda producto-presentacion ───────────────────────────────────────
+    if (sub === 'producto-presentacion') {
+      const nombreProducto = interaction.options.getString('producto', true);
+      const materialBaseName = interaction.options.getString('material_base', true);
+      const presentationType = interaction.options.getString('presentacion', true);
+      const cantidadBase = interaction.options.getInteger('cantidad_base');
+      const etiquetaPresentacion = interaction.options.getString('etiqueta_presentacion');
+
+      const product = await prisma.shopProduct.findUnique({
+        where: {
+          guildId_name: { guildId, name: nombreProducto },
+        },
+      });
+
+      if (!product) {
+        await interaction.editReply(`❌ Producto **${nombreProducto}** no encontrado.`);
+        return;
+      }
+
+      if (product.productType === 'service') {
+        await interaction.editReply('❌ Un servicio no debe configurarse como oferta de material.');
+        return;
+      }
+
+      const activeOrders = await prisma.shopOrderItem.count({
+        where: {
+          productId: product.id,
+          order: {
+            guildId,
+            status: { in: ['pending', 'accepted'] },
+          },
+        },
+      });
+      if (activeOrders > 0) {
+        await interaction.editReply(
+          `❌ **${nombreProducto}** tiene pedidos activos. No cambies su presentación hasta que se resuelvan.`,
+        );
+        return;
+      }
+
+      let presentationConfig;
+      try {
+        presentationConfig = await resolveMaterialPresentation({
+          cantidadBase,
+          etiquetaPresentacion,
+          guildId,
+          materialName: materialBaseName,
+          presentationType,
+        });
+      } catch (err) {
+        await interaction.editReply(`❌ ${err instanceof Error ? err.message : 'Presentación inválida.'}`);
+        return;
+      }
+
+      if (!presentationConfig) {
+        await interaction.editReply('❌ No se pudo resolver la presentación solicitada.');
+        return;
+      }
+
+      await prisma.$transaction(async tx => {
+        if (product.baseMaterialId && product.baseMaterialId !== presentationConfig.material.id) {
+          await tx.shopProductComponent.deleteMany({
+            where: {
+              productId: product.id,
+              materialId: product.baseMaterialId,
+            },
+          });
+        }
+
+        await tx.shopProduct.update({
+          where: { id: product.id },
+          data: {
+            baseMaterialId: presentationConfig.material.id,
+            isActive: true,
+            presentationType: presentationConfig.presentationType,
+            presentationQuantity: presentationConfig.presentationQuantity,
+            presentationLabel: presentationConfig.presentationLabel,
+          },
+        });
+
+        await tx.shopProductComponent.upsert({
+          where: {
+            productId_materialId: {
+              productId: product.id,
+              materialId: presentationConfig.material.id,
+            },
+          },
+          update: { quantityRequired: presentationConfig.presentationQuantity },
+          create: {
+            productId: product.id,
+            materialId: presentationConfig.material.id,
+            quantityRequired: presentationConfig.presentationQuantity,
+          },
+        });
+      });
+
+      void syncProductosToSheet(guildId);
+      void syncComponentesToSheet(guildId);
+      await interaction.editReply(
+        `✅ **${nombreProducto}** ahora vende **${presentationConfig.presentationLabel}** de **${presentationConfig.material.name}**.\n` +
+        `Consumo base: ${presentationConfig.presentationQuantity} ${presentationConfig.material.baseUnit}.`,
       );
       return;
     }
@@ -534,6 +879,13 @@ export const tiendaCommand: Command = {
         return;
       }
 
+      if (product.baseMaterialId === material.id) {
+        await interaction.editReply(
+          `❌ **${nombreProducto}** ya usa **${nombreMaterial}** como material base estandarizado. Usa \`/tienda producto-presentacion\` para cambiar esa cantidad.`,
+        );
+        return;
+      }
+
       const activeOrders = await prisma.shopOrderItem.count({
         where: {
           productId: product.id,
@@ -559,6 +911,7 @@ export const tiendaCommand: Command = {
       await interaction.editReply(
         `✅ **${nombreProducto}** requiere **${cantidad} x ${nombreMaterial}**.`,
       );
+      void syncComponentesToSheet(guildId);
       return;
     }
 
@@ -614,9 +967,9 @@ export const tiendaCommand: Command = {
         );
         return;
       }
-      if (activar && product.productType !== 'service' && product.components.length === 0) {
+      if (activar && !hasProductInventoryDefinition(product)) {
         await interaction.editReply(
-          `❌ **${nombreProducto}** no se puede activar porque no tiene materiales configurados.`,
+          `❌ **${nombreProducto}** no se puede activar porque no tiene una definición de inventario configurada.`,
         );
         return;
       }

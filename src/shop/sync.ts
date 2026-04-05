@@ -10,13 +10,26 @@
 
 import { prisma } from '../database/prisma.js';
 import { logger } from '../core/logger.js';
-import { writeTab, appendRow, readTab, applyProductosDropdowns } from '../utils/sheets-shop.js';
+import {
+  writeTab,
+  appendRow,
+  readTab,
+  applyDescuentosDropdowns,
+  applyMaterialesDropdowns,
+  applyProductosDropdowns,
+} from '../utils/sheets-shop.js';
 import {
   coerceShopTaxonomy,
   getTaxonomy,
   loadTaxonomy,
   parseTaxonomyRows,
 } from './taxonomy.js';
+import {
+  normalizeStackSize,
+  resolvePresentationLabel,
+  resolvePresentationQuantity,
+  type PresentationType,
+} from './quantities.js';
 
 function parseSheetBoolean(value: string | undefined, fallback = true): boolean {
   const normalized = value?.trim().toUpperCase();
@@ -29,6 +42,179 @@ function parseOptionalDate(value: string | undefined): Date | null {
   if (!normalized) return null;
   const parsed = new Date(normalized);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function parseOptionalInteger(value: string | undefined): number | null {
+  const normalized = value?.trim();
+  if (!normalized) return null;
+  const parsed = parseInt(normalized, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeDisplayUnit(value: string | null | undefined): string {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return 'unidad';
+
+  if ([
+    'item',
+    'unit',
+    'unidad',
+    'stack',
+    'chest',
+    'cofre',
+    'double_chest',
+    'cofre_doble',
+  ].includes(normalized)) {
+    return 'unidad';
+  }
+
+  return value?.trim() || 'unidad';
+}
+
+function mapPresentationTypeToSheet(value: string | null | undefined): string {
+  switch (value) {
+    case 'unit':
+      return 'unidad';
+    case 'stack':
+      return 'stack';
+    case 'chest':
+      return 'cofre';
+    case 'double_chest':
+      return 'cofre_doble';
+    case 'custom':
+    default:
+      return 'personalizada';
+  }
+}
+
+function parsePresentationTypeFromSheet(value: string | undefined): PresentationType {
+  const normalized = value?.trim().toLowerCase();
+  switch (normalized) {
+    case 'unidad':
+    case 'unit':
+      return 'unit';
+    case 'stack':
+      return 'stack';
+    case 'cofre':
+    case 'chest':
+      return 'chest';
+    case 'cofre_doble':
+    case 'double_chest':
+      return 'double_chest';
+    case 'personalizada':
+    case 'custom':
+      return 'custom';
+    default:
+      return 'custom';
+  }
+}
+
+function inferPresentationTypeFromQuantity(
+  quantity: number,
+  stackSize: number,
+): PresentationType {
+  const normalizedStackSize = normalizeStackSize(stackSize);
+
+  if (quantity === 1) return 'unit';
+  if (quantity === normalizedStackSize) return 'stack';
+  if (quantity === normalizedStackSize * 27) return 'chest';
+  if (quantity === normalizedStackSize * 54) return 'double_chest';
+  return 'custom';
+}
+
+function getSheetProductType(product: {
+  productType: string;
+}, hasDirectMaterial: boolean): string {
+  if (product.productType === 'service') return 'servicio';
+  if (product.productType === 'kit') return 'kit';
+  if (hasDirectMaterial) return 'material';
+  return product.productType;
+}
+
+function resolveInternalProductType(params: {
+  hasBaseMaterial: boolean;
+  presentationType: PresentationType;
+  rawType: string;
+}): string {
+  const normalized = params.rawType.trim().toLowerCase();
+
+  if (normalized === 'servicio' || normalized === 'service') return 'service';
+  if (normalized === 'kit') return 'kit';
+  if (normalized === 'single' || normalized === 'bulk') return normalized;
+
+  if (normalized === 'material') {
+    if (!params.hasBaseMaterial) return 'single';
+    return params.presentationType === 'unit' ? 'single' : 'bulk';
+  }
+
+  if (params.hasBaseMaterial) {
+    return params.presentationType === 'unit' ? 'single' : 'bulk';
+  }
+
+  return 'single';
+}
+
+function inferDirectProductFromComponents(product: {
+  baseMaterial: {
+    name: string;
+    stackSize: number;
+  } | null;
+  baseMaterialId: string | null;
+  components: Array<{
+    material: {
+      id: string;
+      name: string;
+      stackSize: number;
+    };
+    quantityRequired: number;
+  }>;
+  productType: string;
+  presentationLabel: string | null;
+  presentationQuantity: number;
+  presentationType: string;
+}): {
+  materialName: string;
+  presentationLabel: string;
+  presentationQuantity: number;
+  presentationType: PresentationType;
+} | null {
+  if (product.baseMaterialId && product.baseMaterial) {
+    const presentationType = product.presentationType as PresentationType;
+    return {
+      materialName: product.baseMaterial.name,
+      presentationLabel: product.presentationLabel ?? resolvePresentationLabel({
+        presentationQuantity: product.presentationQuantity,
+        presentationType,
+        stackSize: product.baseMaterial.stackSize,
+      }),
+      presentationQuantity: product.presentationQuantity,
+      presentationType,
+    };
+  }
+
+  if (product.productType === 'kit' || product.productType === 'service') {
+    return null;
+  }
+
+  if (product.components.length !== 1) return null;
+
+  const component = product.components[0];
+  if (!component) return null;
+  const presentationType = inferPresentationTypeFromQuantity(
+    component.quantityRequired,
+    component.material.stackSize,
+  );
+
+  return {
+    materialName: component.material.name,
+    presentationLabel: product.presentationLabel ?? resolvePresentationLabel({
+      presentationQuantity: component.quantityRequired,
+      presentationType,
+      stackSize: component.material.stackSize,
+    }),
+    presentationQuantity: component.quantityRequired,
+    presentationType,
+  };
 }
 
 /** Devuelve true si Google Sheets está configurado en el entorno. */
@@ -99,26 +285,75 @@ export async function importCategoriasFromSheet(): Promise<ImportSummary> {
   return summary;
 }
 
+export async function syncMaterialesToSheet(guildId: string): Promise<void> {
+  if (!sheetsEnabled()) return;
+  try {
+    const materials = await prisma.shopMaterial.findMany({
+      where: { guildId },
+      orderBy: { name: 'asc' },
+    });
+
+    const rows = materials.map(material => [
+      material.name,
+      normalizeDisplayUnit(material.baseUnit),
+      String(material.stackSize),
+      material.isActive ? 'TRUE' : 'FALSE',
+    ]);
+
+    await writeTab('materiales', rows);
+    await applyMaterialesDropdowns();
+    const taxonomy = getTaxonomy();
+    await applyProductosDropdowns(
+      taxonomy.map(category => category.key),
+      taxonomy.flatMap(category => category.subcategories.map(subcategory => subcategory.key)),
+    );
+  } catch (err) {
+    logger.warn({ err }, '[sync] Error exportando materiales a Sheets');
+  }
+}
+
 export async function syncProductosToSheet(guildId: string): Promise<void> {
   if (!sheetsEnabled()) return;
   try {
     const products = await prisma.shopProduct.findMany({
-      where:   { guildId },
-      include: { prices: { where: { validTo: null }, take: 1 } },
+      where: { guildId },
+      include: {
+        baseMaterial: true,
+        components: {
+          include: {
+            material: true,
+          },
+        },
+        prices: { where: { validTo: null }, take: 1 },
+      },
       orderBy: { name: 'asc' },
     });
 
-    const rows = products.map(p => [
-      p.name,
-      p.productType,
-      p.category,
-      p.subcategory,
-      String(p.prices[0]?.price ?? 0),
-      p.description ?? '',
-      p.isActive ? 'TRUE' : 'FALSE',
-    ]);
+    const rows = products.map(product => {
+      const directConfig = inferDirectProductFromComponents(product);
+
+      return [
+        product.name,
+        getSheetProductType(product, !!directConfig),
+        product.category,
+        product.subcategory,
+        String(product.prices[0]?.price ?? 0),
+        directConfig?.materialName ?? '',
+        directConfig ? mapPresentationTypeToSheet(directConfig.presentationType) : '',
+        directConfig ? String(directConfig.presentationQuantity) : '',
+        directConfig?.presentationLabel ?? '',
+        product.description ?? '',
+        product.isActive ? 'TRUE' : 'FALSE',
+      ];
+    });
 
     await writeTab('productos', rows);
+    const taxonomy = getTaxonomy();
+    await applyProductosDropdowns(
+      taxonomy.map(category => category.key),
+      taxonomy.flatMap(category => category.subcategories.map(subcategory => subcategory.key)),
+    );
+    await applyDescuentosDropdowns();
   } catch (err) {
     logger.warn({ err }, '[sync] Error exportando productos a Sheets');
   }
@@ -127,25 +362,39 @@ export async function syncProductosToSheet(guildId: string): Promise<void> {
 export async function syncComponentesToSheet(guildId: string): Promise<void> {
   if (!sheetsEnabled()) return;
   try {
-    const components = await prisma.shopProductComponent.findMany({
-      where: {
-        product: { guildId },
-      },
+    const products = await prisma.shopProduct.findMany({
+      where: { guildId },
       include: {
-        material: true,
-        product: true,
+        components: {
+          include: {
+            material: true,
+          },
+          orderBy: {
+            material: {
+              name: 'asc',
+            },
+          },
+        },
       },
-      orderBy: [
-        { product: { name: 'asc' } },
-        { material: { name: 'asc' } },
-      ],
+      orderBy: { name: 'asc' },
     });
 
-    const rows = components.map(component => [
-      component.product.name,
-      component.material.name,
-      String(component.quantityRequired),
-    ]);
+    const rows = products.flatMap(product => {
+      const inferredDirect =
+        !product.baseMaterialId
+        && product.productType !== 'kit'
+        && product.productType !== 'service'
+        && product.components.length === 1;
+
+      return product.components
+        .filter(component => component.materialId !== product.baseMaterialId)
+        .filter(() => !inferredDirect)
+        .map(component => [
+          product.name,
+          component.material.name,
+          String(component.quantityRequired),
+        ]);
+    });
 
     await writeTab('componentes', rows);
   } catch (err) {
@@ -184,6 +433,7 @@ export async function syncDescuentosToSheet(guildId: string): Promise<void> {
     ]);
 
     await writeTab('descuentos', rows);
+    await applyDescuentosDropdowns();
   } catch (err) {
     logger.warn({ err }, '[sync] Error exportando descuentos a Sheets');
   }
@@ -202,7 +452,8 @@ export async function syncInventarioToSheet(guildId: string): Promise<void> {
       const disponible = inv.currentStock - inv.reservedStock;
       return [
         inv.material.name,
-        inv.material.baseUnit,
+        normalizeDisplayUnit(inv.material.baseUnit),
+        String(inv.material.stackSize),
         String(inv.currentStock),
         String(inv.reservedStock),
         String(disponible),
@@ -312,6 +563,81 @@ export interface ImportSummary {
   notFoundNames?: string[];
 }
 
+export async function importMaterialesFromSheet(
+  guildId: string,
+): Promise<ImportSummary> {
+  const summary: ImportSummary = {
+    created: 0,
+    updated: 0,
+    unchanged: 0,
+    notFound: 0,
+    errors: [],
+    createdNames: [],
+    notFoundNames: [],
+  };
+
+  const rows = await readTab('materiales');
+
+  for (const row of rows) {
+    const nombre = row[0]?.trim() ?? '';
+    const unidadVisual = row[1]?.trim() || 'unidad';
+    const stackSize = parseOptionalInteger(row[2]) ?? 64;
+    const activo = parseSheetBoolean(row[3], true);
+
+    if (!nombre) continue;
+    if (stackSize <= 0) {
+      summary.errors.push(`Stack max inválido para "${nombre}": "${row[2] ?? ''}"`);
+      continue;
+    }
+
+    try {
+      const existing = await prisma.shopMaterial.findUnique({
+        where: { guildId_name: { guildId, name: nombre } },
+      });
+
+      if (!existing) {
+        await prisma.shopMaterial.create({
+          data: {
+            guildId,
+            name: nombre,
+            baseUnit: unidadVisual,
+            stackSize,
+            isActive: activo,
+          },
+        });
+        summary.created++;
+        summary.createdNames?.push(nombre);
+        continue;
+      }
+
+      if (
+        existing.baseUnit === unidadVisual
+        && existing.stackSize === stackSize
+        && existing.isActive === activo
+      ) {
+        summary.unchanged++;
+        continue;
+      }
+
+      await prisma.shopMaterial.update({
+        where: { id: existing.id },
+        data: {
+          baseUnit: unidadVisual,
+          stackSize,
+          isActive: activo,
+        },
+      });
+      summary.updated++;
+    } catch (err) {
+      summary.errors.push(
+        `Error en material "${nombre}": ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  return summary;
+}
+
 /**
  * Lee el tab Productos y aplica los cambios a la BD:
  * - Nuevas filas → crea el producto.
@@ -335,44 +661,132 @@ export async function importProductosFromSheet(
   const rows = await readTab('productos');
 
   for (const row of rows) {
-    // Columnas: Nombre | Tipo | Categoría | Subcategoría | Precio ($) | Descripción | Activo
+    const isNewFormat     = row.length >= 10;
     const nombre          = row[0]?.trim() ?? '';
-    const tipo            = row[1]?.trim() || 'single';
+    const tipoRaw         = row[1]?.trim() || 'single';
     const categoriaRaw    = row[2]?.trim() || null;
     const subcategoriaRaw = row[3]?.trim() || null;
     const precioStr       = (row[4] ?? '0').replace(',', '.');
     const precio          = parseFloat(precioStr);
-    const descripcion     = row[5]?.trim() || null;
-    const activoStr       = (row[6]?.trim() ?? 'TRUE').toUpperCase();
-    const activo          = activoStr === 'TRUE' || activoStr === '1' || activoStr === 'VERDADERO';
+    const materialBaseRaw = isNewFormat ? (row[5]?.trim() ?? '') : '';
+    const presentacionRaw = isNewFormat ? (row[6]?.trim() ?? '') : '';
+    const cantidadBaseRaw = isNewFormat ? (row[7]?.trim() ?? '') : '';
+    const etiquetaRaw     = isNewFormat ? (row[8]?.trim() ?? '') : '';
+    const descripcion     = (isNewFormat ? row[9] : row[5])?.trim() || null;
+    const activo          = parseSheetBoolean(isNewFormat ? row[10] : row[6], true);
     const taxonomy        = coerceShopTaxonomy(categoriaRaw, subcategoriaRaw);
 
     if (!nombre) continue;
     if (isNaN(precio) || precio < 0) {
-      summary.errors.push(`Precio inválido para "${nombre}": "${row[2]}"`);
+      summary.errors.push(`Precio inválido para "${nombre}": "${row[4] ?? ''}"`);
       continue;
     }
 
     try {
+      let directMaterial:
+        | {
+            id: string;
+            name: string;
+            stackSize: number;
+          }
+        | null = null;
+      let presentationType: PresentationType = 'custom';
+      let presentationQuantity = 1;
+      let presentationLabel: string | null = null;
+
+      if (isNewFormat && materialBaseRaw) {
+        directMaterial = await prisma.shopMaterial.findUnique({
+          where: { guildId_name: { guildId, name: materialBaseRaw } },
+          select: {
+            id: true,
+            name: true,
+            stackSize: true,
+          },
+        });
+
+        if (!directMaterial) {
+          summary.notFound++;
+          summary.notFoundNames?.push(materialBaseRaw);
+          continue;
+        }
+
+        presentationType = parsePresentationTypeFromSheet(presentacionRaw || 'unidad');
+        const customQuantity = parseOptionalInteger(cantidadBaseRaw);
+
+        try {
+          presentationQuantity = resolvePresentationQuantity({
+            customQuantity,
+            presentationType,
+            stackSize: directMaterial.stackSize,
+          });
+        } catch (err) {
+          summary.errors.push(
+            `Presentación inválida para "${nombre}": ${err instanceof Error ? err.message : String(err)}`,
+          );
+          continue;
+        }
+
+        presentationLabel = etiquetaRaw || resolvePresentationLabel({
+          presentationQuantity,
+          presentationType,
+          stackSize: directMaterial.stackSize,
+        });
+      } else if (isNewFormat && tipoRaw.trim().toLowerCase() === 'material') {
+        summary.errors.push(`"${nombre}": los productos tipo material requieren "Material Base".`);
+        continue;
+      }
+
+      const internalProductType = resolveInternalProductType({
+        hasBaseMaterial: !!directMaterial,
+        presentationType,
+        rawType: tipoRaw,
+      });
+
       const existing = await prisma.shopProduct.findUnique({
-        where:   { guildId_name: { guildId, name: nombre } },
-        include: { prices: { where: { validTo: null }, take: 1 } },
+        where: { guildId_name: { guildId, name: nombre } },
+        include: {
+          prices: { where: { validTo: null }, take: 1 },
+        },
       });
 
       if (!existing) {
-        await prisma.shopProduct.create({
-          data: {
-            guildId,
-            name:        nombre,
-            productType: tipo,
-            category:    taxonomy.category,
-            subcategory: taxonomy.subcategory,
-            description: descripcion,
-            isActive:    activo,
-            prices: { create: { price: precio, changedByUserId: staffUserId } },
-          },
+        await prisma.$transaction(async tx => {
+          const createdProduct = await tx.shopProduct.create({
+            data: {
+              guildId,
+              name: nombre,
+              productType: internalProductType,
+              category: taxonomy.category,
+              subcategory: taxonomy.subcategory,
+              description: descripcion,
+              isActive: activo,
+              baseMaterialId: directMaterial?.id ?? null,
+              presentationType: directMaterial ? presentationType : 'custom',
+              presentationQuantity: directMaterial ? presentationQuantity : 1,
+              presentationLabel: directMaterial ? presentationLabel : null,
+              prices: { create: { price: precio, changedByUserId: staffUserId } },
+            },
+          });
+
+          if (directMaterial) {
+            await tx.shopProductComponent.upsert({
+              where: {
+                productId_materialId: {
+                  productId: createdProduct.id,
+                  materialId: directMaterial.id,
+                },
+              },
+              update: { quantityRequired: presentationQuantity },
+              create: {
+                productId: createdProduct.id,
+                materialId: directMaterial.id,
+                quantityRequired: presentationQuantity,
+              },
+            });
+          }
         });
         summary.created++;
+        summary.createdNames?.push(nombre);
         continue;
       }
 
@@ -395,21 +809,88 @@ export async function importProductosFromSheet(
         changed = true;
       }
 
-      // Descripción / Activo
+      if (isNewFormat) {
+        const nextBaseMaterialId = directMaterial?.id ?? null;
+        const nextPresentationType = directMaterial ? presentationType : 'custom';
+        const nextPresentationQuantity = directMaterial ? presentationQuantity : 1;
+        const nextPresentationLabel = directMaterial ? presentationLabel : null;
+
+        if (
+          existing.baseMaterialId !== nextBaseMaterialId
+          || existing.presentationType !== nextPresentationType
+          || existing.presentationQuantity !== nextPresentationQuantity
+          || existing.presentationLabel !== nextPresentationLabel
+          || existing.productType !== internalProductType
+        ) {
+          await prisma.$transaction(async tx => {
+            await tx.shopProduct.update({
+              where: { id: existing.id },
+              data: {
+                baseMaterialId: nextBaseMaterialId,
+                presentationType: nextPresentationType,
+                presentationQuantity: nextPresentationQuantity,
+                presentationLabel: nextPresentationLabel,
+                productType: internalProductType,
+              },
+            });
+
+            if (existing.baseMaterialId && existing.baseMaterialId !== nextBaseMaterialId) {
+              await tx.shopProductComponent.deleteMany({
+                where: {
+                  productId: existing.id,
+                  materialId: existing.baseMaterialId,
+                },
+              });
+            }
+
+            if (directMaterial) {
+              await tx.shopProductComponent.upsert({
+                where: {
+                  productId_materialId: {
+                    productId: existing.id,
+                    materialId: directMaterial.id,
+                  },
+                },
+                update: { quantityRequired: presentationQuantity },
+                create: {
+                  productId: existing.id,
+                  materialId: directMaterial.id,
+                  quantityRequired: presentationQuantity,
+                },
+              });
+            }
+          });
+          changed = true;
+        }
+      }
+
       if (
         existing.description !== descripcion ||
         existing.isActive !== activo ||
         existing.category !== taxonomy.category ||
-        existing.subcategory !== taxonomy.subcategory
+        existing.subcategory !== taxonomy.subcategory ||
+        (!isNewFormat && existing.productType !== internalProductType)
       ) {
+        const data: {
+          category: string;
+          description: string | null;
+          isActive: boolean;
+          productType?: string;
+          subcategory: string;
+        } = {
+          category: taxonomy.category,
+          subcategory: taxonomy.subcategory,
+          description: descripcion,
+          isActive: activo,
+        };
+
+        if (!isNewFormat) {
+          data.productType = internalProductType;
+        }
+
         await prisma.shopProduct.update({
           where: { id: existing.id },
-          data:  {
-            category: taxonomy.category,
-            subcategory: taxonomy.subcategory,
-            description: descripcion,
-            isActive: activo,
-          },
+          data,
         });
         changed = true;
       }
@@ -428,10 +909,12 @@ export async function importProductosFromSheet(
 
 /**
  * Lee el tab Inventario y aplica los cambios a la BD:
- * - Stock Total cambiado → ajuste con movimiento `manual_adjustment`.
+ * - Stock Base cambiado → ajuste con movimiento `manual_adjustment`.
  * - Alerta Mínima cambiada → actualiza el umbral.
- * - Materiales no encontrados en BD → se crean junto con su inventario.
+ * - Si falta un material solo se crea automáticamente cuando la fila ya viene
+ *   en el formato nuevo (incluye Stack Max).
  * - Las columnas Reservado y Disponible del Sheet se tratan como derivadas.
+ * - La definición de unidad visual y stack max vive en el tab Materiales.
  */
 export async function importInventarioFromSheet(
   guildId:     string,
@@ -450,30 +933,39 @@ export async function importInventarioFromSheet(
   const rows = await readTab('inventario');
 
   for (const row of rows) {
-    const nombre      = row[0]?.trim() ?? '';
-    const unidad      = row[1]?.trim() || 'item';
-    const stockNuevo  = parseInt(row[2]?.trim() ?? '0', 10);
-    const alertaNueva = parseInt(row[5]?.trim() ?? '0', 10);
+    const isNewFormat = row.length >= 7;
+    const nombre = row[0]?.trim() ?? '';
+    const unidadVisual = row[1]?.trim() || 'unidad';
+    const stackSize = isNewFormat ? (parseOptionalInteger(row[2]) ?? null) : null;
+    const stockNuevo = parseInt((isNewFormat ? row[3] : row[2])?.trim() ?? '0', 10);
+    const alertaNueva = parseInt((isNewFormat ? row[6] : row[5])?.trim() ?? '0', 10);
 
     if (!nombre) continue;
     if (isNaN(stockNuevo) || stockNuevo < 0) {
-      summary.errors.push(`Stock inválido para "${nombre}": "${row[2]}"`);
+      summary.errors.push(`Stock inválido para "${nombre}": "${isNewFormat ? row[3] : row[2]}"`);
       continue;
     }
 
     try {
       const material = await prisma.shopMaterial.findUnique({
-        where:   { guildId_name: { guildId, name: nombre } },//
+        where:   { guildId_name: { guildId, name: nombre } },
         include: { inventory: true },
       });
 
       if (!material) {
+        if (stackSize == null) {
+          summary.notFound++;
+          summary.notFoundNames?.push(nombre);
+          continue;
+        }
+
         await prisma.$transaction(async tx => {
           const createdMaterial = await tx.shopMaterial.create({
             data: {
               guildId,
               name: nombre,
-              baseUnit: unidad,
+              baseUnit: unidadVisual,
+              stackSize,
               inventory: {
                 create: {
                   guildId,
@@ -505,13 +997,6 @@ export async function importInventarioFromSheet(
 
       if (!material.inventory) {
         await prisma.$transaction(async tx => {
-          if (material.baseUnit !== unidad) {
-            await tx.shopMaterial.update({
-              where: { id: material.id },
-              data: { baseUnit: unidad },
-            });
-          }
-
           await tx.shopInventory.create({
             data: {
               guildId,
@@ -541,14 +1026,6 @@ export async function importInventarioFromSheet(
 
       const inv = material.inventory;
       let changed = false;
-
-      if (material.baseUnit !== unidad) {
-        await prisma.shopMaterial.update({
-          where: { id: material.id },
-          data: { baseUnit: unidad },
-        });
-        changed = true;
-      }
 
       if (inv.currentStock !== stockNuevo) {
         if (stockNuevo < inv.reservedStock) {
@@ -652,6 +1129,13 @@ export async function importComponentesFromSheet(
       if (!product || !material) {
         summary.notFound++;
         summary.notFoundNames?.push(`${nombreProducto} -> ${nombreMaterial}`);
+        continue;
+      }
+
+      if (product.baseMaterialId === material.id) {
+        summary.errors.push(
+          `"${nombreProducto}" ya define "${nombreMaterial}" como material base en el tab Productos. Edita la presentación allí, no en Componentes.`,
+        );
         continue;
       }
 

@@ -10,6 +10,11 @@ import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import { upsertShopUser } from '../../database/shop-user.js';
+import {
+  STOCK_CAPTURE_UNIT_CHOICES,
+  convertCaptureQuantityToBase,
+  formatCaptureInput,
+} from '../../shop/quantities.js';
 import { syncInventarioToSheet } from '../../shop/sync.js';
 
 function hasStaffPermission(
@@ -53,6 +58,15 @@ export const stockCommand: Command = {
             .setMinValue(1),
         )
         .addStringOption(opt =>
+          opt
+            .setName('modo')
+            .setDescription('Cómo interpretar la cantidad')
+            .setRequired(false)
+            .addChoices(
+              ...STOCK_CAPTURE_UNIT_CHOICES.map(choice => ({ name: choice.label, value: choice.value })),
+            ),
+        )
+        .addStringOption(opt =>
           opt.setName('motivo').setDescription('Motivo del ingreso (opcional)').setRequired(false),
         ),
     )
@@ -75,6 +89,15 @@ export const stockCommand: Command = {
             .setMinValue(1),
         )
         .addStringOption(opt =>
+          opt
+            .setName('modo')
+            .setDescription('Cómo interpretar la cantidad')
+            .setRequired(false)
+            .addChoices(
+              ...STOCK_CAPTURE_UNIT_CHOICES.map(choice => ({ name: choice.label, value: choice.value })),
+            ),
+        )
+        .addStringOption(opt =>
           opt.setName('motivo').setDescription('Motivo del retiro').setRequired(false),
         ),
     )
@@ -95,6 +118,15 @@ export const stockCommand: Command = {
             .setDescription('Nueva cantidad total')
             .setRequired(true)
             .setMinValue(0),
+        )
+        .addStringOption(opt =>
+          opt
+            .setName('modo')
+            .setDescription('Cómo interpretar la cantidad')
+            .setRequired(false)
+            .addChoices(
+              ...STOCK_CAPTURE_UNIT_CHOICES.map(choice => ({ name: choice.label, value: choice.value })),
+            ),
         )
         .addStringOption(opt =>
           opt.setName('motivo').setDescription('Motivo del ajuste (opcional)').setRequired(false),
@@ -175,6 +207,7 @@ export const stockCommand: Command = {
           name:   `${inv.material.name}${alerta}`,
           value:  [
             `Total: **${inv.currentStock}** ${inv.material.baseUnit}`,
+            `Stack max: ${inv.material.stackSize}`,
             `Reservado: ${inv.reservedStock}`,
             `Disponible: **${disponible}**`,
             inv.minStockAlert > 0 ? `Alerta: < ${inv.minStockAlert}` : '',
@@ -240,19 +273,21 @@ export const stockCommand: Command = {
     // ── /stock sumar ─────────────────────────────────────────────────────────
     if (sub === 'sumar') {
       const cantidad = interaction.options.getInteger('cantidad', true);
+      const modo = (interaction.options.getString('modo') ?? 'unit') as typeof STOCK_CAPTURE_UNIT_CHOICES[number]['value'];
+      const cantidadBase = convertCaptureQuantityToBase(cantidad, modo, material.stackSize);
       const motivo   = interaction.options.getString('motivo') ?? 'Ingreso manual';
 
       await prisma.$transaction([
         prisma.shopInventory.update({
           where: { id: inv.id },
-          data:  { currentStock: { increment: cantidad } },
+          data:  { currentStock: { increment: cantidadBase } },
         }),
         prisma.shopInventoryMovement.create({
           data: {
             guildId,
             materialId:    material.id,
             movementType:  'stock_add',
-            quantity:      cantidad,
+            quantity:      cantidadBase,
             reason:        motivo,
             performedById: staffUser.id,
           },
@@ -261,8 +296,13 @@ export const stockCommand: Command = {
 
       void syncInventarioToSheet(guildId);
       await interaction.editReply(
-        `✅ **+${cantidad}** ${material.baseUnit} de **${nombreMaterial}**.\n` +
-        `Stock total: ${inv.currentStock + cantidad}`,
+        `✅ Ingreso registrado: **+${formatCaptureInput({
+          baseQuantity: cantidadBase,
+          captureQuantity: cantidad,
+          captureUnit: modo,
+          unitLabel: material.baseUnit,
+        })}** de **${nombreMaterial}**.\n` +
+        `Stock total: ${inv.currentStock + cantidadBase}`,
       );
       return;
     }
@@ -270,10 +310,12 @@ export const stockCommand: Command = {
     // ── /stock restar ────────────────────────────────────────────────────────
     if (sub === 'restar') {
       const cantidad = interaction.options.getInteger('cantidad', true);
+      const modo = (interaction.options.getString('modo') ?? 'unit') as typeof STOCK_CAPTURE_UNIT_CHOICES[number]['value'];
+      const cantidadBase = convertCaptureQuantityToBase(cantidad, modo, material.stackSize);
       const motivo   = interaction.options.getString('motivo') ?? 'Retiro manual';
       const disponible = inv.currentStock - inv.reservedStock;
 
-      if (cantidad > disponible) {
+      if (cantidadBase > disponible) {
         await interaction.editReply(
           `❌ Stock disponible insuficiente.\n` +
           `Total: ${inv.currentStock}  ·  Reservado: ${inv.reservedStock}  ·  Disponible: **${disponible}**`,
@@ -284,13 +326,13 @@ export const stockCommand: Command = {
       await prisma.$transaction([
         prisma.shopInventory.update({
           where: { id: inv.id },
-          data:  { currentStock: { decrement: cantidad } },
+          data:  { currentStock: { decrement: cantidadBase } },
         }),
         prisma.shopWithdrawal.create({
           data: {
             guildId,
             materialId: material.id,
-            quantity: cantidad,
+            quantity: cantidadBase,
             reason: motivo,
             performedById: staffUser.id,
           },
@@ -300,7 +342,7 @@ export const stockCommand: Command = {
             guildId,
             materialId:    material.id,
             movementType:  'withdrawal',
-            quantity:      cantidad,
+            quantity:      cantidadBase,
             reason:        motivo,
             performedById: staffUser.id,
           },
@@ -309,15 +351,22 @@ export const stockCommand: Command = {
 
       void syncInventarioToSheet(guildId);
       await interaction.editReply(
-        `✅ Retiro registrado por **-${cantidad}** ${material.baseUnit} de **${nombreMaterial}**.\n` +
-        `Stock total: ${inv.currentStock - cantidad}`,
+        `✅ Retiro registrado: **-${formatCaptureInput({
+          baseQuantity: cantidadBase,
+          captureQuantity: cantidad,
+          captureUnit: modo,
+          unitLabel: material.baseUnit,
+        })}** de **${nombreMaterial}**.\n` +
+        `Stock total: ${inv.currentStock - cantidadBase}`,
       );
       return;
     }
 
     // ── /stock actualizar ────────────────────────────────────────────────────
     if (sub === 'actualizar') {
-      const nuevaCantidad = interaction.options.getInteger('cantidad', true);
+      const cantidad = interaction.options.getInteger('cantidad', true);
+      const modo = (interaction.options.getString('modo') ?? 'unit') as typeof STOCK_CAPTURE_UNIT_CHOICES[number]['value'];
+      const nuevaCantidad = convertCaptureQuantityToBase(cantidad, modo, material.stackSize);
       const motivo        = interaction.options.getString('motivo') ?? 'Ajuste manual';
 
       if (nuevaCantidad < inv.reservedStock) {
@@ -348,7 +397,12 @@ export const stockCommand: Command = {
 
       void syncInventarioToSheet(guildId);
       await interaction.editReply(
-        `✅ Stock de **${nombreMaterial}** ajustado a **${nuevaCantidad}** (${delta >= 0 ? '+' : ''}${delta}).`,
+        `✅ Stock de **${nombreMaterial}** ajustado a **${formatCaptureInput({
+          baseQuantity: nuevaCantidad,
+          captureQuantity: cantidad,
+          captureUnit: modo,
+          unitLabel: material.baseUnit,
+        })}** (${delta >= 0 ? '+' : ''}${delta}).`,
       );
       return;
     }

@@ -23,6 +23,7 @@ import {
 import { getSubcategoryDefinition } from './taxonomy.js';
 
 export interface CartItem {
+  contentsSummary?: string | null;
   productId: string;
   productName: string;
   productType: string;
@@ -99,7 +100,14 @@ export function buildCartEmbed(session: CartSession): EmbedBuilder {
   const lines = items.map((item, index) => {
     const emoji = PRODUCT_TYPE_ICONS[item.productType] ?? '🛍️';
     const line = `**${index + 1}.** ${emoji} **${item.productName}** × ${item.quantity}  —  ${formatPrice(item.unitPrice)} c/u  →  **${formatPrice(item.lineTotal)}**`;
-    return item.notes ? `${line}\n> 📝 ${item.notes}` : line;
+    const extraLines = [];
+    if (item.contentsSummary) {
+      extraLines.push(`> 🎁 ${item.contentsSummary}`);
+    }
+    if (item.notes) {
+      extraLines.push(`> 📝 ${item.notes}`);
+    }
+    return extraLines.length > 0 ? `${line}\n${extraLines.join('\n')}` : line;
   });
 
   const total = cartTotal(items);
