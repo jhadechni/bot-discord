@@ -17,7 +17,6 @@ import { getOrCreateGuildConfig } from '../database/guild-config.js';
 import { getLogChannel } from '../utils/log-channel.js';
 import { buildSuggestionEmbed } from '../utils/suggestion.js';
 import { getFilteredWords, findBannedWord } from '../utils/filter.js';
-import { appendMember } from '../utils/registry.js';
 import { logger } from '../core/logger.js';
 import { upsertShopUser } from '../database/shop-user.js';
 import {
@@ -34,11 +33,6 @@ import {
   releaseOrderStock,
   consumeOrderStock,
 } from '../shop/order-utils.js';
-import {
-  appendVentaToSheet,
-  syncInventarioToSheet,
-  syncPedidosToSheet,
-} from '../shop/sync.js';
 import {
   buildCatalogView,
   queryCatalogProducts,
@@ -625,8 +619,6 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
             : '✅ Pedido aceptado. La gestión se mantiene en el canal de pedidos porque no se pudo mover al canal temporal.',
           ephemeral: true,
         });
-
-        void syncPedidosToSheet(guildId);
         return;
       }
 
@@ -784,10 +776,6 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           );
         } catch { /* DMs desactivados */ }
 
-        void appendVentaToSheet(order.id, guildId);
-        void syncInventarioToSheet(guildId);
-        void syncPedidosToSheet(guildId);
-
         if (order.ticketChannelId) {
           const ticketCh = guild.channels.cache.get(order.ticketChannelId);
           if (ticketCh) {
@@ -883,8 +871,6 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
             }
           }
         }
-
-        void syncPedidosToSheet(guildId);
 
         await interaction.editReply(
           `✅ Descuentos aplicados:\n${appliedDiscounts.map(discount =>
@@ -1330,7 +1316,6 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       }
 
       await interaction.editReply({ embeds: [confirmEmbed], components: [] });
-      void syncPedidosToSheet(guildId);
       return;
     }
 
@@ -1470,7 +1455,6 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         );
       } catch { /* DMs desactivados */ }
 
-      void syncPedidosToSheet(guildId);
       await interaction.editReply('✅ Pedido rechazado. El cliente fue notificado.');
       return;
     }
@@ -1554,11 +1538,6 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         );
       } catch { /* DMs desactivados */ }
 
-      void syncPedidosToSheet(guildId);
-      if (order.status === 'accepted') {
-        void syncInventarioToSheet(guildId);
-      }
-
       if (order.ticketChannelId) {
         const ticketCh = guild.channels.cache.get(order.ticketChannelId);
         if (ticketCh) {
@@ -1570,37 +1549,6 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       await interaction.editReply('✅ Pedido cancelado. El cliente fue notificado.');
       return;
-    }
-
-    // --- Modal: registro de nuevo miembro ---
-    if (interaction.isModalSubmit() && interaction.customId.startsWith('register_modal_')) {
-      await interaction.deferReply({ ephemeral: true });
-
-      const discordUserId = interaction.customId.replace('register_modal_', '');
-      const guild = interaction.guild;
-      if (!guild) return;
-
-      const targetMember = await guild.members.fetch(discordUserId).catch(() => null);
-      const discordTag = targetMember?.user.tag ?? targetMember?.user.username ?? discordUserId;
-
-      const mcUsername = interaction.fields.getTextInputValue('register_mc_username');
-      const alias      = interaction.fields.getTextInputValue('register_alias');
-      const country    = interaction.fields.getTextInputValue('register_country');
-      const notes      = interaction.fields.getTextInputValue('register_notes');
-
-      await appendMember({ mcUsername, alias, discord: discordTag, country, notes });
-
-      await interaction.editReply(
-        `✅ **${mcUsername}** (${discordTag}) registrado correctamente en el spreadsheet.\n🗑️ Este canal se cerrará en 5 segundos.`,
-      );
-
-      // Cerrar el canal temporal tras 5 segundos
-      const channel = interaction.channel;
-      if (channel && 'delete' in channel) {
-        setTimeout(async () => {
-          try { await channel.delete(); } catch { /* canal ya eliminado */ }
-        }, 5_000);
-      }
     }
     } catch (err) {
       const context: Record<string, unknown> = {

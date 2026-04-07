@@ -10,7 +10,6 @@ import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import { upsertShopUser } from '../../database/shop-user.js';
-import { syncComponentesToSheet, syncProductosToSheet, syncInventarioToSheet } from '../../shop/sync.js';
 import {
   buildCatalogView,
   queryCatalogProducts,
@@ -27,6 +26,7 @@ import {
   getSubcategoryDefinition,
   listCategoryDefinitions,
   listSubcategoryDefinitions,
+  reloadTaxonomyFromDatabase,
 } from '../../shop/taxonomy.js';
 
 function hasStaffPermission(
@@ -405,6 +405,8 @@ export const tiendaCommand: Command = {
     const value   = focused.value.toLowerCase();
 
     if (focused.name === 'categoria') {
+      await reloadTaxonomyFromDatabase();
+
       const categories = listCategoryDefinitions()
         .filter(category => {
           const haystack = `${category.label} ${category.key}`.toLowerCase();
@@ -420,6 +422,8 @@ export const tiendaCommand: Command = {
     }
 
     if (focused.name === 'subcategoria') {
+      await reloadTaxonomyFromDatabase();
+
       const categoria = interaction.options.getString('categoria');
       const subcategories = listSubcategoryDefinitions(categoria)
         .filter(subcategory => {
@@ -523,7 +527,6 @@ export const tiendaCommand: Command = {
         },
       });
 
-      void syncInventarioToSheet(guildId);
       await interaction.editReply(
         `✅ Material **${nombre}** registrado (unidad: \`${unidad}\`, stack max: \`${stackMax}\`, stock inicial: 0).\n` +
         `Usa \`/stock sumar\` para agregar stock.`,
@@ -581,7 +584,6 @@ export const tiendaCommand: Command = {
       }
 
       await prisma.shopMaterial.delete({ where: { id: material.id } });
-      void syncInventarioToSheet(guildId);
       await interaction.editReply(`✅ Material **${nombre}** eliminado.`);
       return;
     }
@@ -614,7 +616,6 @@ export const tiendaCommand: Command = {
         },
       });
 
-      void syncInventarioToSheet(guildId);
       await interaction.editReply(
         `✅ **${nombre}** actualizado.\nUnidad: \`${unidad ?? material.baseUnit}\` · Stack max: \`${stackMax ?? material.stackSize}\``,
       );
@@ -633,6 +634,9 @@ export const tiendaCommand: Command = {
       const etiquetaPresentacion = interaction.options.getString('etiqueta_presentacion');
       const categoriaRaw = interaction.options.getString('categoria', true);
       const subcategoriaRaw = interaction.options.getString('subcategoria', true);
+
+      await reloadTaxonomyFromDatabase();
+
       let taxonomy: ReturnType<typeof assertShopTaxonomy>;
       try {
         taxonomy = assertShopTaxonomy(categoriaRaw, subcategoriaRaw);
@@ -699,10 +703,6 @@ export const tiendaCommand: Command = {
         },
       });
 
-      void syncProductosToSheet(guildId);
-      if (presentationConfig) {
-        void syncComponentesToSheet(guildId);
-      }
       await interaction.editReply(
         `✅ Producto **${nombre}** creado a **${precio} $**.\n` +
         `Clasificación: **${categoryLabel} / ${subcategoryLabel}**.\n` +
@@ -813,8 +813,6 @@ export const tiendaCommand: Command = {
         });
       });
 
-      void syncProductosToSheet(guildId);
-      void syncComponentesToSheet(guildId);
       await interaction.editReply(
         `✅ **${nombreProducto}** ahora vende **${presentationConfig.presentationLabel}** de **${presentationConfig.material.name}**.\n` +
         `Consumo base: ${presentationConfig.presentationQuantity} ${presentationConfig.material.baseUnit}.`,
@@ -827,6 +825,9 @@ export const tiendaCommand: Command = {
       const nombreProducto = interaction.options.getString('producto', true);
       const categoriaRaw = interaction.options.getString('categoria', true);
       const subcategoriaRaw = interaction.options.getString('subcategoria', true);
+
+      await reloadTaxonomyFromDatabase();
+
       let taxonomy: ReturnType<typeof assertShopTaxonomy>;
       try {
         taxonomy = assertShopTaxonomy(categoriaRaw, subcategoriaRaw);
@@ -853,7 +854,6 @@ export const tiendaCommand: Command = {
         },
       });
 
-      void syncProductosToSheet(guildId);
       await interaction.editReply(
         `✅ **${nombreProducto}** ahora pertenece a **${categoryLabel} / ${subcategoryLabel}**.`,
       );
@@ -911,7 +911,6 @@ export const tiendaCommand: Command = {
       await interaction.editReply(
         `✅ **${nombreProducto}** requiere **${cantidad} x ${nombreMaterial}**.`,
       );
-      void syncComponentesToSheet(guildId);
       return;
     }
 
@@ -941,7 +940,6 @@ export const tiendaCommand: Command = {
         });
       });
 
-      void syncProductosToSheet(guildId);
       await interaction.editReply(
         `✅ Precio de **${nombreProducto}** actualizado a **${nuevoPrecio} $**.`,
       );
@@ -975,7 +973,6 @@ export const tiendaCommand: Command = {
       }
 
       await prisma.shopProduct.update({ where: { id: product.id }, data: { isActive: activar } });
-      void syncProductosToSheet(guildId);
       await interaction.editReply(
         `${activar ? '✅' : '⛔'} **${nombreProducto}** ${activar ? 'activado' : 'desactivado'}.`,
       );
@@ -1006,7 +1003,6 @@ export const tiendaCommand: Command = {
         prisma.shopProductComponent.deleteMany({ where: { productId: product.id } }),
         prisma.shopProduct.delete({ where: { id: product.id } }),
       ]);
-      void syncProductosToSheet(guildId);
       await interaction.editReply(`✅ Producto **${nombreProducto}** eliminado.`);
       return;
     }

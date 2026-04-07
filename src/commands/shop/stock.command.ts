@@ -15,7 +15,6 @@ import {
   convertCaptureQuantityToBase,
   formatCaptureInput,
 } from '../../shop/quantities.js';
-import { syncInventarioToSheet } from '../../shop/sync.js';
 
 function hasStaffPermission(
   interaction: ChatInputCommandInteraction,
@@ -294,7 +293,6 @@ export const stockCommand: Command = {
         }),
       ]);
 
-      void syncInventarioToSheet(guildId);
       await interaction.editReply(
         `✅ Ingreso registrado: **+${formatCaptureInput({
           baseQuantity: cantidadBase,
@@ -349,7 +347,6 @@ export const stockCommand: Command = {
         }),
       ]);
 
-      void syncInventarioToSheet(guildId);
       await interaction.editReply(
         `✅ Retiro registrado: **-${formatCaptureInput({
           baseQuantity: cantidadBase,
@@ -395,7 +392,6 @@ export const stockCommand: Command = {
         }),
       ]);
 
-      void syncInventarioToSheet(guildId);
       await interaction.editReply(
         `✅ Stock de **${nombreMaterial}** ajustado a **${formatCaptureInput({
           baseQuantity: nuevaCantidad,
@@ -416,7 +412,6 @@ export const stockCommand: Command = {
         data:  { minStockAlert: minimo },
       });
 
-      void syncInventarioToSheet(guildId);
       await interaction.editReply(
         minimo === 0
           ? `✅ Alerta de stock desactivada para **${nombreMaterial}**.`

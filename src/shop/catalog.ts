@@ -13,6 +13,7 @@ import {
   compareSubcategoryKeys,
   getCategoryDefinition,
   getSubcategoryDefinition,
+  reloadTaxonomyFromDatabase,
 } from './taxonomy.js';
 import { COLORS, formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 import { resolvePresentationLabel } from './quantities.js';
@@ -60,6 +61,8 @@ type ProductGridEmbedOptions = {
 };
 
 export async function queryCatalogProducts(guildId: string) {
+  await reloadTaxonomyFromDatabase();
+
   return prisma.shopProduct.findMany({
     where:   {
       guildId,

@@ -20,7 +20,6 @@ import {
   getOrderStockAssessment,
 } from '../../shop/order-utils.js';
 import { COLORS, formatPrice, SHOP_FOOTER } from '../../utils/ui.js';
-import { syncPedidosToSheet } from '../../shop/sync.js';
 import {
   queryCartProducts,
   buildCartView,
@@ -190,7 +189,6 @@ export const pedidoCommand: Command = {
       if (notas) confirmEmbed.addFields({ name: '📝 Notas', value: notas });
 
       await interaction.editReply({ embeds: [confirmEmbed] });
-      void syncPedidosToSheet(guildId);
       return;
     }
 

@@ -5,7 +5,7 @@
 
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-// Taxonomía dinámica — seed usa categoría genérica. Importar con /sync importar categorias.
+// Taxonomía dinámica — seed usa categoría genérica. Ajusta categorías reales desde la BD o el panel administrativo.
 const inferTaxonomyForMaterial = (_name: string) => ({ category: 'general', subcategory: 'otros' });
 const inferTaxonomyForKit      = (_mats: string[]) => ({ category: 'general', subcategory: 'otros' });
 const inferTaxonomyForService  = (_name: string) => ({ category: 'general', subcategory: 'otros' });
