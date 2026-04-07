@@ -6,7 +6,9 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
 } from 'discord.js';
+import type { Prisma } from '../generated/prisma/client.js';
 import { prisma } from '../database/prisma.js';
+import { resolveShopGuildScopes } from './scope.js';
 import {
   coerceShopTaxonomy,
   compareCategoryKeys,
@@ -36,7 +38,15 @@ export const PRODUCT_TYPE_ICONS: Record<string, string> = {
   service: '🔧',
 };
 
-export type CatalogProduct = Awaited<ReturnType<typeof queryCatalogProducts>>[number];
+type CatalogProductRecord = Prisma.ShopProductGetPayload<{
+  include: {
+    baseMaterial: true;
+    prices: { where: { validTo: null }; take: 1 };
+    components: { include: { material: true }; orderBy: { quantityRequired: 'desc' } };
+  };
+}>;
+
+export type CatalogProduct = CatalogProductRecord;
 
 type CatalogGrouping = Map<string, Map<string, CatalogProduct[]>>;
 
@@ -61,29 +71,45 @@ type ProductGridEmbedOptions = {
 };
 
 export async function queryCatalogProducts(guildId: string) {
-  await reloadTaxonomyFromDatabase();
+  await reloadTaxonomyFromDatabase(guildId);
 
-  return prisma.shopProduct.findMany({
-    where:   {
-      guildId,
-      isActive: true,
-      OR: [
-        { productType: 'service' },
-        { baseMaterialId: { not: null } },
-        { components: { some: {} } },
+  const productsByName = new Map<string, CatalogProduct>();
+
+  for (const scope of resolveShopGuildScopes(guildId)) {
+    const scopedProducts = await prisma.shopProduct.findMany({
+      where:   {
+        guildId: scope,
+        isActive: true,
+        OR: [
+          { productType: 'service' },
+          { baseMaterialId: { not: null } },
+          { components: { some: {} } },
+        ],
+      },
+      include: {
+        baseMaterial: true,
+        prices:     { where: { validTo: null }, take: 1 },
+        components: { include: { material: true }, orderBy: { quantityRequired: 'desc' } },
+      },
+      orderBy: [
+        { category: 'asc' },
+        { subcategory: 'asc' },
+        { name: 'asc' },
       ],
-    },
-    include: {
-      baseMaterial: true,
-      prices:     { where: { validTo: null }, take: 1 },
-      components: { include: { material: true }, orderBy: { quantityRequired: 'desc' } },
-    },
-    orderBy: [
-      { category: 'asc' },
-      { subcategory: 'asc' },
-      { name: 'asc' },
-    ],
-  });
+    });
+
+    for (const product of scopedProducts) {
+      if (!productsByName.has(product.name)) {
+        productsByName.set(product.name, product);
+      }
+    }
+  }
+
+  return [...productsByName.values()].sort((left, right) =>
+    left.category.localeCompare(right.category, 'es')
+    || left.subcategory.localeCompare(right.subcategory, 'es')
+    || left.name.localeCompare(right.name, 'es'),
+  );
 }
 
 function labelize(value: string): string {
@@ -127,7 +153,7 @@ function applyTaxonomyImages(
 ): EmbedBuilder {
   const category = getCategoryDefinition(state.currentCategory);
   const subcategory = getSubcategoryDefinition(state.currentCategory, state.currentSubcategory);
-  const thumbnailImage = category.imageUrl ?? subcategory.imageUrl;
+  const thumbnailImage = subcategory.imageUrl ?? category.imageUrl;
 
   if (thumbnailImage) {
     embed.setThumbnail(thumbnailImage);
@@ -194,12 +220,14 @@ export function resolveCatalogViewState(
   pageSize = CATALOG_PAGE_SIZE,
 ): CatalogViewState {
   const grouped = groupCatalogProducts(products);
-  const categoryKeys = [...grouped.keys()];
+  const categoryKeys = [...grouped.keys()].sort(compareCategoryKeys);
   const fallbackCategory = categoryKeys[0] ?? 'general';
   const normalizedCategory = coerceShopTaxonomy(categoryKey, null).category;
   const currentCategory = grouped.has(normalizedCategory) ? normalizedCategory : fallbackCategory;
-  const subcategoryMap = grouped.get(currentCategory) ?? new Map([['otros', []]]);
-  const subcategoryKeys = [...subcategoryMap.keys()];
+  const subcategoryMap = grouped.get(currentCategory) ?? new Map<string, CatalogProduct[]>();
+  const subcategoryKeys = [...subcategoryMap.keys()].sort((left, right) =>
+    compareSubcategoryKeys(currentCategory, left, right),
+  );
   const fallbackSubcategory = subcategoryKeys[0] ?? 'otros';
   const normalizedSubcategory = coerceShopTaxonomy(currentCategory, subcategoryKey).subcategory;
   const currentSubcategory = subcategoryMap.has(normalizedSubcategory)

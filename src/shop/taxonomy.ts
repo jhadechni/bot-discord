@@ -1,4 +1,5 @@
 import { prisma } from '../database/prisma.js';
+import { resolveShopGuildScopes } from './scope.js';
 
 export interface ShopSubcategoryDefinition {
   key: string;
@@ -18,6 +19,23 @@ export interface ShopTaxonomySelection {
   category: string;
   subcategory: string;
 }
+
+type TaxonomyCategoryRow = {
+  name: string;
+  slug: string;
+  imageUrl: string | null;
+  subcategories: Array<{
+    name: string;
+    slug: string;
+    imageUrl: string | null;
+  }>;
+};
+
+const taxonomyPrisma = prisma as typeof prisma & {
+  shopCategory: {
+    findMany: (args: unknown) => Promise<TaxonomyCategoryRow[]>;
+  };
+};
 
 const FALLBACK_TAXONOMY: ShopCategoryDefinition[] = [
   {
@@ -44,7 +62,8 @@ function buildSubcategoryOrder(taxonomy: ShopCategoryDefinition[]): Map<string, 
 
 function labelize(value: string): string {
   return value
-    .split('_')
+    .split(/[-_]/g)
+    .filter(Boolean)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
 }
@@ -61,56 +80,116 @@ function categoryEmoji(categoryKey: string): string {
   return emojiMap[categoryKey] ?? '🧭';
 }
 
-function buildTaxonomyFromRecords(
-  rows: Array<{ category: string; subcategory: string }>,
+function buildTaxonomyFromCategories(
+  rows: Array<{
+    name: string;
+    slug: string;
+    imageUrl: string | null;
+    subcategories: Array<{
+      name: string;
+      slug: string;
+      imageUrl: string | null;
+    }>;
+  }>,
 ): ShopCategoryDefinition[] {
   if (rows.length === 0) {
     return [...FALLBACK_TAXONOMY];
   }
 
-  const categories = new Map<string, {
-    imageUrl: string | null;
-    label: string;
-    emoji: string;
-    subcategories: Map<string, ShopSubcategoryDefinition>;
-  }>();
+  return rows
+    .map(row => {
+      const categoryKey = normalizeShopTaxonomyKey(row.slug || row.name);
+      if (!categoryKey) return null;
 
-  for (const row of rows) {
-    const categoryKey = normalizeShopTaxonomyKey(row.category);
-    const subcategoryKey = normalizeShopTaxonomyKey(row.subcategory);
+      const subcategories = row.subcategories
+        .map(subcategory => {
+          const subcategoryKey = normalizeShopTaxonomyKey(subcategory.slug || subcategory.name);
+          if (!subcategoryKey) return null;
 
-    if (!categoryKey) {
-      continue;
-    }
+          return {
+            key: subcategoryKey,
+            label: subcategory.name || labelize(subcategoryKey),
+            imageUrl: subcategory.imageUrl ?? null,
+          };
+        })
+        .filter((subcategory): subcategory is ShopSubcategoryDefinition => !!subcategory);
 
-    if (!categories.has(categoryKey)) {
-      categories.set(categoryKey, {
-        imageUrl: null,
-        label: labelize(categoryKey),
+      return {
+        key: categoryKey,
+        label: row.name || labelize(categoryKey),
         emoji: categoryEmoji(categoryKey),
-        subcategories: new Map(),
-      });
-    }
+        imageUrl: row.imageUrl ?? null,
+        subcategories: subcategories.length > 0
+          ? subcategories
+          : [{ key: 'otros', label: 'Otros', imageUrl: null }],
+      };
+    })
+    .filter((category): category is ShopCategoryDefinition => !!category);
+}
 
-    const category = categories.get(categoryKey)!;
-    const safeSubcategoryKey = subcategoryKey || 'otros';
+async function fetchTaxonomyRows(guildId?: string | null) {
+  const categoryMap = new Map<string, TaxonomyCategoryRow>();
 
-    if (!category.subcategories.has(safeSubcategoryKey)) {
-      category.subcategories.set(safeSubcategoryKey, {
-        key: safeSubcategoryKey,
-        label: labelize(safeSubcategoryKey),
-        imageUrl: null,
+  for (const scope of resolveShopGuildScopes(guildId)) {
+    const rows = await taxonomyPrisma.shopCategory.findMany({
+      where: {
+        guildId: scope,
+        isActive: true,
+      },
+      select: {
+        name: true,
+        slug: true,
+        imageUrl: true,
+        subcategories: {
+          where: { isActive: true },
+          select: {
+            name: true,
+            slug: true,
+            imageUrl: true,
+          },
+          orderBy: [
+            { sortOrder: 'asc' },
+            { name: 'asc' },
+          ],
+        },
+      },
+      orderBy: [
+        { sortOrder: 'asc' },
+        { name: 'asc' },
+      ],
+    });
+
+    for (const row of rows) {
+      const categoryKey = normalizeShopTaxonomyKey(row.slug || row.name);
+      if (!categoryKey) continue;
+
+      const existing = categoryMap.get(categoryKey);
+      if (!existing) {
+        categoryMap.set(categoryKey, {
+          ...row,
+          subcategories: [...row.subcategories],
+        });
+        continue;
+      }
+
+      const subcategoryMap = new Map(
+        existing.subcategories.map(subcategory => [normalizeShopTaxonomyKey(subcategory.slug || subcategory.name), subcategory]),
+      );
+
+      for (const subcategory of row.subcategories) {
+        const subcategoryKey = normalizeShopTaxonomyKey(subcategory.slug || subcategory.name);
+        if (!subcategoryKey || subcategoryMap.has(subcategoryKey)) continue;
+        subcategoryMap.set(subcategoryKey, subcategory);
+      }
+
+      categoryMap.set(categoryKey, {
+        ...existing,
+        subcategories: [...subcategoryMap.values()],
       });
     }
   }
 
-  return [...categories.entries()].map(([key, category]) => ({
-    key,
-    label: category.label,
-    emoji: category.emoji,
-    imageUrl: category.imageUrl,
-    subcategories: [...category.subcategories.values()],
-  }));
+  return [...categoryMap.values()];
 }
 
 export function loadTaxonomy(categories: ShopCategoryDefinition[]): void {
@@ -126,20 +205,9 @@ export function getTaxonomy(): ShopCategoryDefinition[] {
   return _taxonomy;
 }
 
-export async function reloadTaxonomyFromDatabase(): Promise<ShopCategoryDefinition[]> {
-  const rows = await prisma.shopProduct.findMany({
-    select: {
-      category: true,
-      subcategory: true,
-    },
-    distinct: ['category', 'subcategory'],
-    orderBy: [
-      { category: 'asc' },
-      { subcategory: 'asc' },
-    ],
-  });
-
-  const categories = buildTaxonomyFromRecords(rows);
+export async function reloadTaxonomyFromDatabase(guildId?: string | null): Promise<ShopCategoryDefinition[]> {
+  const rows = await fetchTaxonomyRows(guildId);
+  const categories = buildTaxonomyFromCategories(rows);
   loadTaxonomy(categories);
   return categories;
 }
@@ -150,8 +218,8 @@ export function normalizeShopTaxonomyKey(value: string | null | undefined): stri
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 export function listCategoryDefinitions(): ShopCategoryDefinition[] {

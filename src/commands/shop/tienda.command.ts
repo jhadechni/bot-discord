@@ -405,7 +405,7 @@ export const tiendaCommand: Command = {
     const value   = focused.value.toLowerCase();
 
     if (focused.name === 'categoria') {
-      await reloadTaxonomyFromDatabase();
+      await reloadTaxonomyFromDatabase(guildId);
 
       const categories = listCategoryDefinitions()
         .filter(category => {
@@ -422,7 +422,7 @@ export const tiendaCommand: Command = {
     }
 
     if (focused.name === 'subcategoria') {
-      await reloadTaxonomyFromDatabase();
+      await reloadTaxonomyFromDatabase(guildId);
 
       const categoria = interaction.options.getString('categoria');
       const subcategories = listSubcategoryDefinitions(categoria)
@@ -635,7 +635,7 @@ export const tiendaCommand: Command = {
       const categoriaRaw = interaction.options.getString('categoria', true);
       const subcategoriaRaw = interaction.options.getString('subcategoria', true);
 
-      await reloadTaxonomyFromDatabase();
+      await reloadTaxonomyFromDatabase(guildId);
 
       let taxonomy: ReturnType<typeof assertShopTaxonomy>;
       try {
@@ -826,7 +826,7 @@ export const tiendaCommand: Command = {
       const categoriaRaw = interaction.options.getString('categoria', true);
       const subcategoriaRaw = interaction.options.getString('subcategoria', true);
 
-      await reloadTaxonomyFromDatabase();
+      await reloadTaxonomyFromDatabase(guildId);
 
       let taxonomy: ReturnType<typeof assertShopTaxonomy>;
       try {

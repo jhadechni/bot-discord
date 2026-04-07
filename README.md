@@ -370,6 +370,7 @@ Cada material que compone el producto debe existir en el sistema.
 ```
 
 > La unidad por defecto es `item`. Puedes especificar otra: `unidad:bloque`.
+> También puedes definir `stack_max` para materiales que stackean a `1`, `16` o `64`.
 
 #### 2. Cargar stock inicial
 
@@ -434,14 +435,16 @@ El producto aparece activo por defecto. Si necesitas ocultarlo temporalmente:
 
 | Comando | Descripción |
 |---|---|
-| `/tienda material-agregar <nombre> [unidad]` | Registra un nuevo material base (stock inicial: 0) |
+| `/tienda material-agregar <nombre> [unidad] [stack_max]` | Registra un nuevo material base (stock inicial: 0) |
+| `/tienda material-configurar <nombre> [unidad] [stack_max]` | Ajusta la unidad visual y el tamaño de stack del material |
 | `/tienda material-eliminar <nombre>` | Elimina un material (solo si no tiene productos ni stock) |
 
 #### Gestión de productos (staff)
 
 | Comando | Descripción |
 |---|---|
-| `/tienda producto-agregar <nombre> <tipo> <precio> [descripcion]` | Crea un producto en el catálogo |
+| `/tienda producto-agregar <nombre> <tipo> <precio> [descripcion] [material_base] [presentacion] [cantidad_base]` | Crea un producto en el catálogo o una oferta directa de material |
+| `/tienda producto-presentacion <producto> <material_base> <presentacion> [cantidad_base]` | Estandariza una presentación comercial para una oferta de material |
 | `/tienda producto-componente <producto> <material> <cantidad>` | Define o actualiza un componente del producto |
 | `/tienda producto-precio <producto> <precio>` | Actualiza el precio — guarda historial del anterior |
 | `/tienda producto-activar <producto>` | Hace visible el producto en el catálogo |
@@ -578,11 +581,13 @@ El proyecto usa **PostgreSQL** con **Prisma ORM**.
 | `ShopProductComponent` | Receta: qué materiales y cantidades consume cada producto |
 | `ShopProductPrice` | Historial de precios por producto |
 | `ShopOrder` | Pedido (cabecera): cliente, estado, canal, totales |
-| `ShopOrderItem` | Líneas del pedido: producto, cantidad, precio congelado |
+| `ShopOrderItem` | Líneas del pedido: producto, cantidad, precio congelado, bruto y neto |
 | `ShopInventoryMovement` | Auditoría completa de todo cambio de stock |
 | `ShopSale` | Registro formal de venta cerrada |
 | `ShopWithdrawal` | Retiros de stock no comerciales (consumo interno, pérdidas) |
 | `ShopOrderEvent` | Bitácora del flujo de cada pedido |
+| `ShopDiscountPolicy` | Políticas estandarizadas de descuento |
+| `ShopAppliedDiscount` | Descuentos realmente aplicados a pedido o línea |
 
 ### Comandos útiles de Prisma
 

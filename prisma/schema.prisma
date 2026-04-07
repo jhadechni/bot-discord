@@ -355,6 +355,40 @@ model ShopAppliedDiscount {
   appliedBy      ShopUser?           @relation("ShopAppliedDiscountAppliedBy", fields: [appliedByUserId], references: [id])
 }
 
+model ShopCategory {
+  id          String   @id @default(cuid())
+  guildId     String
+  name        String
+  slug        String
+  description String?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subcategories ShopSubcategory[]
+
+  @@unique([guildId, slug])
+}
+
+model ShopSubcategory {
+  id          String   @id @default(cuid())
+  categoryId  String
+  name        String
+  slug        String
+  description String?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category ShopCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, slug])
+}
+
 model ShopOrderEvent {
   id            String   @id @default(cuid())
   orderId       String

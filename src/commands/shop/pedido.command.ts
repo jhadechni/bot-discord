@@ -25,6 +25,7 @@ import {
   buildCartView,
   setCart,
 } from '../../shop/cart.js';
+import { buildShopGuildWhere, findFirstInShopScopes } from '../../shop/scope.js';
 
 function hasStaffPermission(
   interaction: ChatInputCommandInteraction,
@@ -92,7 +93,7 @@ export const pedidoCommand: Command = {
     const value = interaction.options.getFocused().toLowerCase();
     const products = await prisma.shopProduct.findMany({
       where:   {
-        guildId,
+        ...buildShopGuildWhere(guildId),
         isActive: true,
         name: { contains: value, mode: 'insensitive' },
         OR: [
@@ -105,7 +106,8 @@ export const pedidoCommand: Command = {
       select:  { name: true },
       orderBy: { name: 'asc' },
     });
-    await interaction.respond(products.map(p => ({ name: p.name, value: p.name })));
+    const uniqueProducts = [...new Map(products.map(product => [product.name, product])).values()];
+    await interaction.respond(uniqueProducts.map(product => ({ name: product.name, value: product.name })));
   },
 
   async execute(interaction: ChatInputCommandInteraction) {
@@ -123,9 +125,11 @@ export const pedidoCommand: Command = {
       const cantidad       = interaction.options.getInteger('cantidad', true);
       const notas          = interaction.options.getString('notas') ?? null;
 
-      const product = await prisma.shopProduct.findUnique({
-        where: { guildId_name: { guildId, name: nombreProducto } },
-      });
+      const product = await findFirstInShopScopes(guildId, scope =>
+        prisma.shopProduct.findUnique({
+          where: { guildId_name: { guildId: scope, name: nombreProducto } },
+        }),
+      );
 
       if (!product || !product.isActive) {
         await interaction.editReply(`❌ El producto **${nombreProducto}** no está disponible.`);
