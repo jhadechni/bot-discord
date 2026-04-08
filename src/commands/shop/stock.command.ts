@@ -17,7 +17,7 @@ import {
 } from '../../shop/quantities.js';
 
 function hasStaffPermission(
-  interaction: ChatInputCommandInteraction,
+  interaction: ChatInputCommandInteraction | AutocompleteInteraction,
   staffRoleId: string | null,
 ): boolean {
   if (interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) return true;
@@ -32,6 +32,7 @@ export const stockCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('stock')
     .setDescription('[Staff] Gestión de inventario de materiales')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addSubcommand(sub =>
       sub.setName('ver').setDescription('Lista todos los materiales con su stock actual'),
     )
@@ -154,6 +155,11 @@ export const stockCommand: Command = {
   async autocomplete(interaction: AutocompleteInteraction) {
     const guildId = interaction.guildId;
     if (!guildId) { await interaction.respond([]); return; }
+    const config = await getOrCreateGuildConfig(guildId);
+    if (!hasStaffPermission(interaction, config.staffRoleId ?? null)) {
+      await interaction.respond([]);
+      return;
+    }
 
     const value = interaction.options.getFocused().toLowerCase();
     const materials = await prisma.shopMaterial.findMany({

@@ -32,9 +32,9 @@ import { perfilCommand } from "./commands/levels/perfil.command.js";
 import { topCommand } from "./commands/levels/top.command.js";
 import { remindCommand } from "./commands/remind/remind.command.js";
 import { adormirdaniCommand, atrabajardaniCommand } from "./commands/fun/adormirdani.command.js";
-import { tiendaCommand } from "./commands/shop/tienda.command.js";
+import { catalogoCommand, tiendaCommand } from "./commands/shop/tienda.command.js";
 import { stockCommand } from "./commands/shop/stock.command.js";
-import { pedidoCommand } from "./commands/shop/pedido.command.js";
+import { pedidoCommand, pedidosCommand } from "./commands/shop/pedido.command.js";
 
 // Events
 import readyEvent from "./events/ready.event.js";
@@ -75,8 +75,10 @@ for (const cmd of [
   adormirdaniCommand,
   atrabajardaniCommand,
   tiendaCommand,
+  catalogoCommand,
   stockCommand,
   pedidoCommand,
+  pedidosCommand,
 ]) {
   client.commands.set(cmd.data.name, cmd);
 }

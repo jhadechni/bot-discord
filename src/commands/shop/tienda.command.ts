@@ -30,7 +30,7 @@ import {
 } from '../../shop/taxonomy.js';
 
 function hasStaffPermission(
-  interaction: ChatInputCommandInteraction,
+  interaction: ChatInputCommandInteraction | AutocompleteInteraction,
   staffRoleId: string | null,
 ): boolean {
   if (interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) return true;
@@ -79,13 +79,11 @@ async function resolveMaterialPresentation(params: {
   };
 }
 
-export const tiendaCommand: Command = {
+export const catalogoCommand: Command = {
   data: new SlashCommandBuilder()
-    .setName('tienda')
-    .setDescription('Tienda del clan Aquaris')
-    .addSubcommand(sub =>
-      sub.setName('ver').setDescription('Muestra el catálogo de productos disponibles'),
-    )
+    .setName('catalogo')
+    .setDescription('[Staff] Gestión del catálogo de la tienda')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addSubcommand(sub =>
       sub
         .setName('material-agregar')
@@ -400,6 +398,11 @@ export const tiendaCommand: Command = {
   async autocomplete(interaction: AutocompleteInteraction) {
     const guildId = interaction.guildId;
     if (!guildId) { await interaction.respond([]); return; }
+    const config = await getOrCreateGuildConfig(guildId);
+    if (!hasStaffPermission(interaction, config.staffRoleId ?? null)) {
+      await interaction.respond([]);
+      return;
+    }
 
     const focused = interaction.options.getFocused(true);
     const value   = focused.value.toLowerCase();
@@ -473,33 +476,15 @@ export const tiendaCommand: Command = {
 
     const sub = interaction.options.getSubcommand();
 
-    // ── /tienda ver ──────────────────────────────────────────────────────────
-    if (sub === 'ver') {
-      await interaction.deferReply({ephemeral: true });
-
-      const products = await queryCatalogProducts(guildId);
-
-      if (products.length === 0) {
-        await interaction.editReply('🏪 La tienda está vacía por el momento.');
-        return;
-      }
-
-      const { embed, components } = buildCatalogView(products);
-
-      await interaction.editReply({ embeds: [embed], components });
-      return;
-    }
-
     // ── Verificación de permisos de staff ────────────────────────────────────
     const config = await getOrCreateGuildConfig(guildId);
     if (!hasStaffPermission(interaction, config.staffRoleId ?? null)) {
       await interaction.reply({
-        content: '❌ Solo el staff puede usar este subcomando.',
+        content: '❌ Solo el staff puede usar este comando.',
         ephemeral: true,
       });
       return;
     }
-
     await interaction.deferReply({ ephemeral: true });
     const staffUser = await upsertShopUser(guildId, interaction.user, true);
 
@@ -1136,5 +1121,34 @@ export const tiendaCommand: Command = {
       await interaction.editReply({ embeds: [embed] });
       return;
     }
+  },
+};
+
+export const tiendaCommand: Command = {
+  data: new SlashCommandBuilder()
+    .setName('tienda')
+    .setDescription('Tienda del clan Aquaris')
+    .addSubcommand(sub =>
+      sub.setName('ver').setDescription('Muestra el catálogo de productos disponibles'),
+    ),
+
+  async execute(interaction: ChatInputCommandInteraction) {
+    const guildId = interaction.guildId;
+    if (!guildId) return;
+
+    const sub = interaction.options.getSubcommand();
+    if (sub !== 'ver') return;
+
+    await interaction.deferReply({ ephemeral: true });
+
+    const products = await queryCatalogProducts(guildId);
+
+    if (products.length === 0) {
+      await interaction.editReply('🏪 La tienda está vacía por el momento.');
+      return;
+    }
+
+    const { embed, components } = buildCatalogView(products);
+    await interaction.editReply({ embeds: [embed], components });
   },
 };

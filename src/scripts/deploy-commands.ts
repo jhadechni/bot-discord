@@ -31,9 +31,9 @@ import { perfilCommand } from "../commands/levels/perfil.command.js";
 import { topCommand } from "../commands/levels/top.command.js";
 import { remindCommand } from "../commands/remind/remind.command.js";
 import { adormirdaniCommand, atrabajardaniCommand } from "../commands/fun/adormirdani.command.js";
-import { tiendaCommand } from "../commands/shop/tienda.command.js";
+import { catalogoCommand, tiendaCommand } from "../commands/shop/tienda.command.js";
 import { stockCommand } from "../commands/shop/stock.command.js";
-import { pedidoCommand } from "../commands/shop/pedido.command.js";
+import { pedidoCommand, pedidosCommand } from "../commands/shop/pedido.command.js";
 
 const commands = [
   pingCommand,
@@ -62,8 +62,10 @@ const commands = [
   adormirdaniCommand,
   atrabajardaniCommand,
   tiendaCommand,
+  catalogoCommand,
   stockCommand,
   pedidoCommand,
+  pedidosCommand,
 ].map((cmd) => cmd.data.toJSON());
 
 const rest = new REST().setToken(env.discordToken);

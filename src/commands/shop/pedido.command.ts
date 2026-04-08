@@ -28,7 +28,7 @@ import {
 import { buildShopGuildWhere, findFirstInShopScopes } from '../../shop/scope.js';
 
 function hasStaffPermission(
-  interaction: ChatInputCommandInteraction,
+  interaction: ChatInputCommandInteraction | AutocompleteInteraction,
   staffRoleId: string | null,
 ): boolean {
   if (interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) return true;
@@ -78,9 +78,6 @@ export const pedidoCommand: Command = {
             .setDescription('Código del pedido (ej: AQ-ABC123)')
             .setRequired(true),
         ),
-    )
-    .addSubcommand(sub =>
-      sub.setName('lista').setDescription('[Staff] Lista los pedidos pendientes y aceptados'),
     )
     .addSubcommand(sub =>
       sub.setName('carrito').setDescription('Abre tu carrito interactivo para crear un pedido'),
@@ -264,63 +261,77 @@ export const pedidoCommand: Command = {
       return;
     }
 
-    // ── /pedido lista ────────────────────────────────────────────────────────
-    if (sub === 'lista') {
-      if (!hasStaffPermission(interaction, config.staffRoleId ?? null)) {
-        await interaction.reply({
-          content:   '❌ Solo el staff puede ver la lista de pedidos.',
-          ephemeral: true,
-        });
-        return;
-      }
+  },
+};
 
-      await interaction.deferReply({ ephemeral: true });
+export const pedidosCommand: Command = {
+  data: new SlashCommandBuilder()
+    .setName('pedidos')
+    .setDescription('[Staff] Gestión interna de pedidos')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .addSubcommand(sub =>
+      sub.setName('lista').setDescription('Lista los pedidos pendientes y aceptados'),
+    ),
 
-      const orders = await prisma.shopOrder.findMany({
-        where:   { guildId, status: { in: ['pending', 'accepted'] } },
-        include: { customer: true, items: { include: { product: true } } },
-        orderBy: { createdAt: 'asc' },
-        take:    25,
+  async execute(interaction: ChatInputCommandInteraction) {
+    const guildId = interaction.guildId;
+    if (!guildId) return;
+
+    const config = await getOrCreateGuildConfig(guildId);
+    if (!hasStaffPermission(interaction, config.staffRoleId ?? null)) {
+      await interaction.reply({
+        content: '❌ Solo el staff puede ver la lista de pedidos.',
+        ephemeral: true,
       });
-
-      if (orders.length === 0) {
-        await interaction.editReply('📋 No hay pedidos activos en este momento.');
-        return;
-      }
-
-      const pending  = orders.filter(o => o.status === 'pending');
-      const accepted = orders.filter(o => o.status === 'accepted');
-
-      const embed = new EmbedBuilder()
-        .setTitle('📋 Pedidos activos')
-        .setColor(COLORS.blurple)
-        .setDescription(
-          `🟡 **${pending.length}** pendiente${pending.length !== 1 ? 's' : ''}` +
-          `  ·  🟢 **${accepted.length}** aceptado${accepted.length !== 1 ? 's' : ''}`,
-        )
-        .setFooter(SHOP_FOOTER)
-        .setTimestamp();
-
-      const addOrderField = (order: typeof orders[0]) => {
-        const items = order.items.map(i => `${i.product.name} ×${i.quantity}`).join(', ');
-        const ts    = `<t:${Math.floor(order.createdAt.getTime() / 1000)}:R>`;
-        embed.addFields({
-          name:  `${order.status === 'pending' ? '🟡' : '🟢'} ${order.orderCode}`,
-          value: `<@${order.customer.discordUserId}>  ·  ${items}  ·  **${formatPrice(order.totalAmount)}**\n${ts}`,
-        });
-      };
-
-      if (pending.length > 0) {
-        embed.addFields({ name: '─── Pendientes ───', value: '\u200B' });
-        pending.forEach(addOrderField);
-      }
-      if (accepted.length > 0) {
-        embed.addFields({ name: '─── Aceptados ───', value: '\u200B' });
-        accepted.forEach(addOrderField);
-      }
-
-      await interaction.editReply({ embeds: [embed] });
       return;
     }
+
+    await interaction.deferReply({ ephemeral: true });
+
+    const orders = await prisma.shopOrder.findMany({
+      where:   { guildId, status: { in: ['pending', 'accepted'] } },
+      include: { customer: true, items: { include: { product: true } } },
+      orderBy: { createdAt: 'asc' },
+      take:    25,
+    });
+
+    if (orders.length === 0) {
+      await interaction.editReply('📋 No hay pedidos activos en este momento.');
+      return;
+    }
+
+    const pending  = orders.filter(order => order.status === 'pending');
+    const accepted = orders.filter(order => order.status === 'accepted');
+
+    const embed = new EmbedBuilder()
+      .setTitle('📋 Pedidos activos')
+      .setColor(COLORS.blurple)
+      .setDescription(
+        `🟡 **${pending.length}** pendiente${pending.length !== 1 ? 's' : ''}` +
+        `  ·  🟢 **${accepted.length}** aceptado${accepted.length !== 1 ? 's' : ''}`,
+      )
+      .setFooter(SHOP_FOOTER)
+      .setTimestamp();
+
+    const addOrderField = (order: typeof orders[0]) => {
+      const items = order.items.map(item => `${item.product.name} ×${item.quantity}`).join(', ');
+      const ts = `<t:${Math.floor(order.createdAt.getTime() / 1000)}:R>`;
+      embed.addFields({
+        name: `${order.status === 'pending' ? '🟡' : '🟢'} ${order.orderCode}`,
+        value: `<@${order.customer.discordUserId}>  ·  ${items}  ·  **${formatPrice(order.totalAmount)}**\n${ts}`,
+      });
+    };
+
+    if (pending.length > 0) {
+      embed.addFields({ name: '─── Pendientes ───', value: '\u200B' });
+      pending.forEach(addOrderField);
+    }
+
+    if (accepted.length > 0) {
+      embed.addFields({ name: '─── Aceptados ───', value: '\u200B' });
+      accepted.forEach(addOrderField);
+    }
+
+    await interaction.editReply({ embeds: [embed] });
   },
 };
