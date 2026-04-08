@@ -6,25 +6,7 @@ import { logger } from "../core/logger.js";
 import { pingCommand } from "../commands/ping/ping.command.js";
 import { suggestCommand } from "../commands/suggest/suggest.command.js";
 import { configCommand } from "../commands/config/config.command.js";
-import { warnCommand } from "../commands/moderation/warn.command.js";
-import { kickCommand } from "../commands/moderation/kick.command.js";
-import { banCommand } from "../commands/moderation/ban.command.js";
-import { unbanCommand } from "../commands/moderation/unban.command.js";
-import { tempbanCommand } from "../commands/moderation/tempban.command.js";
-import {
-  timeoutCommand,
-  untimeoutCommand,
-} from "../commands/moderation/timeout.command.js";
-import {
-  muteCommand,
-  tempmuteCommand,
-  unmuteCommand,
-} from "../commands/moderation/mute.command.js";
-import { warningsCommand } from "../commands/moderation/warnings.command.js";
-import { clearCommand } from "../commands/moderation/clear.command.js";
-import { logsCommand } from "../commands/moderation/logs.command.js";
-import { reasonCommand } from "../commands/moderation/reason.command.js";
-import { filterCommand } from "../commands/moderation/filter.command.js";
+import { modCommand } from "../commands/moderation/mod.command.js";
 import { applyCommand } from "../commands/apply/apply.command.js";
 import { helpCommand } from "../commands/help/help.command.js";
 import { perfilCommand } from "../commands/levels/perfil.command.js";
@@ -39,21 +21,7 @@ const commands = [
   pingCommand,
   suggestCommand,
   configCommand,
-  warnCommand,
-  kickCommand,
-  banCommand,
-  unbanCommand,
-  tempbanCommand,
-  timeoutCommand,
-  untimeoutCommand,
-  muteCommand,
-  tempmuteCommand,
-  unmuteCommand,
-  warningsCommand,
-  clearCommand,
-  logsCommand,
-  reasonCommand,
-  filterCommand,
+  modCommand,
   applyCommand,
   helpCommand,
   perfilCommand,

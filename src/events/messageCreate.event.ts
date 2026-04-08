@@ -96,14 +96,21 @@ const messageCreateEvent: BotEvent<'messageCreate'> = {
 
     if (!member) return;
 
-    // Administradores y moderadores no son afectados
-    if (
+    const hasModerationBypass =
       member.permissions.has('Administrator') ||
       member.permissions.has('ManageMessages') ||
-      member.permissions.has('ModerateMembers')
-    ) return;
+      member.permissions.has('ModerateMembers');
 
     const config = await getOrCreateGuildConfig(guildId);
+
+    if (hasModerationBypass) {
+      try {
+        await trackMessageXp(message, guildId, userId, config);
+      } catch (err) {
+        logger.warn({ err }, 'Error actualizando XP de mensaje');
+      }
+      return;
+    }
 
     // ── 1. Filtro de palabras ─────────────────────────────────────────────────
     const filteredWords = await getFilteredWords(guildId);

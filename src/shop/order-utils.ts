@@ -66,6 +66,12 @@ type ProductWithResolvedComponents = {
   presentationQuantity?: number;
 };
 
+function shouldBypassInventoryForZeroStock(inventory: {
+  currentStock: number;
+} | null | undefined): boolean {
+  return (inventory?.currentStock ?? 0) === 0;
+}
+
 function resolveProductComponents(product: ProductWithResolvedComponents): ProductComponentLike[] {
   if (!product.baseMaterialId || !product.baseMaterial || !product.presentationQuantity) {
     return product.components;
@@ -291,14 +297,15 @@ export async function getOrderStockAssessment(orderId: string): Promise<OrderSto
 
   const requirements = new Map<string, OrderMaterialStockStatus>();
 
-  for (const item of order.items) {
-    for (const component of resolveProductComponents(item.product)) {
-      const inventory = component.material.inventory;
-      const currentStock = inventory?.currentStock ?? 0;
-      const reservedStock = inventory?.reservedStock ?? 0;
-      const availableStock = currentStock - reservedStock;
-      const requiredQuantity = component.quantityRequired * item.quantity;
-      const existing = requirements.get(component.materialId);
+    for (const item of order.items) {
+      for (const component of resolveProductComponents(item.product)) {
+        const inventory = component.material.inventory;
+        const bypassInventory = shouldBypassInventoryForZeroStock(inventory);
+        const currentStock = inventory?.currentStock ?? 0;
+        const reservedStock = inventory?.reservedStock ?? 0;
+        const availableStock = currentStock - reservedStock;
+        const requiredQuantity = component.quantityRequired * item.quantity;
+        const existing = requirements.get(component.materialId);
 
       if (existing) {
         existing.requiredQuantity += requiredQuantity;
@@ -313,7 +320,7 @@ export async function getOrderStockAssessment(orderId: string): Promise<OrderSto
         materialName: component.material.name,
         requiredQuantity,
         reservedStock,
-        shortfallQuantity: Math.max(0, requiredQuantity - availableStock),
+        shortfallQuantity: bypassInventory ? 0 : Math.max(0, requiredQuantity - availableStock),
       });
     }
   }
@@ -411,6 +418,7 @@ export async function reserveOrderStock(
         const needed    = comp.quantityRequired * unitsToReserve;
         const inv       = comp.material.inventory;
         if (!inv) throw new Error(`Sin inventario para ${comp.material.name}`);
+        if (shouldBypassInventoryForZeroStock(inv)) continue;
         const available = inv.currentStock - inv.reservedStock;
         if (available < needed) {
           throw new Error(
@@ -427,7 +435,9 @@ export async function reserveOrderStock(
       if (unitsToReserve <= 0) continue;
       for (const comp of resolveProductComponents(item.product)) {
         const needed = comp.quantityRequired * unitsToReserve;
+        if (needed === 0) continue;
         const inv    = comp.material.inventory!;
+        if (shouldBypassInventoryForZeroStock(inv)) continue;
         await tx.shopInventory.update({
           where: { id: inv.id },
           data:  { reservedStock: { increment: needed } },
@@ -543,6 +553,7 @@ export async function consumeOrderStock(
         const needed    = comp.quantityRequired * unitsToReserve;
         const inv       = comp.material.inventory;
         if (!inv) throw new Error(`Sin inventario para ${comp.material.name}`);
+        if (shouldBypassInventoryForZeroStock(inv)) continue;
         const available = inv.currentStock - inv.reservedStock;
         if (available < needed) {
           throw new Error(
@@ -559,6 +570,7 @@ export async function consumeOrderStock(
         for (const comp of resolveProductComponents(item.product)) {
           const needed = comp.quantityRequired * unitsToReserve;
           if (needed === 0) continue;
+          if (shouldBypassInventoryForZeroStock(comp.material.inventory)) continue;
 
           await tx.shopInventory.update({
             where: { id: comp.material.inventory!.id },
@@ -587,6 +599,7 @@ export async function consumeOrderStock(
       for (const comp of resolveProductComponents(item.product)) {
         const qty = comp.quantityRequired * item.quantity;
         if (qty === 0) continue;
+        if (shouldBypassInventoryForZeroStock(comp.material.inventory)) continue;
         await tx.shopInventory.update({
           where: { id: comp.material.inventory!.id },
           data:  {

@@ -1,57 +1,110 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import {
+  EmbedBuilder,
+  GuildMember,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
+} from 'discord.js';
 import type { Command } from '../../types/command.js';
+import { getOrCreateGuildConfig } from '../../database/guild-config.js';
+
+function hasStaffAccess(member: GuildMember | null, staffRoleId: string | null): boolean {
+  if (!member) return false;
+  if (member.permissions.has(PermissionFlagsBits.ManageGuild)) return true;
+  if (!staffRoleId) return false;
+  return member.roles.cache.has(staffRoleId);
+}
 
 export const helpCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('help')
-    .setDescription('Muestra todos los comandos disponibles'),
+    .setDescription('Muestra la lista actual de comandos del bot'),
 
   async execute(interaction) {
     await interaction.deferReply({ ephemeral: true });
 
+    const guildId = interaction.guildId;
+    const member = interaction.member instanceof GuildMember
+      ? interaction.member
+      : await interaction.guild?.members.fetch(interaction.user.id).catch(() => null);
+
+    const config = guildId ? await getOrCreateGuildConfig(guildId) : null;
+    const isStaff = hasStaffAccess(member ?? null, config?.staffRoleId ?? null);
+
     const embed = new EmbedBuilder()
       .setColor(0x5865f2)
       .setTitle('📖 Comandos del Bot Aquaris')
+      .setDescription(
+        isStaff
+          ? 'Listado actual de comandos públicos y de staff.'
+          : 'Listado actual de comandos públicos. Los comandos de staff solo se muestran a quien tiene acceso.',
+      )
       .addFields(
         {
           name: '🔧 General',
           value: [
-            '`/ping` — Comprueba que el bot responde y el estado de la base de datos.',
-            '`/help` — Muestra este mensaje.',
+            '`/ping` — Comprueba que el bot responde.',
+            '`/help` — Muestra este listado.',
           ].join('\n'),
         },
         {
-          name: '💡 Sugerencias',
-          value:
-            '`/suggest contenido` — Envía una sugerencia al canal configurado. El staff puede cambiar su estado.',
-        },
-        {
-          name: '📋 Reclutamiento',
-          value:
-            '`/apply` — Abre el formulario de solicitud de ingreso al clan. Primero seleccionas tu rol, luego rellenas el formulario.',
-        },
-        {
-          name: '🛡️ Moderación (solo staff)',
+          name: '🛒 Tienda',
           value: [
-            '`/warn usuario motivo` — Registra una advertencia y notifica al usuario por DM.',
-            '`/kick usuario [motivo]` — Expulsa al usuario del servidor.',
-            '`/ban usuario [motivo] [borrar_mensajes]` — Banea al usuario (0-7 días de mensajes borrados).',
+            '`/tienda ver` — Abre el catálogo público.',
+            '`/pedido crear` — Crea un pedido directo.',
+            '`/pedido estado` — Consulta el estado de un pedido.',
+            '`/pedido carrito` — Abre el carrito interactivo.',
           ].join('\n'),
         },
         {
-          name: '⚙️ Configuración (solo staff)',
+          name: '📋 Comunidad',
           value: [
-            '`/config ver` — Muestra la configuración actual del bot.',
-            '`/config set-welcome canal` — Canal de bienvenida y despedida.',
-            '`/config set-logs canal` — Canal de logs de moderación.',
-            '`/config set-suggestions canal` — Canal de sugerencias.',
-            '`/config set-recruitment categoria_id` — Categoría para tickets de reclutamiento.',
-            '`/config set-rol tipo rol` — Asocia un rol de Discord a una función del bot.',
+            '`/apply` — Envía tu solicitud de ingreso al clan.',
+            '`/suggest` — Envía una sugerencia al servidor.',
+            '`/perfil [usuario]` — Consulta el perfil de XP.',
+            '`/top [tipo]` — Muestra rankings del servidor.',
+            '`/remind add|lista|editar|cancelar` — Gestiona tus recordatorios.',
           ].join('\n'),
         },
       )
-      .setFooter({ text: 'Aquaris Bot · Fase 1' })
+      .setFooter({ text: 'Aquaris Bot' })
       .setTimestamp();
+
+    if (isStaff) {
+      embed.addFields(
+        {
+          name: '🛡️ Moderación',
+          value: [
+            '`/mod disciplina warn|kick|ban|unban|tempban`',
+            '`/mod disciplina timeout|untimeout|mute|tempmute|unmute`',
+            '`/mod historial warnings|logs|reason`',
+            '`/mod chat clear`',
+            '`/mod filtro añadir|eliminar|lista`',
+          ].join('\n'),
+        },
+        {
+          name: '🏪 Staff Tienda',
+          value: [
+            '`/catalogo material-agregar|material-configurar|material-eliminar`',
+            '`/catalogo producto-agregar|producto-precio|producto-clasificar`',
+            '`/catalogo producto-presentacion|producto-componente`',
+            '`/catalogo producto-activar|producto-desactivar|producto-eliminar|stats`',
+            '`/stock ver|bajo|sumar|restar|actualizar|alerta`',
+            '`/pedidos lista`',
+          ].join('\n'),
+        },
+        {
+          name: '⚙️ Configuración y utilidades',
+          value: [
+            '`/config ver`',
+            '`/config set-welcome|set-logs|set-suggestions|set-recruitment`',
+            '`/config set-niveles|set-boost|set-rol`',
+            '`/config nick-rol-agregar|nick-rol-quitar`',
+            '`/config set-shop-staff|set-shop-categoria`',
+            '`/adormirdani` y `/atrabajardani` — utilidades internas de staff.',
+          ].join('\n'),
+        },
+      );
+    }
 
     await interaction.editReply({ embeds: [embed] });
   },
