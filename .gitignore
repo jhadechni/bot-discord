@@ -6,3 +6,8 @@ node_modules
 credentials
 .agents
 .claude
+AGENTS.md
+bd.md
+CLAUDE.md
+skills-lock.json
+tienda.md
