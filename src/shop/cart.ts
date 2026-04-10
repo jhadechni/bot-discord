@@ -12,7 +12,7 @@ import {
 } from 'discord.js';
 import type { Decimal } from '@prisma/client/runtime/client';
 import { COLORS, formatPrice, SHOP_FOOTER } from '../utils/ui.js';
-import type { CatalogViewState } from './catalog.js';
+import type { CatalogMode, CatalogViewState } from './catalog.js';
 import {
   PRODUCT_TYPE_ICONS,
   buildCategorySelectRow,
@@ -41,6 +41,7 @@ export interface CartSession {
   channelId: string;
   messageId: string;
   currentCategory: string | null;
+  currentCatalogMode: CatalogMode;
   currentPage: number;
   currentSubcategory: string | null;
   items: CartItem[];
@@ -242,7 +243,7 @@ function buildBrowseComponents(
   const rows: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
 
   if (state.categoryKeys.length > 1) {
-    rows.push(buildCategorySelectRow('pedido:cart', state.categoryKeys, state.currentCategory));
+    rows.push(buildCategorySelectRow('pedido:cart', state.currentMode, state.categoryKeys, state.currentCategory));
   }
 
   if (state.subcategoryKeys.length > 1) {
@@ -279,6 +280,7 @@ export function buildCartView(
 } {
   const state = resolveCatalogViewState(
     products,
+    session.currentCatalogMode,
     session.currentCategory,
     session.currentSubcategory,
     session.currentPage,

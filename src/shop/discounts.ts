@@ -1,9 +1,63 @@
 import { Prisma } from '../generated/prisma/client.js';
 import { prisma } from '../database/prisma.js';
+import { buildShopGuildWhere } from './scope.js';
 
 const ZERO = new Prisma.Decimal(0);
 const ONE_HUNDRED = new Prisma.Decimal(100);
 type DiscountTx = Prisma.TransactionClient;
+
+export function normalizeDiscountType(discountType: string): string {
+  const normalized = discountType.trim().toLowerCase();
+
+  if (normalized === 'percent' || normalized === 'percentage') {
+    return 'percent';
+  }
+
+  if (
+    normalized === 'fixed'
+    || normalized === 'fixed_amount'
+    || normalized === 'fixedamount'
+    || normalized === 'amount'
+    || normalized === 'flat'
+    || normalized === 'flat_amount'
+  ) {
+    return 'fixed';
+  }
+
+  return normalized;
+}
+
+function normalizePolicyType(policyType: string): string {
+  const normalized = policyType.trim().toLowerCase();
+
+  if (normalized === 'seasonal' || normalized === 'automatic') {
+    return 'automatic';
+  }
+
+  if (normalized === 'volume' || normalized === 'bulk') {
+    return 'volume';
+  }
+
+  if (normalized === 'manual') {
+    return 'manual';
+  }
+
+  return normalized;
+}
+
+function normalizeDiscountScope(scope: string): 'item' | 'order' | string {
+  const normalized = scope.trim().toLowerCase();
+
+  if (normalized === 'item' || normalized === 'product') {
+    return 'item';
+  }
+
+  if (normalized === 'order' || normalized === 'global') {
+    return 'order';
+  }
+
+  return normalized;
+}
 
 export interface PendingOrderPricingItemInput {
   productId: string;
@@ -63,11 +117,13 @@ function calculateDiscountAmount(
   discountType: string,
   discountValue: Prisma.Decimal,
 ): Prisma.Decimal {
-  if (discountType === 'percent') {
+  const normalizedDiscountType = normalizeDiscountType(discountType);
+
+  if (normalizedDiscountType === 'percent') {
     return clampDiscountAmount(baseAmount.mul(discountValue).div(ONE_HUNDRED), baseAmount);
   }
 
-  if (discountType === 'fixed') {
+  if (normalizedDiscountType === 'fixed') {
     return clampDiscountAmount(discountValue, baseAmount);
   }
 
@@ -87,7 +143,20 @@ function isPolicyInWindow(
 function isAutoApplicablePolicy(
   policyType: string,
 ): boolean {
-  return policyType === 'seasonal';
+  return normalizePolicyType(policyType) === 'automatic';
+}
+
+function isManualVolumeLikePolicy(
+  policyType: string,
+): boolean {
+  const normalized = normalizePolicyType(policyType);
+  return normalized === 'volume' || normalized === 'manual';
+}
+
+function isProductScopedPolicy(
+  scope: string,
+): boolean {
+  return normalizeDiscountScope(scope) === 'item';
 }
 
 function sumDiscountAmounts(
@@ -133,7 +202,7 @@ function pickBestEligibleVolumePolicies(params: {
   const bestByProduct = new Map<string, EligibleManualVolumeDiscount>();
 
   for (const policy of params.policies) {
-    if (policy.policyType !== 'volume' || policy.scope !== 'item') continue;
+    if (!isManualVolumeLikePolicy(policy.policyType) || !isProductScopedPolicy(policy.scope)) continue;
     if (!policy.productId || policy.minQuantity == null) continue;
     if (appliedPolicyIds.has(policy.id)) continue;
 
@@ -143,7 +212,7 @@ function pickBestEligibleVolumePolicies(params: {
     const current = bestByProduct.get(policy.productId);
     const candidate: EligibleManualVolumeDiscount = {
       aggregatedQuantity,
-      discountType: policy.discountType,
+      discountType: normalizeDiscountType(policy.discountType),
       discountValue: policy.discountValue,
       minQuantity: policy.minQuantity,
       policyId: policy.id,
@@ -263,9 +332,8 @@ export async function calculateOrderPricing(
   const now = new Date();
   const policies = await prisma.shopDiscountPolicy.findMany({
     where: {
-      guildId,
+      ...buildShopGuildWhere(guildId),
       isActive: true,
-      policyType: 'seasonal',
     },
     orderBy: [
       { priority: 'desc' },
@@ -282,9 +350,12 @@ export async function calculateOrderPricing(
       continue;
     }
 
-    if (policy.scope === 'item') {
+    const normalizedScope = normalizeDiscountScope(policy.scope);
+
+    if (normalizedScope === 'item') {
       for (const [index, item] of calculatedItems.entries()) {
         if (item.netLineTotal.comparedTo(ZERO) <= 0) continue;
+        if (policy.productId && item.productId !== policy.productId) continue;
 
         const discountAmount = calculateDiscountAmount(
           item.netLineTotal,
@@ -298,11 +369,11 @@ export async function calculateOrderPricing(
           appliedByUserId: null,
           discountAmount,
           discountPolicyId: policy.id,
-          discountType: policy.discountType,
+          discountType: normalizeDiscountType(policy.discountType),
           discountValue: policy.discountValue,
           orderItemIndex: index,
           reason: policy.name,
-          scope: 'item',
+          scope: normalizedScope,
         });
         item.netLineTotal = item.netLineTotal.sub(discountAmount);
       }
@@ -310,7 +381,7 @@ export async function calculateOrderPricing(
       continue;
     }
 
-    if (policy.scope !== 'order') {
+    if (normalizedScope !== 'order') {
       continue;
     }
   }
@@ -332,7 +403,8 @@ export async function calculateOrderPricing(
       continue;
     }
 
-    if (policy.scope !== 'order') {
+    const normalizedScope = normalizeDiscountScope(policy.scope);
+    if (normalizedScope !== 'order') {
       continue;
     }
 
@@ -352,11 +424,11 @@ export async function calculateOrderPricing(
       appliedByUserId: null,
       discountAmount,
       discountPolicyId: policy.id,
-      discountType: policy.discountType,
+      discountType: normalizeDiscountType(policy.discountType),
       discountValue: policy.discountValue,
       orderItemIndex: null,
       reason: policy.name,
-      scope: 'order',
+      scope: normalizedScope,
     });
     remainingOrderBase = remainingOrderBase.sub(discountAmount);
   }
@@ -400,9 +472,8 @@ export async function getEligibleManualVolumeDiscounts(
   const now = new Date();
   const policies = await prisma.shopDiscountPolicy.findMany({
     where: {
-      guildId: order.guildId,
+      ...buildShopGuildWhere(order.guildId),
       isActive: true,
-      policyType: 'volume',
       productId: { in: productIds },
     },
     orderBy: [
@@ -414,7 +485,9 @@ export async function getEligibleManualVolumeDiscounts(
   });
 
   const activePolicies = policies.filter(policy =>
-    isPolicyInWindow(now, policy.startsAt ?? null, policy.endsAt ?? null),
+    isPolicyInWindow(now, policy.startsAt ?? null, policy.endsAt ?? null)
+      && isManualVolumeLikePolicy(policy.policyType)
+      && isProductScopedPolicy(policy.scope),
   );
 
   return pickBestEligibleVolumePolicies({
@@ -453,10 +526,9 @@ export async function applyManualVolumeDiscounts(params: {
     const now = new Date();
     const policies = await tx.shopDiscountPolicy.findMany({
       where: {
-        guildId: order.guildId,
+        ...buildShopGuildWhere(order.guildId),
         id: { in: selectedPolicyIds },
         isActive: true,
-        policyType: 'volume',
       },
       orderBy: [
         { productId: 'asc' },
@@ -467,7 +539,9 @@ export async function applyManualVolumeDiscounts(params: {
     });
 
     const activePolicies = policies.filter(policy =>
-      isPolicyInWindow(now, policy.startsAt ?? null, policy.endsAt ?? null),
+      isPolicyInWindow(now, policy.startsAt ?? null, policy.endsAt ?? null)
+        && isManualVolumeLikePolicy(policy.policyType)
+        && isProductScopedPolicy(policy.scope),
     );
     const eligibleDiscounts = pickBestEligibleVolumePolicies({
       items: order.items,

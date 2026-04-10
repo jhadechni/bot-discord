@@ -210,6 +210,7 @@ export const pedidoCommand: Command = {
         channelId:      interaction.channelId,
         messageId:      '',   // se rellena después de enviar
         currentCategory: null,
+        currentCatalogMode: 'products' as const,
         currentPage: 1,
         currentSubcategory: null,
         items:          [],

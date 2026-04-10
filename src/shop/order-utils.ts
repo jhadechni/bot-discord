@@ -8,7 +8,8 @@ import { Prisma } from '../generated/prisma/client.js';
 import { prisma } from '../database/prisma.js';
 import { calculateOrderPricing } from './discounts.js';
 import { buildProductContentsLines, buildProductContentsSummary } from './product-contents.js';
-import { hasProductInventoryDefinition } from './quantities.js';
+import { hasProductInventoryDefinition, normalizeStackSize } from './quantities.js';
+import { buildShopGuildWhere } from './scope.js';
 import { ORDER_COLORS, ORDER_LABELS, formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
@@ -28,6 +29,7 @@ export interface OrderMaterialStockStatus {
   materialName: string;
   requiredQuantity: number;
   reservedStock: number;
+  stackSize: number;
   shortfallQuantity: number;
 }
 
@@ -48,6 +50,7 @@ type ProductComponentLike = {
       reservedStock: number;
     } | null;
     name: string;
+    stackSize: number;
   };
 };
 
@@ -60,6 +63,7 @@ type ProductWithResolvedComponents = {
       reservedStock: number;
     } | null;
     name: string;
+    stackSize: number;
   } | null;
   baseMaterialId?: string | null;
   components: ProductComponentLike[];
@@ -70,6 +74,56 @@ function shouldBypassInventoryForZeroStock(inventory: {
   currentStock: number;
 } | null | undefined): boolean {
   return (inventory?.currentStock ?? 0) === 0;
+}
+
+function formatQuantityBreakdown(quantity: number, stackSize: number): string {
+  const normalizedStackSize = normalizeStackSize(stackSize);
+  const doubleChestSize = normalizedStackSize * 54;
+  const chestSize = normalizedStackSize * 27;
+
+  let remaining = Math.max(0, quantity);
+  const doubleChests = Math.floor(remaining / doubleChestSize);
+  remaining -= doubleChests * doubleChestSize;
+
+  const chests = Math.floor(remaining / chestSize);
+  remaining -= chests * chestSize;
+
+  const stacks = Math.floor(remaining / normalizedStackSize);
+  remaining -= stacks * normalizedStackSize;
+
+  const units = remaining;
+  const parts: string[] = [];
+
+  if (doubleChests > 0) {
+    parts.push(`${doubleChests.toLocaleString('es-ES')} ${doubleChests === 1 ? 'cofre doble' : 'cofres dobles'}`);
+  }
+  if (chests > 0) {
+    parts.push(`${chests.toLocaleString('es-ES')} ${chests === 1 ? 'cofre' : 'cofres'}`);
+  }
+  if (stacks > 0) {
+    parts.push(`${stacks.toLocaleString('es-ES')} ${stacks === 1 ? 'stack' : 'stacks'}`);
+  }
+  if (units > 0 || parts.length === 0) {
+    parts.push(`${units.toLocaleString('es-ES')} ${units === 1 ? 'unidad' : 'unidades'}`);
+  }
+
+  if (parts.length === 1) return parts[0] ?? '0 unidades';
+  if (parts.length === 2) return `${parts[0]} y ${parts[1]}`;
+  const last = parts.pop();
+  return `${parts.join(', ')} y ${last}`;
+}
+
+function formatStockQuantity(quantity: number, stackSize: number): string {
+  return formatQuantityBreakdown(quantity, stackSize);
+}
+
+export function formatOrderStockStatusLine(status: OrderMaterialStockStatus): string {
+  return [
+    `• **${status.materialName}**`,
+    `  Falta: ${formatStockQuantity(status.shortfallQuantity, status.stackSize)}`,
+    `  Necesario: ${formatStockQuantity(status.requiredQuantity, status.stackSize)}`,
+    `  Disponible: ${formatStockQuantity(status.availableStock, status.stackSize)}`,
+  ].join('\n');
 }
 
 function resolveProductComponents(product: ProductWithResolvedComponents): ProductComponentLike[] {
@@ -156,7 +210,7 @@ export async function createPendingOrder(params: {
   const orderCode = await generateOrderCode();
   const products = await prisma.shopProduct.findMany({
     where: {
-      guildId,
+      ...buildShopGuildWhere(guildId),
       id: { in: items.map(item => item.productId) },
     },
     include: {
@@ -309,7 +363,9 @@ export async function getOrderStockAssessment(orderId: string): Promise<OrderSto
 
       if (existing) {
         existing.requiredQuantity += requiredQuantity;
-        existing.shortfallQuantity = Math.max(0, existing.requiredQuantity - existing.availableStock);
+        existing.shortfallQuantity = shouldBypassInventoryForZeroStock({ currentStock: existing.currentStock })
+          ? 0
+          : Math.max(0, existing.requiredQuantity - existing.availableStock);
         continue;
       }
 
@@ -320,6 +376,7 @@ export async function getOrderStockAssessment(orderId: string): Promise<OrderSto
         materialName: component.material.name,
         requiredQuantity,
         reservedStock,
+        stackSize: component.material.stackSize,
         shortfallQuantity: bypassInventory ? 0 : Math.max(0, requiredQuantity - availableStock),
       });
     }
@@ -343,9 +400,7 @@ function buildStockStatusValue(stockAssessment: OrderStockAssessment): string {
 
   return [
     'Falta stock para reservar el pedido completo en este momento.',
-    ...stockAssessment.shortages.slice(0, 6).map(shortage =>
-      `• ${shortage.materialName}: faltan ${shortage.shortfallQuantity} (necesario ${shortage.requiredQuantity}, disponible ${shortage.availableStock})`,
-    ),
+    ...stockAssessment.shortages.slice(0, 6).map(formatOrderStockStatusLine),
   ].join('\n');
 }
 
@@ -421,10 +476,7 @@ export async function reserveOrderStock(
         if (shouldBypassInventoryForZeroStock(inv)) continue;
         const available = inv.currentStock - inv.reservedStock;
         if (available < needed) {
-          throw new Error(
-            `Stock insuficiente de **${comp.material.name}**: ` +
-            `necesario ${needed}, disponible ${available}`,
-          );
+          throw new Error(`Stock insuficiente de **${comp.material.name}**.`);
         }
       }
     }
@@ -556,10 +608,7 @@ export async function consumeOrderStock(
         if (shouldBypassInventoryForZeroStock(inv)) continue;
         const available = inv.currentStock - inv.reservedStock;
         if (available < needed) {
-          throw new Error(
-            `Stock insuficiente de **${comp.material.name}**: ` +
-            `necesario ${needed}, disponible ${available}`,
-          );
+          throw new Error(`Stock insuficiente de **${comp.material.name}**.`);
         }
       }
     }

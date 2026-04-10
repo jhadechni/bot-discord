@@ -82,13 +82,8 @@ export const helpCommand: Command = {
           ].join('\n'),
         },
         {
-          name: '🏪 Staff Tienda',
+          name: '🧾 Staff Pedidos',
           value: [
-            '`/catalogo material-agregar|material-configurar|material-eliminar`',
-            '`/catalogo producto-agregar|producto-precio|producto-clasificar`',
-            '`/catalogo producto-presentacion|producto-componente`',
-            '`/catalogo producto-activar|producto-desactivar|producto-eliminar|stats`',
-            '`/stock ver|bajo|sumar|restar|actualizar|alerta`',
             '`/pedidos lista`',
           ].join('\n'),
         },

@@ -175,6 +175,8 @@ model ShopProduct {
   name                 String
   productType          String   // single | bulk | kit | service
   category             String   @default("general")
+  additionalCategories String[] @default([])
+  additionalCategoryAssignments Json @default("[]")
   subcategory          String   @default("otros")
   description          String?
   baseMaterialId       String?

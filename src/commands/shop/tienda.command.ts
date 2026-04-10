@@ -11,6 +11,7 @@ import { prisma } from '../../database/prisma.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import { upsertShopUser } from '../../database/shop-user.js';
 import {
+  buildCatalogEntryView,
   buildCatalogView,
   queryCatalogProducts,
 } from '../../shop/catalog.js';
@@ -1148,7 +1149,7 @@ export const tiendaCommand: Command = {
       return;
     }
 
-    const { embed, components } = buildCatalogView(products);
+    const { embed, components } = buildCatalogEntryView(products);
     await interaction.editReply({ embeds: [embed], components });
   },
 };

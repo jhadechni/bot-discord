@@ -9,6 +9,8 @@ import {
   StringSelectMenuBuilder,
   TextInputBuilder,
   TextInputStyle,
+  type Guild,
+  type Message,
 } from 'discord.js';
 import type { BotEvent } from '../types/event.js';
 import type { AquarisClient } from '../core/client.js';
@@ -22,6 +24,7 @@ import { upsertShopUser } from '../database/shop-user.js';
 import {
   applyManualVolumeDiscounts,
   getEligibleManualVolumeDiscounts,
+  normalizeDiscountType,
 } from '../shop/discounts.js';
 import {
   getOrderFull,
@@ -29,14 +32,17 @@ import {
   buildAcceptedButtons,
   buildPendingButtons,
   createPendingOrder,
+  formatOrderStockStatusLine,
   getOrderStockAssessment,
   releaseOrderStock,
   consumeOrderStock,
 } from '../shop/order-utils.js';
 import {
+  buildCatalogEntryView,
   buildCatalogView,
   queryCatalogProducts,
 } from '../shop/catalog.js';
+import type { CatalogMode } from '../shop/catalog.js';
 import {
   getCart,
   setCart,
@@ -56,8 +62,9 @@ function formatDiscountLabel(
   discountType: string,
   value: { toString(): string },
 ): string {
+  const normalizedDiscountType = normalizeDiscountType(discountType);
   const numericValue = Number(value.toString());
-  if (discountType === 'percent') {
+  if (normalizedDiscountType === 'percent') {
     return `${numericValue.toLocaleString('es-ES')}%`;
   }
   return numericValue.toLocaleString('es-ES');
@@ -99,6 +106,74 @@ function buildManualDiscountPrompt(params: {
     embeds: [embed],
     components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select)],
   };
+}
+
+function isCatalogMode(value: string | undefined): value is CatalogMode {
+  return value === 'products' || value === 'services';
+}
+
+async function refreshOrderManagementEmbeds(params: {
+  channelHints?: Array<string | null | undefined>;
+  guild: Guild;
+  orderCode: string;
+  stockAssessment: Awaited<ReturnType<typeof getOrderStockAssessment>> | null;
+  updatedOrder: NonNullable<Awaited<ReturnType<typeof getOrderFull>>>;
+}) {
+  const botUserId = params.guild.client.user?.id;
+  if (!botUserId) return 0;
+
+  const channelIds = Array.from(new Set(
+    (params.channelHints ?? []).filter((value): value is string => !!value),
+  ));
+
+  let updatedCount = 0;
+  const componentRow =
+    params.updatedOrder.status === 'accepted'
+      ? [buildAcceptedButtons(params.orderCode)]
+      : params.updatedOrder.status === 'pending'
+        ? [buildPendingButtons(params.orderCode)]
+        : [];
+
+  for (const channelId of channelIds) {
+    const channel =
+      params.guild.channels.cache.get(channelId) ??
+      await params.guild.channels.fetch(channelId).catch(() => null);
+
+    if (!channel?.isTextBased()) continue;
+
+    const recentMessages = await channel.messages.fetch({ limit: 25 }).catch(() => null);
+    if (!recentMessages) continue;
+
+    const matchingMessages = recentMessages.filter((message: Message) => {
+      if (message.author.id !== botUserId) return false;
+
+      const hasMatchingTitle = message.embeds.some((embed: Message['embeds'][number]) =>
+        (embed.title ?? '').includes(params.orderCode),
+      );
+
+      const hasMatchingButton = message.components.some((row: Message['components'][number]) => {
+        if (!('components' in row) || !Array.isArray(row.components)) {
+          return false;
+        }
+
+        return row.components.some(component =>
+          'customId' in component && typeof component.customId === 'string' && component.customId.includes(params.orderCode),
+        );
+      });
+
+      return hasMatchingTitle || hasMatchingButton;
+    });
+
+    for (const message of matchingMessages.values()) {
+      await message.edit({
+        embeds: [buildOrderEmbed(params.updatedOrder, params.stockAssessment)],
+        components: componentRow,
+      }).catch(() => undefined);
+      updatedCount += 1;
+    }
+  }
+
+  return updatedCount;
 }
 
 const interactionCreateEvent: BotEvent<'interactionCreate'> = {
@@ -196,6 +271,52 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       suggestCooldown.set(cooldownKey, Date.now());
       await interaction.editReply('✅ Tu sugerencia fue enviada.');
+      return;
+    }
+
+    if (interaction.isModalSubmit() && interaction.customId === 'tienda:catalog:request_modal') {
+      await interaction.deferReply({ ephemeral: true });
+
+      const guildId = interaction.guildId;
+      const guild = interaction.guild;
+      if (!guildId || !guild) return;
+
+      const requestText = interaction.fields.getTextInputValue('request_text').trim();
+      const config = await getOrCreateGuildConfig(guildId);
+
+      if (!config.shopStaffChannelId) {
+        await interaction.editReply(
+          '⚠️ La tienda no tiene configurado un canal de staff para solicitudes libres.',
+        );
+        return;
+      }
+
+      const staffChannel =
+        guild.channels.cache.get(config.shopStaffChannelId)
+        ?? await guild.channels.fetch(config.shopStaffChannelId).catch(() => null);
+
+      if (!staffChannel?.isTextBased()) {
+        await interaction.editReply('⚠️ El canal de staff configurado para la tienda no es válido.');
+        return;
+      }
+
+      await upsertShopUser(guildId, interaction.user);
+
+      const embed = new EmbedBuilder()
+        .setTitle('📝 Solicitud libre de tienda')
+        .setColor(0xfee75c)
+        .setDescription(requestText)
+        .addFields(
+          { name: '👤 Cliente', value: `<@${interaction.user.id}>`, inline: true },
+          { name: '🧭 Tipo', value: 'Solicitud fuera de catálogo', inline: true },
+        )
+        .setFooter({ text: 'Tienda Aquaris  ·  Solicitud manual' })
+        .setTimestamp();
+
+      await staffChannel.send({ embeds: [embed] });
+      await interaction.editReply(
+        '✅ Tu solicitud fue enviada al staff. Te contactarán si necesitan más detalles.',
+      );
       return;
     }
 
@@ -710,9 +831,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           }
         } catch (err) {
           const stockAssessment = await getOrderStockAssessment(order.id).catch(() => null);
-          const shortageLines = stockAssessment?.shortages.slice(0, 6).map(shortage =>
-            `• ${shortage.materialName}: faltan ${shortage.shortfallQuantity} (necesario ${shortage.requiredQuantity}, disponible ${shortage.availableStock})`,
-          ) ?? [];
+          const shortageLines = stockAssessment?.shortages.slice(0, 6).map(formatOrderStockStatusLine) ?? [];
           await interaction.followUp({
             content: [
               `❌ No se puede marcar como entregado: ${err instanceof Error ? err.message : 'Error al consumir stock.'}`,
@@ -857,10 +976,13 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           return;
         }
 
+        let orderMessageUpdated = false;
         const updatedOrder = await getOrderFull(orderCode);
         if (updatedOrder) {
           const stockAssessment = await getOrderStockAssessment(updatedOrder.id).catch(() => null);
-          const originalChannel = guild.channels.cache.get(channelId);
+          const originalChannel =
+            guild.channels.cache.get(channelId) ??
+            await guild.channels.fetch(channelId).catch(() => null);
           if (originalChannel?.isTextBased()) {
             const originalMessage = await originalChannel.messages.fetch(messageId).catch(() => null);
             if (originalMessage) {
@@ -868,14 +990,32 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
                 embeds: [buildOrderEmbed(updatedOrder, stockAssessment)],
                 components: [buildAcceptedButtons(orderCode)],
               });
+              orderMessageUpdated = true;
             }
           }
+
+          const refreshedEmbeds = await refreshOrderManagementEmbeds({
+            guild,
+            orderCode,
+            stockAssessment,
+            updatedOrder,
+            channelHints: [
+              channelId,
+              order.ticketChannelId,
+              order.staffChannelId,
+            ],
+          });
+          orderMessageUpdated = orderMessageUpdated || refreshedEmbeds > 0;
         }
 
         await interaction.editReply(
-          `✅ Descuentos aplicados:\n${appliedDiscounts.map(discount =>
-            `• ${discount.productName}: ${formatDiscountLabel(discount.discountType, discount.discountValue)} (${discount.minQuantity}+)`,
-          ).join('\n')}`,
+          [
+            '✅ Descuentos aplicados:',
+            ...appliedDiscounts.map(discount =>
+              `• ${discount.productName}: ${formatDiscountLabel(discount.discountType, discount.discountValue)} (${discount.minQuantity}+)`,
+            ),
+            orderMessageUpdated ? '' : '⚠️ El descuento se guardó, pero no pude refrescar el embed de la orden automáticamente.',
+          ].filter(Boolean).join('\n'),
         );
       } catch (err) {
         await interaction.editReply(
@@ -898,18 +1038,27 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const products = await queryCatalogProducts(guildId);
       const selected = interaction.values[0]!;
 
+      let mode: CatalogMode | undefined;
       let categoryKey:    string | undefined;
       let subcategoryKey: string | undefined;
 
       if (action === 'category') {
+        mode = isCatalogMode(parts[3]) ? parts[3] : undefined;
         categoryKey = selected;
         // subcategoría se resetea a la primera de la nueva categoría
       } else if (action === 'subcategory') {
-        categoryKey    = parts[3]; // tienda:catalog:subcategory:{category}
+        mode = isCatalogMode(parts[3]) ? parts[3] : undefined;
+        categoryKey    = parts[4]; // tienda:catalog:subcategory:{mode}:{category}
         subcategoryKey = selected;
       }
 
-      const { embed, components } = buildCatalogView(products, categoryKey, subcategoryKey, 1);
+      if (!mode) {
+        const { embed, components } = buildCatalogEntryView(products);
+        await interaction.editReply({ embeds: [embed], components });
+        return;
+      }
+
+      const { embed, components } = buildCatalogView(products, mode, categoryKey, subcategoryKey, 1);
       await interaction.editReply({ embeds: [embed], components });
       return;
     }
@@ -920,6 +1069,40 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const guildId = interaction.guildId;
       if (!guildId) return;
 
+      if (parts[2] === 'request') {
+        const modal = new ModalBuilder()
+          .setCustomId('tienda:catalog:request_modal')
+          .setTitle('Solicitud libre');
+
+        const input = new TextInputBuilder()
+          .setCustomId('request_text')
+          .setLabel('¿Qué quieres pedir?')
+          .setStyle(TextInputStyle.Paragraph)
+          .setRequired(true)
+          .setMinLength(5)
+          .setMaxLength(1000)
+          .setPlaceholder('Ej: 2 cajas de cohetes, un servicio especial o un encargo no listado.');
+
+        modal.addComponents(
+          new ActionRowBuilder<TextInputBuilder>().addComponents(input),
+        );
+
+        await interaction.showModal(modal);
+        return;
+      }
+
+      if (parts[2] === 'mode') {
+        const mode = isCatalogMode(parts[3]) ? parts[3] : undefined;
+        if (!mode) return;
+
+        await interaction.deferUpdate();
+
+        const products = await queryCatalogProducts(guildId);
+        const { embed, components } = buildCatalogView(products, mode, undefined, undefined, 1);
+        await interaction.editReply({ embeds: [embed], components });
+        return;
+      }
+
       if (parts[2] === 'open_cart') {
         await interaction.deferUpdate();
 
@@ -929,7 +1112,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           return;
         }
 
-        const requestedPage = Number.parseInt(parts[5] ?? '1', 10);
+        const requestedPage = Number.parseInt(parts[6] ?? '1', 10);
         const existingCart = getCart(guildId, interaction.user.id);
         const session = existingCart ?? {
           guildId,
@@ -937,6 +1120,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           channelId: interaction.channelId,
           messageId: interaction.message.id,
           currentCategory: null,
+          currentCatalogMode: 'products' as const,
           currentPage: 1,
           currentSubcategory: null,
           items: [],
@@ -946,8 +1130,9 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
         session.channelId = interaction.channelId;
         session.messageId = interaction.message.id;
-        session.currentCategory = parts[3] ?? session.currentCategory;
-        session.currentSubcategory = parts[4] ?? session.currentSubcategory;
+        session.currentCatalogMode = isCatalogMode(parts[3]) ? parts[3] : session.currentCatalogMode;
+        session.currentCategory = parts[4] ?? session.currentCategory;
+        session.currentSubcategory = parts[5] ?? session.currentSubcategory;
         session.currentPage = Number.isNaN(requestedPage) ? 1 : requestedPage;
         session.viewMode = 'browse';
         setCart(session);
@@ -958,13 +1143,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       }
 
       let category: string | undefined;
+      let mode: CatalogMode | undefined;
       let subcategory: string | undefined;
       let rawPage: string | undefined;
 
       if (parts[2] === 'page') {
-        category = parts[3];
-        subcategory = parts[4];
-        rawPage = parts[5];
+        mode = isCatalogMode(parts[3]) ? parts[3] : undefined;
+        category = parts[4];
+        subcategory = parts[5];
+        rawPage = parts[6];
       } else if (parts[2] === 'page-label') {
         return;
       }
@@ -972,9 +1159,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       await interaction.deferUpdate();
 
       const products = await queryCatalogProducts(guildId);
+      if (!mode) {
+        const { embed, components } = buildCatalogEntryView(products);
+        await interaction.editReply({ embeds: [embed], components });
+        return;
+      }
       const requestedPage = Number.parseInt(rawPage ?? '1', 10);
       const { embed, components } = buildCatalogView(
         products,
+        mode,
         category,
         subcategory,
         Number.isNaN(requestedPage) ? 1 : requestedPage,
@@ -985,7 +1178,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
     }
 
     // ── Carrito interactivo: cambiar categoría ────────────────────────────────
-    if (interaction.isStringSelectMenu() && interaction.customId === 'pedido:cart:category') {
+    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('pedido:cart:category')) {
       const guildId = interaction.guildId;
       if (!guildId) return;
 
@@ -995,6 +1188,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         return;
       }
 
+      const mode = interaction.customId.split(':')[3];
+      if (isCatalogMode(mode)) {
+        cart.currentCatalogMode = mode;
+      }
       cart.currentCategory = interaction.values[0] ?? null;
       cart.currentSubcategory = null;
       cart.currentPage = 1;

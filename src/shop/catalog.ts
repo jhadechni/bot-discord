@@ -23,6 +23,28 @@ import { buildProductContentsSummary } from './product-contents.js';
 
 const CATALOG_PAGE_SIZE = 6;
 
+export type CatalogMode = 'products' | 'services';
+
+const CATALOG_MODE_META: Record<CatalogMode, {
+  description: string;
+  emoji: string;
+  emptyMessage: string;
+  label: string;
+}> = {
+  products: {
+    description: 'Materiales, kits y ofertas físicas del catálogo.',
+    emoji: '📦',
+    emptyMessage: '_No hay productos disponibles en esta sección._',
+    label: 'Productos',
+  },
+  services: {
+    description: 'Servicios y encargos configurados por el staff.',
+    emoji: '🔧',
+    emptyMessage: '_No hay servicios disponibles en esta sección._',
+    label: 'Servicios',
+  },
+};
+
 export const PRODUCT_TYPE_LABELS: Record<string, string> = {
   single:  'Unidad',
   bulk:    'Granel',
@@ -50,9 +72,15 @@ export type CatalogProduct = CatalogProductRecord;
 
 type CatalogGrouping = Map<string, Map<string, CatalogProduct[]>>;
 
+type ProductCategoryAssignment = {
+  category: string;
+  subcategory: string;
+};
+
 export type CatalogViewState = {
   categoryKeys: string[];
   currentCategory: string;
+  currentMode: CatalogMode;
   currentPage: number;
   currentSubcategory: string;
   pageProducts: CatalogProduct[];
@@ -162,22 +190,94 @@ function applyTaxonomyImages(
   return embed;
 }
 
+function filterCatalogProductsByMode(
+  products: CatalogProduct[],
+  mode: CatalogMode,
+): CatalogProduct[] {
+  return products.filter(product =>
+    mode === 'services'
+      ? product.productType === 'service'
+      : product.productType !== 'service',
+  );
+}
+
+function countCatalogProductsByMode(
+  products: CatalogProduct[],
+): Record<CatalogMode, number> {
+  return {
+    products: filterCatalogProductsByMode(products, 'products').length,
+    services: filterCatalogProductsByMode(products, 'services').length,
+  };
+}
+
+function parseProductCategoryAssignments(
+  product: CatalogProduct,
+): ProductCategoryAssignment[] {
+  const assignments: ProductCategoryAssignment[] = [];
+  const seen = new Set<string>();
+
+  const pushAssignment = (categoryValue: string | null | undefined, subcategoryValue: string | null | undefined) => {
+    const taxonomy = coerceShopTaxonomy(categoryValue, subcategoryValue);
+    const key = `${taxonomy.category}:${taxonomy.subcategory}`;
+
+    if (seen.has(key)) return;
+    seen.add(key);
+    assignments.push({
+      category: taxonomy.category,
+      subcategory: taxonomy.subcategory,
+    });
+  };
+
+  pushAssignment(product.category, product.subcategory);
+
+  const rawAssignments = 'additionalCategoryAssignments' in product
+    ? product.additionalCategoryAssignments
+    : null;
+
+  if (Array.isArray(rawAssignments)) {
+    for (const rawAssignment of rawAssignments) {
+      if (!rawAssignment || typeof rawAssignment !== 'object') continue;
+
+      const assignment = rawAssignment as {
+        category?: unknown;
+        subcategory?: unknown;
+      };
+
+      pushAssignment(
+        typeof assignment.category === 'string' ? assignment.category : null,
+        typeof assignment.subcategory === 'string' ? assignment.subcategory : null,
+      );
+    }
+  }
+
+  if (assignments.length === 1 && 'additionalCategories' in product && Array.isArray(product.additionalCategories)) {
+    for (const additionalCategory of product.additionalCategories) {
+      if (typeof additionalCategory !== 'string') continue;
+      pushAssignment(additionalCategory, null);
+    }
+  }
+
+  return assignments;
+}
+
 function groupCatalogProducts(products: CatalogProduct[]): CatalogGrouping {
   const grouped = new Map<string, Map<string, CatalogProduct[]>>();
 
   for (const product of products) {
-    const taxonomy = coerceShopTaxonomy(product.category, product.subcategory);
+    const assignments = parseProductCategoryAssignments(product);
 
-    if (!grouped.has(taxonomy.category)) {
-      grouped.set(taxonomy.category, new Map());
+    for (const assignment of assignments) {
+      if (!grouped.has(assignment.category)) {
+        grouped.set(assignment.category, new Map());
+      }
+
+      const subcategories = grouped.get(assignment.category)!;
+      if (!subcategories.has(assignment.subcategory)) {
+        subcategories.set(assignment.subcategory, []);
+      }
+
+      subcategories.get(assignment.subcategory)!.push(product);
     }
-
-    const subcategories = grouped.get(taxonomy.category)!;
-    if (!subcategories.has(taxonomy.subcategory)) {
-      subcategories.set(taxonomy.subcategory, []);
-    }
-
-    subcategories.get(taxonomy.subcategory)!.push(product);
   }
 
   const orderedCategories = [...grouped.keys()].sort(compareCategoryKeys);
@@ -214,12 +314,13 @@ function paginateCatalogProducts(products: CatalogProduct[], pageSize: number): 
 
 export function resolveCatalogViewState(
   products: CatalogProduct[],
+  mode: CatalogMode,
   categoryKey?: string | null,
   subcategoryKey?: string | null,
   requestedPage = 1,
   pageSize = CATALOG_PAGE_SIZE,
 ): CatalogViewState {
-  const grouped = groupCatalogProducts(products);
+  const grouped = groupCatalogProducts(filterCatalogProductsByMode(products, mode));
   const categoryKeys = [...grouped.keys()].sort(compareCategoryKeys);
   const fallbackCategory = categoryKeys[0] ?? 'general';
   const normalizedCategory = coerceShopTaxonomy(categoryKey, null).category;
@@ -240,6 +341,7 @@ export function resolveCatalogViewState(
   return {
     categoryKeys,
     currentCategory,
+    currentMode: mode,
     currentPage,
     currentSubcategory,
     pageProducts: pages[currentPage - 1] ?? [],
@@ -255,13 +357,15 @@ export function buildProductGridEmbed(
 ): EmbedBuilder {
   const category = getCategoryDefinition(state.currentCategory);
   const subcategory = getSubcategoryDefinition(state.currentCategory, state.currentSubcategory);
+  const modeMeta = CATALOG_MODE_META[state.currentMode];
+  const itemLabel = state.currentMode === 'services' ? 'servicio' : 'producto';
   const categoryIndex = state.categoryKeys.indexOf(state.currentCategory) + 1;
   const subcategoryIndex = state.subcategoryKeys.indexOf(state.currentSubcategory) + 1;
   const titlePrefix = options.titlePrefix ?? '🏪 Tienda Aquaris';
   const footerHint = options.footerHint ?? '/pedido crear o carrito para comprar';
   const pageSize = options.pageSize ?? state.pageProducts.length;
   const embed = new EmbedBuilder()
-    .setTitle(`${titlePrefix}  ·  ${category.emoji} ${category.label}`)
+    .setTitle(`${titlePrefix}  ·  ${modeMeta.emoji} ${modeMeta.label}  ·  ${category.emoji} ${category.label}`)
     .setColor(options.color ?? COLORS.blurple)
     .setTimestamp();
 
@@ -273,6 +377,7 @@ export function buildProductGridEmbed(
       .setFooter({
         text: [
           SHOP_FOOTER.text,
+          modeMeta.label,
           `Cat. ${categoryIndex}/${state.categoryKeys.length}`,
           `Sub. ${subcategoryIndex}/${state.subcategoryKeys.length}`,
           footerHint,
@@ -280,7 +385,7 @@ export function buildProductGridEmbed(
       }), state);
   }
 
-  embed.setDescription(`**${subcategory.label}**`);
+  embed.setDescription(`**${subcategory.label}**\n${modeMeta.description}`);
 
   const fields = state.pageProducts.map((product, index) => {
     const icon = PRODUCT_TYPE_ICONS[product.productType] ?? '🛍️';
@@ -302,7 +407,8 @@ export function buildProductGridEmbed(
   embed.setFooter({
     text: [
       SHOP_FOOTER.text,
-      `${state.totalSubcategoryProducts} producto${state.totalSubcategoryProducts !== 1 ? 's' : ''}`,
+      modeMeta.label,
+      `${state.totalSubcategoryProducts} ${itemLabel}${state.totalSubcategoryProducts !== 1 ? 's' : ''}`,
       `Pág. ${state.currentPage}/${state.totalPages}`,
       `Cat. ${categoryIndex}/${state.categoryKeys.length}`,
       `Sub. ${subcategoryIndex}/${state.subcategoryKeys.length}`,
@@ -314,13 +420,66 @@ export function buildProductGridEmbed(
   return applyTaxonomyImages(embed, state);
 }
 
+function buildCatalogModeRow(
+  currentMode: CatalogMode | null,
+  counts: Record<CatalogMode, number>,
+): ActionRowBuilder<ButtonBuilder> {
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId('tienda:catalog:mode:products')
+      .setLabel(`📦 Productos (${counts.products})`)
+      .setStyle(currentMode === 'products' ? ButtonStyle.Primary : ButtonStyle.Secondary)
+      .setDisabled(counts.products === 0),
+    new ButtonBuilder()
+      .setCustomId('tienda:catalog:mode:services')
+      .setLabel(`🔧 Servicios (${counts.services})`)
+      .setStyle(currentMode === 'services' ? ButtonStyle.Primary : ButtonStyle.Secondary)
+      .setDisabled(counts.services === 0),
+    new ButtonBuilder()
+      .setCustomId('tienda:catalog:request')
+      .setLabel('📝 Solicitud libre')
+      .setStyle(ButtonStyle.Success),
+  );
+}
+
+export function buildCatalogEntryView(
+  products: CatalogProduct[],
+): {
+  components: Array<ActionRowBuilder<ButtonBuilder>>;
+  embed: EmbedBuilder;
+} {
+  const counts = countCatalogProductsByMode(products);
+  const embed = new EmbedBuilder()
+    .setTitle('🏪 Tienda Aquaris')
+    .setColor(COLORS.blurple)
+    .setDescription(
+      [
+        'Elige cómo quieres navegar la tienda.',
+        '',
+        `📦 **Productos**: ${counts.products} disponible${counts.products === 1 ? '' : 's'}`,
+        `🔧 **Servicios**: ${counts.services} disponible${counts.services === 1 ? '' : 's'}`,
+        '📝 **Solicitud libre**: envía al staff algo que no esté listado en el catálogo.',
+      ].join('\n'),
+    )
+    .setFooter({
+      text: `${SHOP_FOOTER.text}  ·  Selecciona una sección para continuar`,
+    })
+    .setTimestamp();
+
+  return {
+    components: [buildCatalogModeRow(null, counts)],
+    embed,
+  };
+}
+
 export function buildCategorySelectRow(
   prefix: string,
+  mode: CatalogMode,
   categoryKeys: string[],
   currentCategory: string,
 ): ActionRowBuilder<StringSelectMenuBuilder> {
   const select = new StringSelectMenuBuilder()
-    .setCustomId(`${prefix}:category`)
+    .setCustomId(`${prefix}:category:${mode}`)
     .setPlaceholder('Selecciona una categoría')
     .addOptions(
       categoryKeys.map(categoryKey => {
@@ -337,12 +496,13 @@ export function buildCategorySelectRow(
 
 export function buildSubcategorySelectRow(
   prefix: string,
+  mode: CatalogMode,
   currentCategory: string,
   subcategoryKeys: string[],
   currentSubcategory: string,
 ): ActionRowBuilder<StringSelectMenuBuilder> {
   const select = new StringSelectMenuBuilder()
-    .setCustomId(`${prefix}:subcategory:${currentCategory}`)
+    .setCustomId(`${prefix}:subcategory:${mode}:${currentCategory}`)
     .setPlaceholder('Selecciona una subcategoría')
     .addOptions(
       subcategoryKeys.map(subcategoryKey => {
@@ -358,6 +518,7 @@ export function buildSubcategorySelectRow(
 }
 
 function buildPaginationRow(
+  mode: CatalogMode,
   currentCategory: string,
   currentSubcategory: string,
   currentPage: number,
@@ -365,17 +526,17 @@ function buildPaginationRow(
 ): ActionRowBuilder<ButtonBuilder> {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
-      .setCustomId(`tienda:catalog:page:${currentCategory}:${currentSubcategory}:${currentPage - 1}`)
+      .setCustomId(`tienda:catalog:page:${mode}:${currentCategory}:${currentSubcategory}:${currentPage - 1}`)
       .setLabel('Anterior')
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(currentPage <= 1),
     new ButtonBuilder()
-      .setCustomId(`tienda:catalog:page-label:${currentCategory}:${currentSubcategory}:${currentPage}`)
+      .setCustomId(`tienda:catalog:page-label:${mode}:${currentCategory}:${currentSubcategory}:${currentPage}`)
       .setLabel(`Página ${currentPage}/${totalPages}`)
       .setStyle(ButtonStyle.Primary)
       .setDisabled(true),
     new ButtonBuilder()
-      .setCustomId(`tienda:catalog:page:${currentCategory}:${currentSubcategory}:${currentPage + 1}`)
+      .setCustomId(`tienda:catalog:page:${mode}:${currentCategory}:${currentSubcategory}:${currentPage + 1}`)
       .setLabel('Siguiente')
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(currentPage >= totalPages),
@@ -386,7 +547,7 @@ function buildOpenCartRow(state: CatalogViewState): ActionRowBuilder<ButtonBuild
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId(
-        `tienda:catalog:open_cart:${state.currentCategory}:${state.currentSubcategory}:${state.currentPage}`,
+        `tienda:catalog:open_cart:${state.currentMode}:${state.currentCategory}:${state.currentSubcategory}:${state.currentPage}`,
       )
       .setLabel('🛒 Abrir carrito')
       .setStyle(ButtonStyle.Success),
@@ -395,6 +556,7 @@ function buildOpenCartRow(state: CatalogViewState): ActionRowBuilder<ButtonBuild
 
 export function buildCatalogView(
   products: CatalogProduct[],
+  mode: CatalogMode,
   categoryKey?: string | null,
   subcategoryKey?: string | null,
   requestedPage = 1,
@@ -403,16 +565,20 @@ export function buildCatalogView(
   embed: EmbedBuilder;
   state: CatalogViewState;
 } {
-  const state = resolveCatalogViewState(products, categoryKey, subcategoryKey, requestedPage);
+  const state = resolveCatalogViewState(products, mode, categoryKey, subcategoryKey, requestedPage);
   const components: Array<ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>> = [];
+  const counts = countCatalogProductsByMode(products);
+
+  components.push(buildCatalogModeRow(state.currentMode, counts));
 
   if (state.categoryKeys.length > 1) {
-    components.push(buildCategorySelectRow('tienda:catalog', state.categoryKeys, state.currentCategory));
+    components.push(buildCategorySelectRow('tienda:catalog', state.currentMode, state.categoryKeys, state.currentCategory));
   }
 
   if (state.subcategoryKeys.length > 1) {
     components.push(buildSubcategorySelectRow(
       'tienda:catalog',
+      state.currentMode,
       state.currentCategory,
       state.subcategoryKeys,
       state.currentSubcategory,
@@ -421,6 +587,7 @@ export function buildCatalogView(
 
   if (state.totalPages > 1) {
     components.push(buildPaginationRow(
+      state.currentMode,
       state.currentCategory,
       state.currentSubcategory,
       state.currentPage,
