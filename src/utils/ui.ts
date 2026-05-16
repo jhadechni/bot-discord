@@ -9,9 +9,14 @@ export const COLORS = {
   success:   0x57f287,  // Verde — operación exitosa, pedido aceptado
   danger:    0xed4245,  // Rojo  — error, rechazo
   warning:   0xfee75c,  // Amarillo — atención, pedido pendiente
+  info:      0x3498db,  // Azul Aquaris — información general
   blurple:   0x5865f2,  // Azul Discord — neutro, info, pedido entregado
   neutral:   0x99aab5,  // Gris — cancelado, inactivo
   orange:    0xffa500,  // Naranja — advertencia stock bajo, importación con errores
+  mute:      0xf59e0b,  // Ámbar — mute
+  timeout:   0xf97316,  // Naranja intenso — timeout
+  kick:      0xe67e22,  // Naranja oscuro — kick
+  system:    0x64748b,  // Slate — sistema
 } as const;
 
 // ── Estados de pedido ──────────────────────────────────────────────────────────

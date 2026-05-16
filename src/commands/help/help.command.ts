@@ -88,6 +88,12 @@ export const helpCommand: Command = {
           ].join('\n'),
         },
         {
+          name: '👥 Roster',
+          value: [
+            '`/jugadores registrar` — Registra al jugador desde el canal de entrevista y cierra el canal.',
+          ].join('\n'),
+        },
+        {
           name: '⚙️ Configuración y utilidades',
           value: [
             '`/config ver`',

@@ -82,6 +82,8 @@ async function trackMessageXp(
 
 export { invalidateFilterCache } from '../utils/filter.js';
 import { getFilteredWords, findBannedWord } from '../utils/filter.js';
+import { analyzeToxicity } from '../utils/perspective.js';
+import { env } from '../config/env.js';
 
 const messageCreateEvent: BotEvent<'messageCreate'> = {
   name: 'messageCreate',
@@ -96,23 +98,9 @@ const messageCreateEvent: BotEvent<'messageCreate'> = {
 
     if (!member) return;
 
-    const hasModerationBypass =
-      member.permissions.has('Administrator') ||
-      member.permissions.has('ManageMessages') ||
-      member.permissions.has('ModerateMembers');
-
     const config = await getOrCreateGuildConfig(guildId);
 
-    if (hasModerationBypass) {
-      try {
-        await trackMessageXp(message, guildId, userId, config);
-      } catch (err) {
-        logger.warn({ err }, 'Error actualizando XP de mensaje');
-      }
-      return;
-    }
-
-    // ── 1. Filtro de palabras ─────────────────────────────────────────────────
+    // ── 1. Filtro de palabras (FilterWord BD) ────────────────────────────────
     const filteredWords = await getFilteredWords(guildId);
     if (filteredWords.size > 0) {
       const matched = findBannedWord(message.content, filteredWords);
@@ -161,7 +149,71 @@ const messageCreateEvent: BotEvent<'messageCreate'> = {
       }
     }
 
-    // ── 2. Anti-spam ──────────────────────────────────────────────────────────
+    // ── 2. Perspective API (análisis semántico de toxicidad) ──────────────────
+    if (env.perspectiveApiKey) {
+      const score = await analyzeToxicity(message.content, env.perspectiveApiKey);
+      const TOXICITY_THRESHOLD = 0.80;
+
+      if (score !== null && score >= TOXICITY_THRESHOLD) {
+        try {
+          await message.delete();
+        } catch { /* mensaje ya eliminado */ }
+
+        try {
+          await message.author.send(
+            `🚫 Tu mensaje en **${message.guild.name}** fue eliminado por contenido inapropiado.`,
+          );
+        } catch { /* DMs desactivados */ }
+
+        const log = await prisma.moderationLog.create({
+          data: {
+            guildId,
+            targetId: userId,
+            moderatorId: message.client.user?.id ?? 'bot',
+            type: 'FILTER',
+            reason: `Perspective API: toxicidad ${(score * 100).toFixed(0)}%`,
+          },
+        });
+
+        const automodLogCh = getLogChannel(message.guild, config, 'automod');
+        if (automodLogCh) {
+          await automodLogCh.send({
+            embeds: [
+              new EmbedBuilder()
+                .setColor(0xed4245)
+                .setTitle('🤖 Mensaje eliminado (IA)')
+                .addFields(
+                  { name: 'Usuario', value: `<@${userId}> (${message.author.tag})`, inline: true },
+                  { name: 'Canal', value: `<#${message.channelId}>`, inline: true },
+                  { name: 'Toxicidad', value: `${(score * 100).toFixed(0)}%`, inline: true },
+                  { name: 'Contenido', value: message.content.slice(0, 500) },
+                  { name: 'ID Log', value: log.id, inline: true },
+                )
+                .setTimestamp(),
+            ],
+          });
+        }
+
+        return;
+      }
+    }
+
+    // ── 3. Anti-spam (omitido para moderadores) ──────────────────────────────
+    const hasModerationBypass =
+      member.permissions.has('Administrator') ||
+      member.permissions.has('ManageMessages') ||
+      member.permissions.has('ModerateMembers');
+
+    if (hasModerationBypass) {
+      try {
+        await trackMessageXp(message, guildId, userId, config);
+      } catch (err) {
+        logger.warn({ err }, 'Error actualizando XP de mensaje');
+      }
+      return;
+    }
+
+    // ── Anti-spam ─────────────────────────────────────────────────────────────
     const key = `${guildId}-${userId}`;
     const entry = getSpamEntry(key);
     const now = Date.now();

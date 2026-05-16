@@ -7,6 +7,7 @@ import {
   PermissionFlagsBits,
   ModalBuilder,
   StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
   TextInputBuilder,
   TextInputStyle,
   type Guild,
@@ -19,6 +20,7 @@ import { getOrCreateGuildConfig } from '../database/guild-config.js';
 import { getLogChannel } from '../utils/log-channel.js';
 import { buildSuggestionEmbed } from '../utils/suggestion.js';
 import { getFilteredWords, findBannedWord } from '../utils/filter.js';
+import { parseTime, formatTime } from '../utils/time.js';
 import { logger } from '../core/logger.js';
 import { upsertShopUser } from '../database/shop-user.js';
 import {
@@ -53,10 +55,28 @@ import {
 } from '../shop/cart.js';
 import { buildProductContentsSummary } from '../shop/product-contents.js';
 import { hasProductInventoryDefinition } from '../shop/quantities.js';
+import {
+  CLAN_PLAYER_CUSTOM_IDS,
+  applyAdditionalModalValues,
+  applyBasicsModalValues,
+  applySessionSelectValue,
+  buildClanPlayerAdditionalModal,
+  buildClanPlayerBasicsModal,
+  buildClanPlayerReviewReply,
+  buildClanPlayerStepOneReply,
+  canManageClanPlayers,
+  clearClanPlayerRegistrationSession,
+  getClanPlayerSession,
+  saveClanPlayerRegistration,
+} from '../recruitment/player-registration.js';
 
-// ── Cooldown de sugerencias (en memoria) ──────────────────────────────────────
-const SUGGEST_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutos
+// ── Cooldowns (en memoria para sugerencias, DB para apply) ───────────────────
+const SUGGEST_COOLDOWN_MS = 5 * 60 * 1000;  // 5 minutos
+const APPLY_COOLDOWN_MS   = 48 * 60 * 60 * 1000; // 48 horas
 const suggestCooldown = new Map<string, number>(); // key: guildId-userId → last timestamp
+
+// Cache de selección pendiente en /remind kit (userId → templateId[])
+const kitSelectionCache = new Map<string, string[]>();
 
 function formatDiscountLabel(
   discountType: string,
@@ -213,6 +233,428 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       return;
     }
 
+    // ─── Kit: modal crear plantilla ──────────────────────────────────────────
+    if (interaction.isModalSubmit() && interaction.customId === 'kit:create_modal') {
+      await interaction.deferReply({ ephemeral: true });
+
+      const guildId = interaction.guildId;
+      const guild = interaction.guild;
+      if (!guildId || !guild) return;
+
+      // Staff check
+      const guildConfig = await getOrCreateGuildConfig(guildId);
+      const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+      if (!member) return;
+      const staffRoles = [guildConfig.staffRoleId, guildConfig.liderRoleId, guildConfig.coLiderRoleId].filter(Boolean) as string[];
+      const isKitStaff = staffRoles.some(r => member.roles.cache.has(r)) || member.permissions.has('Administrator');
+      if (!isKitStaff) {
+        await interaction.editReply('❌ Solo el staff puede crear plantillas de kits.');
+        return;
+      }
+
+      const name = interaction.fields.getTextInputValue('kit_name').trim();
+      const cooldownStr = interaction.fields.getTextInputValue('kit_cooldown').trim();
+      const description = interaction.fields.getTextInputValue('kit_description').trim() || null;
+
+      const cooldownMin = parseTime(cooldownStr);
+      if (!cooldownMin || cooldownMin < 1) {
+        await interaction.editReply('❌ Cooldown inválido. Usa formato como `7d`, `24h`, `3d12h`.');
+        return;
+      }
+
+      const existing = await prisma.reminderTemplate.findFirst({ where: { guildId, name, isActive: true } });
+      if (existing) {
+        await interaction.editReply(`❌ Ya existe una plantilla llamada **${name}**.`);
+        return;
+      }
+
+      const template = await prisma.reminderTemplate.upsert({
+        where: { guildId_name: { guildId, name } },
+        create: { guildId, name, description: description ?? null, cooldownMin },
+        update: { description: description ?? null, cooldownMin, isActive: true },
+      });
+
+      await interaction.editReply(
+        `✅ Plantilla **${template.name}** creada — cooldown: **${formatTime(template.cooldownMin)}**`,
+      );
+      return;
+    }
+
+    // ─── Kit: select menu toggle ──────────────────────────────────────────────
+    if (interaction.isStringSelectMenu() && interaction.customId === 'remind:kit:toggle') {
+      await interaction.deferUpdate();
+
+      const selected = interaction.values; // templateId[]
+      kitSelectionCache.set(interaction.user.id, selected);
+
+      // Reconstruir select con defaults actualizados
+      const templates = await prisma.reminderTemplate.findMany({
+        where: { guildId: interaction.guildId ?? '', isActive: true },
+        orderBy: { name: 'asc' },
+      });
+
+      const updatedSelect = new StringSelectMenuBuilder()
+        .setCustomId('remind:kit:toggle')
+        .setPlaceholder('Selecciona los kits que quieres recordar...')
+        .setMinValues(0)
+        .setMaxValues(templates.length)
+        .addOptions(
+          templates.map(t =>
+            new StringSelectMenuOptionBuilder()
+              .setLabel(t.name)
+              .setDescription(t.description ?? `Cooldown: ${formatTime(t.cooldownMin)}`)
+              .setValue(t.id)
+              .setDefault(selected.includes(t.id)),
+          ),
+        );
+
+      const saveBtn = new ButtonBuilder()
+        .setCustomId('remind:kit:save')
+        .setLabel('Guardar')
+        .setStyle(ButtonStyle.Primary);
+
+      const editBtn = new ButtonBuilder()
+        .setCustomId('remind:kit:edit_open')
+        .setLabel('Editar próximo aviso')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(false); // si llega aquí hay reminders activos o están por activarse
+
+      const selectedLabel = selected.length > 0
+        ? templates.filter(t => selected.includes(t.id)).map(t => `🎁 ${t.name}`).join('\n')
+        : 'Ninguno seleccionado — guardar desactivará todos los recordatorios de kit.';
+
+      const updatedEmbed = new EmbedBuilder()
+        .setColor(0x5865f2)
+        .setTitle('🎁 Recordatorios de kits')
+        .setDescription(selectedLabel)
+        .setFooter({ text: 'Pulsa Guardar para aplicar los cambios' });
+
+      await interaction.editReply({
+        embeds: [updatedEmbed],
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(updatedSelect),
+          new ActionRowBuilder<ButtonBuilder>().addComponents(saveBtn, editBtn),
+        ],
+      });
+      return;
+    }
+
+    // ─── Kit: botón guardar selección ─────────────────────────────────────────
+    if (interaction.isButton() && interaction.customId === 'remind:kit:save') {
+      await interaction.deferUpdate();
+
+      const guildId = interaction.guildId ?? '';
+      const userId = interaction.user.id;
+      const selectedIds = kitSelectionCache.get(userId) ?? [];
+      kitSelectionCache.delete(userId);
+
+      // Obtener kits activos actuales del usuario
+      const activeReminders = await prisma.reminder.findMany({
+        where: { userId, guildId, active: true, templateId: { not: null } },
+        select: { id: true, templateId: true },
+      });
+
+      const activeTemplateIds = activeReminders.map(r => r.templateId!);
+
+      // Desactivar los que ya no están en la selección
+      const toDeactivate = activeReminders.filter(r => !selectedIds.includes(r.templateId!));
+      if (toDeactivate.length > 0) {
+        await prisma.reminder.updateMany({
+          where: { id: { in: toDeactivate.map(r => r.id) } },
+          data: { active: false },
+        });
+      }
+
+      // Crear los nuevos que no existen aún
+      const toCreate = selectedIds.filter(id => !activeTemplateIds.includes(id));
+      if (toCreate.length > 0) {
+        const templates = await prisma.reminderTemplate.findMany({
+          where: { id: { in: toCreate }, isActive: true },
+        });
+        for (const t of templates) {
+          await prisma.reminder.create({
+            data: {
+              userId,
+              guildId,
+              message: t.name,
+              triggerAt: new Date(Date.now() + t.cooldownMin * 60_000),
+              intervalMin: null, // one-shot — se reprograma al clicar "Ya lo reclamé"
+              templateId: t.id,
+            },
+          });
+        }
+      }
+
+      // Rebuild view
+      const allTemplates = await prisma.reminderTemplate.findMany({
+        where: { guildId, isActive: true },
+        orderBy: { name: 'asc' },
+      });
+      const updatedReminders = await prisma.reminder.findMany({
+        where: { userId, guildId, active: true, templateId: { not: null } },
+        include: { template: true },
+        orderBy: { triggerAt: 'asc' },
+      });
+      const activeSet = new Set(updatedReminders.map(r => r.templateId!));
+
+      const lines = updatedReminders.length > 0
+        ? updatedReminders.map(r => {
+            const msLeft = r.triggerAt.getTime() - Date.now();
+            const timeLeft = msLeft > 0 ? formatTime(Math.ceil(msLeft / 60_000)) : 'vencido';
+            return `🎁 **${r.template!.name}** — en **${timeLeft}**  *(cada ${formatTime(r.template!.cooldownMin)})*`;
+          })
+        : ['No tienes recordatorios de kit activos.'];
+
+      const embed = new EmbedBuilder()
+        .setColor(0x57f287)
+        .setTitle('✅ Recordatorios de kits actualizados')
+        .setDescription(lines.join('\n'))
+        .setFooter({ text: 'Recibirás un DM cuando sea momento de reclamar cada kit' });
+
+      const select = new StringSelectMenuBuilder()
+        .setCustomId('remind:kit:toggle')
+        .setPlaceholder('Selecciona los kits que quieres recordar...')
+        .setMinValues(0)
+        .setMaxValues(allTemplates.length)
+        .addOptions(
+          allTemplates.map(t =>
+            new StringSelectMenuOptionBuilder()
+              .setLabel(t.name)
+              .setDescription(t.description ?? `Cooldown: ${formatTime(t.cooldownMin)}`)
+              .setValue(t.id)
+              .setDefault(activeSet.has(t.id)),
+          ),
+        );
+
+      const saveBtn = new ButtonBuilder().setCustomId('remind:kit:save').setLabel('Guardar').setStyle(ButtonStyle.Primary);
+      const editBtn = new ButtonBuilder().setCustomId('remind:kit:edit_open').setLabel('Editar próximo aviso').setStyle(ButtonStyle.Secondary).setDisabled(updatedReminders.length === 0);
+
+      await interaction.editReply({
+        embeds: [embed],
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select),
+          new ActionRowBuilder<ButtonBuilder>().addComponents(saveBtn, editBtn),
+        ],
+      });
+      return;
+    }
+
+    // ─── Kit: botón editar → muestra select de reminders activos ─────────────
+    if (interaction.isButton() && interaction.customId === 'remind:kit:edit_open') {
+      await interaction.deferUpdate();
+
+      const guildId = interaction.guildId ?? '';
+      const activeReminders = await prisma.reminder.findMany({
+        where: { userId: interaction.user.id, guildId, active: true, templateId: { not: null } },
+        include: { template: true },
+        orderBy: { triggerAt: 'asc' },
+      });
+
+      if (activeReminders.length === 0) {
+        await interaction.followUp({ ephemeral: true, content: 'No tienes recordatorios de kit activos para editar.' });
+        return;
+      }
+
+      const editSelect = new StringSelectMenuBuilder()
+        .setCustomId('remind:kit:edit_select')
+        .setPlaceholder('Selecciona el kit cuyo aviso quieres cambiar...')
+        .addOptions(
+          activeReminders.map(r => {
+            const msLeft = r.triggerAt.getTime() - Date.now();
+            const timeLeft = msLeft > 0 ? formatTime(Math.ceil(msLeft / 60_000)) : 'vencido';
+            return new StringSelectMenuOptionBuilder()
+              .setLabel(r.template!.name)
+              .setDescription(`Próximo aviso en ${timeLeft}`)
+              .setValue(r.id);
+          }),
+        );
+
+      const backBtn = new ButtonBuilder()
+        .setCustomId('remind:kit:edit_back')
+        .setLabel('← Volver')
+        .setStyle(ButtonStyle.Secondary);
+
+      const embed = new EmbedBuilder()
+        .setColor(0x5865f2)
+        .setTitle('🎁 Editar próximo aviso')
+        .setDescription('Selecciona el kit y establece en cuánto tiempo debe dispararse el siguiente recordatorio.');
+
+      await interaction.editReply({
+        embeds: [embed],
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(editSelect),
+          new ActionRowBuilder<ButtonBuilder>().addComponents(backBtn),
+        ],
+      });
+      return;
+    }
+
+    // ─── Kit: select editar → abre modal ──────────────────────────────────────
+    if (interaction.isStringSelectMenu() && interaction.customId === 'remind:kit:edit_select') {
+      const reminderId = interaction.values[0];
+      if (!reminderId) return;
+
+      const modal = new ModalBuilder()
+        .setCustomId(`remind:kit:edit_modal:${reminderId}`)
+        .setTitle('Cambiar próximo aviso');
+
+      modal.addComponents(
+        new ActionRowBuilder<TextInputBuilder>().addComponents(
+          new TextInputBuilder()
+            .setCustomId('new_trigger')
+            .setLabel('¿En cuánto tiempo debe avisarte?')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ej: 2d, 6h, 3d12h')
+            .setRequired(true)
+            .setMaxLength(20),
+        ),
+      );
+
+      await interaction.showModal(modal);
+      return;
+    }
+
+    // ─── Kit: modal editar → actualiza triggerAt ──────────────────────────────
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('remind:kit:edit_modal:')) {
+      await interaction.deferReply({ ephemeral: true });
+
+      const reminderId = interaction.customId.replace('remind:kit:edit_modal:', '');
+      const newTimeStr = interaction.fields.getTextInputValue('new_trigger').trim();
+      const minutes = parseTime(newTimeStr);
+
+      if (!minutes || minutes < 5) {
+        await interaction.editReply('❌ Tiempo inválido. Mínimo 5 minutos. Ej: `5m`, `2h`, `1d`.');
+        return;
+      }
+
+      const reminder = await prisma.reminder.findFirst({
+        where: { id: reminderId, userId: interaction.user.id, active: true },
+        include: { template: true },
+      });
+
+      if (!reminder) {
+        await interaction.editReply('❌ No se encontró ese recordatorio o ya no está activo.');
+        return;
+      }
+
+      const newTrigger = new Date(Date.now() + minutes * 60_000);
+      await prisma.reminder.update({ where: { id: reminderId }, data: { triggerAt: newTrigger } });
+
+      await interaction.editReply(
+        `✅ **${reminder.template?.name ?? reminder.message}** — próximo aviso en **${formatTime(minutes)}**.`,
+      );
+      return;
+    }
+
+    // ─── Kit: botón volver al view principal ─────────────────────────────────
+    if (interaction.isButton() && interaction.customId === 'remind:kit:edit_back') {
+      await interaction.deferUpdate();
+
+      const guildId = interaction.guildId ?? '';
+      const userId = interaction.user.id;
+
+      const templates = await prisma.reminderTemplate.findMany({
+        where: { guildId, isActive: true },
+        orderBy: { name: 'asc' },
+      });
+      const activeReminders = await prisma.reminder.findMany({
+        where: { userId, guildId, active: true, templateId: { not: null } },
+        include: { template: true },
+        orderBy: { triggerAt: 'asc' },
+      });
+      const activeSet = new Set(activeReminders.map(r => r.templateId!));
+
+      const lines = activeReminders.length > 0
+        ? activeReminders.map(r => {
+            const msLeft = r.triggerAt.getTime() - Date.now();
+            const timeLeft = msLeft > 0 ? formatTime(Math.ceil(msLeft / 60_000)) : 'vencido';
+            return `🎁 **${r.template!.name}** — en **${timeLeft}**  *(cada ${formatTime(r.template!.cooldownMin)})*`;
+          })
+        : ['No tienes recordatorios de kit activos.'];
+
+      const embed = new EmbedBuilder()
+        .setColor(0x5865f2)
+        .setTitle('🎁 Recordatorios de kits')
+        .setDescription(lines.join('\n'))
+        .setFooter({ text: 'Selecciona kits y pulsa Guardar · Pulsa Ya lo reclamé en el DM cuando lo hagas' });
+
+      const select = new StringSelectMenuBuilder()
+        .setCustomId('remind:kit:toggle')
+        .setPlaceholder('Selecciona los kits que quieres recordar...')
+        .setMinValues(0)
+        .setMaxValues(templates.length)
+        .addOptions(
+          templates.map(t =>
+            new StringSelectMenuOptionBuilder()
+              .setLabel(t.name)
+              .setDescription(t.description ?? `Cooldown: ${formatTime(t.cooldownMin)}`)
+              .setValue(t.id)
+              .setDefault(activeSet.has(t.id)),
+          ),
+        );
+
+      const saveBtn = new ButtonBuilder().setCustomId('remind:kit:save').setLabel('Guardar').setStyle(ButtonStyle.Primary);
+      const editBtn = new ButtonBuilder().setCustomId('remind:kit:edit_open').setLabel('Editar próximo aviso').setStyle(ButtonStyle.Secondary).setDisabled(activeReminders.length === 0);
+
+      await interaction.editReply({
+        embeds: [embed],
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select),
+          new ActionRowBuilder<ButtonBuilder>().addComponents(saveBtn, editBtn),
+        ],
+      });
+      return;
+    }
+
+    // ─── Kit: botón "Ya lo reclamé" (llega desde DM) ─────────────────────────
+    if (interaction.isButton() && interaction.customId.startsWith('remind:kit:claimed:')) {
+      await interaction.deferReply({ ephemeral: true });
+
+      const parts = interaction.customId.replace('remind:kit:claimed:', '').split(':');
+      const templateId = parts[0];
+      const guildId = parts[1];
+
+      if (!templateId || !guildId) return;
+
+      const template = await prisma.reminderTemplate.findFirst({
+        where: { id: templateId, isActive: true },
+      });
+
+      if (!template) {
+        await interaction.editReply('❌ Esta plantilla de kit ya no está disponible.');
+        return;
+      }
+
+      // Verificar que no haya ya un reminder activo para este kit (evitar duplicados)
+      const existing = await prisma.reminder.findFirst({
+        where: { userId: interaction.user.id, guildId, active: true, templateId },
+      });
+
+      if (existing) {
+        const msLeft = existing.triggerAt.getTime() - Date.now();
+        const timeLeft = msLeft > 0 ? formatTime(Math.ceil(msLeft / 60_000)) : 'ahora mismo';
+        await interaction.editReply(`⏳ Ya tienes un recordatorio activo para **${template.name}** — en **${timeLeft}**.`);
+        return;
+      }
+
+      const nextTrigger = new Date(Date.now() + template.cooldownMin * 60_000);
+      await prisma.reminder.create({
+        data: {
+          userId: interaction.user.id,
+          guildId,
+          message: template.name,
+          triggerAt: nextTrigger,
+          intervalMin: null,
+          templateId,
+        },
+      });
+
+      await interaction.editReply(
+        `✅ ¡Anotado! Te recordaré reclamar **${template.name}** en **${formatTime(template.cooldownMin)}**.`,
+      );
+      return;
+    }
+
     // --- Modal: sugerencia ---
     if (interaction.isModalSubmit() && interaction.customId === 'suggest_modal') {
       await interaction.deferReply({ ephemeral: true });
@@ -323,50 +765,53 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
     // --- Select menu: selección de rol(es) en reclutamiento ---
     if (interaction.isStringSelectMenu() && interaction.customId === 'apply_role_select') {
       if (interaction.values.length === 0) return;
+      await interaction.deferUpdate();
 
-      // Unir roles con coma para pasarlos en el customId del modal
-      const rolesJoined = interaction.values.join(',');
+      const selected = interaction.values;
+      const rolesJoined = selected.join(',');
 
-      const modal = new ModalBuilder()
-        .setCustomId(`apply_modal_${rolesJoined}`)
-        .setTitle('Solicitud de ingreso — Aquaris');
+      const ALL_ROLES = [
+        { value: 'Builder',  label: 'Builder',           description: 'Construcción y diseño',       emoji: '🏗️' },
+        { value: 'Técnico',  label: 'Técnico / Redstone', description: 'Farms, mecánicas y redstone', emoji: '⚙️' },
+        { value: 'PvP',      label: 'PvP',                description: 'Combate y defensa del clan',  emoji: '⚔️' },
+        { value: 'Farmer',   label: 'Farmer',             description: 'Producción de recursos',      emoji: '🌾' },
+        { value: 'Otro',     label: 'Otro',               description: 'Otro rol o perfil',           emoji: '✨' },
+      ];
 
-      modal.addComponents(
-        new ActionRowBuilder<TextInputBuilder>().addComponents(
-          new TextInputBuilder()
-            .setCustomId('apply_age')
-            .setLabel('¿Cuántos años tienes?')
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true)
-            .setMaxLength(3),
-        ),
-        new ActionRowBuilder<TextInputBuilder>().addComponents(
-          new TextInputBuilder()
-            .setCustomId('apply_experience')
-            .setLabel('¿Cuánto tiempo llevas jugando Minecraft?')
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true)
-            .setMaxLength(100),
-        ),
-        new ActionRowBuilder<TextInputBuilder>().addComponents(
-          new TextInputBuilder()
-            .setCustomId('apply_contribution')
-            .setLabel('¿Qué puedes aportar al clan?')
-            .setStyle(TextInputStyle.Paragraph)
-            .setRequired(true)
-            .setMaxLength(400),
-        ),
-        new ActionRowBuilder<TextInputBuilder>().addComponents(
-          new TextInputBuilder()
-            .setCustomId('apply_availability')
-            .setLabel('Disponibilidad (días/horas por semana)')
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true)
-            .setMaxLength(100),
-        ),
-      );
+      const updatedSelect = new StringSelectMenuBuilder()
+        .setCustomId('apply_role_select')
+        .setPlaceholder('¿En qué puedes aportar?')
+        .setMinValues(1)
+        .setMaxValues(5)
+        .addOptions(
+          ALL_ROLES.map(r =>
+            new StringSelectMenuOptionBuilder()
+              .setLabel(r.label)
+              .setDescription(r.description)
+              .setValue(r.value)
+              .setEmoji(r.emoji)
+              .setDefault(selected.includes(r.value)),
+          ),
+        );
 
-      await interaction.showModal(modal);
+      const confirmBtn = new ButtonBuilder()
+        .setCustomId(`apply_confirm_${rolesJoined}`)
+        .setLabel('Continuar')
+        .setStyle(ButtonStyle.Primary)
+        .setDisabled(false);
+
+      const updatedEmbed = new EmbedBuilder()
+        .setColor(0x5865f2)
+        .setTitle('Solicitud de ingreso — Aquaris')
+        .setDescription(`Roles: **${selected.join(', ')}**\n\nPulsa **Continuar** para abrir el formulario.`);
+
+      await interaction.editReply({
+        embeds: [updatedEmbed],
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(updatedSelect),
+          new ActionRowBuilder<ButtonBuilder>().addComponents(confirmBtn),
+        ],
+      });
       return;
     }
 
@@ -376,6 +821,23 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const guildId = interaction.guildId;
       if (!guildId || !interaction.guild) return;
+
+      // Cooldown 48h (DB) — comprobación de seguridad si el check del select fue omitido
+      const lastApplyTicket = await prisma.recruitmentTicket.findFirst({
+        where: { guildId, userId: interaction.user.id },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true },
+      });
+      if (lastApplyTicket) {
+        const remaining = APPLY_COOLDOWN_MS - (Date.now() - lastApplyTicket.createdAt.getTime());
+        if (remaining > 0) {
+          const hours = Math.ceil(remaining / (60 * 60 * 1000));
+          await interaction.editReply(
+            `⏳ Ya tienes una solicitud reciente. Podrás volver a aplicar en **${hours} hora${hours === 1 ? '' : 's'}**.`,
+          );
+          return;
+        }
+      }
 
       const roles = interaction.customId.replace('apply_modal_', '').split(',');
       const role = roles.join(', ');
@@ -440,46 +902,64 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         }
       }
 
-      const embed = new EmbedBuilder()
+      const staffEmbed = new EmbedBuilder()
         .setColor(0x5865f2)
         .setTitle('📋 Nueva solicitud de reclutamiento')
+        .setDescription(`**<@${interaction.user.id}>** ha solicitado unirse al clan Aquaris.`)
         .addFields(
-          { name: 'Solicitante', value: `<@${interaction.user.id}>`, inline: true },
-          { name: 'Rol deseado', value: role, inline: true },
-          { name: 'Edad', value: age, inline: true },
-          { name: 'Experiencia en Minecraft', value: experience },
-          { name: 'Aportación al clan', value: contribution },
-          { name: 'Disponibilidad', value: availability },
-          { name: 'ID Ticket', value: ticket.id },
+          { name: '👤 Solicitante', value: `<@${interaction.user.id}>\n\`${interaction.user.username}\``, inline: true },
+          { name: '🎮 Rol solicitado', value: role, inline: true },
+          { name: '🎂 Edad', value: age, inline: true },
+          { name: '⏱️ Experiencia en Minecraft', value: experience },
+          { name: '📅 Disponibilidad semanal', value: availability },
+          { name: '💡 Aportación al clan', value: contribution },
         )
         .setThumbnail(interaction.user.displayAvatarURL())
+        .setFooter({ text: `Ticket ${ticket.id}  ·  Aquaris Reclutamiento` })
         .setTimestamp();
 
       const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
           .setCustomId(`apply_accept_${ticket.id}`)
           .setLabel('Aceptar')
+          .setEmoji('✅')
           .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
           .setCustomId(`apply_reject_${ticket.id}`)
           .setLabel('Rechazar')
+          .setEmoji('❌')
           .setStyle(ButtonStyle.Danger),
       );
 
       if (channelId) {
         const ticketChannel = interaction.guild.channels.cache.get(channelId);
         if (ticketChannel?.isTextBased()) {
-          await ticketChannel.send({ embeds: [embed], components: [buttons] });
+          // Bienvenida al solicitante en su canal privado
+          const welcomeEmbed = new EmbedBuilder()
+            .setColor(0x5865f2)
+            .setTitle('Bienvenido a tu solicitud — Aquaris')
+            .setDescription(
+              `Hola <@${interaction.user.id}>, tu solicitud ha sido enviada correctamente.\n\n` +
+              'El staff revisará tu perfil y te responderá aquí. ' +
+              'Puedes añadir más información o aclarar cualquier punto mientras esperamos.',
+            )
+            .setFooter({ text: `Ticket ${ticket.id}  ·  Aquaris Reclutamiento` })
+            .setTimestamp();
+          await ticketChannel.send({ embeds: [welcomeEmbed] });
+
           if (roles.includes('Builder')) {
             await ticketChannel.send(
               `📸 <@${interaction.user.id}> Ya que aplicas como **Builder**, sube aquí capturas de tus construcciones o proyectos. El staff las revisará junto con tu solicitud.`,
             );
           }
+
+          // Embed de revisión para el staff (sin mención al usuario para no notificarle otra vez)
+          await ticketChannel.send({ embeds: [staffEmbed], components: [buttons] });
         }
       } else {
         const recruitLogCh = getLogChannel(interaction.guild, config, 'recruit');
         if (recruitLogCh) {
-          await recruitLogCh.send({ embeds: [embed], components: [buttons] });
+          await recruitLogCh.send({ embeds: [staffEmbed], components: [buttons] });
           if (roles.includes('Builder')) {
             await recruitLogCh.send(
               `📸 <@${interaction.user.id}> Ya que aplicas como **Builder**, sube aquí capturas de tus construcciones o proyectos.`,
@@ -488,7 +968,243 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         }
       }
 
-      await interaction.editReply('✅ Solicitud enviada. El staff revisará tu aplicación pronto.');
+      await interaction.editReply(
+        '✅ **Solicitud enviada.** El staff revisará tu aplicación y te responderá en tu canal privado.',
+      );
+      return;
+    }
+
+    if (interaction.isModalSubmit() && interaction.customId.startsWith(CLAN_PLAYER_CUSTOM_IDS.basicsModal)) {
+      const guild = interaction.guild;
+      if (!guild) return;
+
+      const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
+      if (!actor || !(await canManageClanPlayers(actor))) {
+        await interaction.reply({
+          content: '❌ Solo el staff puede registrar jugadores en el roster.',
+          ephemeral: true,
+        });
+        return;
+      }
+
+      const sessionId = interaction.customId.slice(CLAN_PLAYER_CUSTOM_IDS.basicsModal.length);
+      const session = applyBasicsModalValues(sessionId, {
+        discord: interaction.fields.getTextInputValue('discord').trim(),
+        fullName: interaction.fields.getTextInputValue('fullName').trim(),
+        minecraftNick: interaction.fields.getTextInputValue('minecraftNick').trim(),
+        joinedAt: interaction.fields.getTextInputValue('joinedAt').trim(),
+        country: interaction.fields.getTextInputValue('country').trim(),
+      });
+
+      if (!session) {
+        await interaction.reply({
+          content: '❌ La sesión expiró. Ejecuta el comando otra vez.',
+          ephemeral: true,
+        });
+        return;
+      }
+
+      await interaction.reply({
+        ...buildClanPlayerStepOneReply(session),
+        ephemeral: true,
+      });
+      return;
+    }
+
+    if (interaction.isModalSubmit() && interaction.customId.startsWith(CLAN_PLAYER_CUSTOM_IDS.additionalModal)) {
+      const guild = interaction.guild;
+      if (!guild) return;
+
+      const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
+      if (!actor || !(await canManageClanPlayers(actor))) {
+        await interaction.reply({
+          content: '❌ Solo el staff puede registrar jugadores en el roster.',
+          ephemeral: true,
+        });
+        return;
+      }
+
+      const sessionId = interaction.customId.slice(CLAN_PLAYER_CUSTOM_IDS.additionalModal.length);
+      const session = applyAdditionalModalValues(sessionId, {
+        utcOffset: interaction.fields.getTextInputValue('utcOffset').trim(),
+        notes: interaction.fields.getTextInputValue('notes').trim(),
+      });
+
+      if (!session) {
+        await interaction.reply({
+          content: '❌ La sesión expiró. Ejecuta el comando otra vez.',
+          ephemeral: true,
+        });
+        return;
+      }
+
+      await interaction.reply({
+        ...buildClanPlayerReviewReply(session),
+        ephemeral: true,
+      });
+      return;
+    }
+
+    if (interaction.isButton() && interaction.customId.startsWith('clanplayer:')) {
+      const guild = interaction.guild;
+      if (!guild) return;
+
+      const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
+      if (!actor || !(await canManageClanPlayers(actor))) {
+        await interaction.reply({
+          content: '❌ Solo el staff puede registrar jugadores en el roster.',
+          ephemeral: true,
+        });
+        return;
+      }
+
+      const { customId } = interaction;
+
+      if (customId.startsWith(CLAN_PLAYER_CUSTOM_IDS.cancelButton)) {
+        const sessionId = customId.slice(CLAN_PLAYER_CUSTOM_IDS.cancelButton.length);
+        clearClanPlayerRegistrationSession(sessionId);
+        await interaction.update({
+          content: '✅ Registro cancelado.',
+          embeds: [],
+          components: [],
+        });
+        return;
+      }
+
+      const prefixToSlice =
+        customId.startsWith(CLAN_PLAYER_CUSTOM_IDS.continueButton) ? CLAN_PLAYER_CUSTOM_IDS.continueButton :
+        customId.startsWith(CLAN_PLAYER_CUSTOM_IDS.editBasicsButton) ? CLAN_PLAYER_CUSTOM_IDS.editBasicsButton :
+        customId.startsWith(CLAN_PLAYER_CUSTOM_IDS.editAdditionalButton) ? CLAN_PLAYER_CUSTOM_IDS.editAdditionalButton :
+        customId.startsWith(CLAN_PLAYER_CUSTOM_IDS.confirmButton) ? CLAN_PLAYER_CUSTOM_IDS.confirmButton :
+        null;
+
+      if (!prefixToSlice) return;
+
+      const sessionId = customId.slice(prefixToSlice.length);
+      const session = getClanPlayerSession(sessionId);
+
+      if (!session) {
+        await interaction.reply({
+          content: '❌ La sesión expiró. Ejecuta el comando otra vez.',
+          ephemeral: true,
+        });
+        return;
+      }
+
+      if (customId.startsWith(CLAN_PLAYER_CUSTOM_IDS.continueButton) || customId.startsWith(CLAN_PLAYER_CUSTOM_IDS.editAdditionalButton)) {
+        await interaction.showModal(buildClanPlayerAdditionalModal(session));
+        return;
+      }
+
+      if (customId.startsWith(CLAN_PLAYER_CUSTOM_IDS.editBasicsButton)) {
+        await interaction.showModal(buildClanPlayerBasicsModal(session));
+        return;
+      }
+
+      if (customId.startsWith(CLAN_PLAYER_CUSTOM_IDS.confirmButton)) {
+        const result = await saveClanPlayerRegistration(sessionId);
+        if (!result.ok) {
+          await interaction.reply({
+            content: `❌ ${result.message}`,
+            ephemeral: true,
+          });
+          return;
+        }
+
+        await interaction.reply({
+          content: `✅ Jugador **${result.player.minecraftNick}** registrado en el roster. Cerrando canal de entrevista...`,
+          ephemeral: true,
+        });
+
+        const interviewChannel =
+          guild.channels.cache.get(result.channelId) ??
+          await guild.channels.fetch(result.channelId).catch(() => null);
+
+        if (interviewChannel && 'delete' in interviewChannel) {
+          await interviewChannel.delete('Jugador registrado en el roster desde el flujo de entrevista').catch(async () => {
+            await interaction.followUp({
+              content: '⚠️ El jugador se registró, pero no pude cerrar el canal de entrevista automáticamente.',
+              ephemeral: true,
+            }).catch(() => undefined);
+          });
+        }
+
+        return;
+      }
+    }
+
+    // --- Botón confirmar selección de rol (reclutamiento) ---
+    if (interaction.isButton() && interaction.customId.startsWith('apply_confirm_')) {
+      const rolesJoined = interaction.customId.replace('apply_confirm_', '');
+      if (!rolesJoined) return; // estado deshabilitado, no debería llegar aquí
+
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      // Cooldown 48h (DB)
+      const lastApplyCheck = await prisma.recruitmentTicket.findFirst({
+        where: { guildId, userId: interaction.user.id },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true },
+      });
+      if (lastApplyCheck) {
+        const remaining = APPLY_COOLDOWN_MS - (Date.now() - lastApplyCheck.createdAt.getTime());
+        if (remaining > 0) {
+          const hours = Math.ceil(remaining / (60 * 60 * 1000));
+          await interaction.reply({
+            ephemeral: true,
+            content: `⏳ Ya tienes una solicitud reciente. Podrás volver a aplicar en **${hours} hora${hours === 1 ? '' : 's'}**.`,
+          });
+          return;
+        }
+      }
+
+      const modal = new ModalBuilder()
+        .setCustomId(`apply_modal_${rolesJoined}`)
+        .setTitle('Solicitud de ingreso — Aquaris');
+
+      modal.addComponents(
+        new ActionRowBuilder<TextInputBuilder>().addComponents(
+          new TextInputBuilder()
+            .setCustomId('apply_age')
+            .setLabel('Edad')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ej: 20')
+            .setRequired(true)
+            .setMinLength(1)
+            .setMaxLength(3),
+        ),
+        new ActionRowBuilder<TextInputBuilder>().addComponents(
+          new TextInputBuilder()
+            .setCustomId('apply_experience')
+            .setLabel('Experiencia en Minecraft')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ej: 5 años, survival/factions/SMP...')
+            .setRequired(true)
+            .setMaxLength(100),
+        ),
+        new ActionRowBuilder<TextInputBuilder>().addComponents(
+          new TextInputBuilder()
+            .setCustomId('apply_availability')
+            .setLabel('Disponibilidad semanal')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ej: tardes entre semana, fines de semana')
+            .setRequired(true)
+            .setMaxLength(100),
+        ),
+        new ActionRowBuilder<TextInputBuilder>().addComponents(
+          new TextInputBuilder()
+            .setCustomId('apply_contribution')
+            .setLabel('¿Qué puedes aportar al clan?')
+            .setStyle(TextInputStyle.Paragraph)
+            .setPlaceholder('Cuéntanos tus habilidades, proyectos anteriores...')
+            .setRequired(true)
+            .setMinLength(20)
+            .setMaxLength(400),
+        ),
+      );
+
+      await interaction.showModal(modal);
       return;
     }
 
@@ -931,6 +1647,42 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         await interaction.showModal(cancelModal);
         return;
       }
+    }
+
+    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('clanplayer:')) {
+      const guild = interaction.guild;
+      if (!guild) return;
+
+      const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
+      if (!actor || !(await canManageClanPlayers(actor))) {
+        await interaction.reply({
+          content: '❌ Solo el staff puede registrar jugadores en el roster.',
+          ephemeral: true,
+        });
+        return;
+      }
+
+      const mapping = [
+        { prefix: CLAN_PLAYER_CUSTOM_IDS.rankSelect, field: 'rank' as const },
+        { prefix: CLAN_PLAYER_CUSTOM_IDS.minecraftRankSelect, field: 'minecraftRank' as const },
+        { prefix: CLAN_PLAYER_CUSTOM_IDS.statusSelect, field: 'status' as const },
+      ].find(item => interaction.customId.startsWith(item.prefix));
+
+      if (!mapping) return;
+
+      const sessionId = interaction.customId.slice(mapping.prefix.length);
+      const session = applySessionSelectValue(sessionId, mapping.field, interaction.values[0] ?? '');
+
+      if (!session) {
+        await interaction.reply({
+          content: '❌ La sesión expiró. Ejecuta el comando otra vez.',
+          ephemeral: true,
+        });
+        return;
+      }
+
+      await interaction.update(buildClanPlayerReviewReply(session));
+      return;
     }
 
     if (interaction.isStringSelectMenu() && interaction.customId.startsWith('shop:discount_select:')) {

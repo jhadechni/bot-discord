@@ -35,6 +35,7 @@ Referencia interna de usuarios Discord dentro de la tienda. Se crea/actualiza au
 | `discordUserId` | String | ID de Discord |
 | `username` | String | Nombre de usuario |
 | `displayName` | String | Nombre visible |
+| `isStaff` | Boolean | Si el usuario puede ejecutar acciones administrativas |
 
 Restricción única: `(guildId, discordUserId)`
 
@@ -47,6 +48,7 @@ Materiales base del inventario (piedra, diamante, antorcha, etc.).
 | `guildId` | String | Servidor |
 | `name` | String | Nombre del material |
 | `baseUnit` | String | Unidad de medida (default: `item`) |
+| `stackSize` | Int | Tamaño máximo de stack real (`1`, `16` o `64`) |
 | `isActive` | Boolean | Si está vigente |
 
 Restricción única: `(guildId, name)`
@@ -71,6 +73,10 @@ Catálogo de productos vendibles.
 | `name` | String | Nombre del producto |
 | `productType` | String | `single` \| `bulk` \| `kit` \| `service` |
 | `description` | String? | Descripción visible en catálogo |
+| `baseMaterialId` | String? | Material base si es una oferta directa de material |
+| `presentationType` | String | `unit` \| `stack` \| `chest` \| `double_chest` \| `custom` |
+| `presentationQuantity` | Int | Cantidad base real que consume la presentación |
+| `presentationLabel` | String? | Texto visible de la presentación |
 | `isActive` | Boolean | Si aparece en `/tienda ver` |
 
 Restricción única: `(guildId, name)`
@@ -87,6 +93,7 @@ Receta: qué materiales y cantidades consume cada producto.
 Restricción única: `(productId, materialId)`
 
 > Los productos de tipo `service` pueden no tener componentes. En ese caso, el pedido se procesa sin afectar stock.
+> Una oferta directa de material puede definir `baseMaterialId` + presentación; el sistema la traduce a cantidad base real.
 
 ### ShopProductPrice
 Historial de precios. El precio activo es el que tiene `validTo = null`.
@@ -111,14 +118,15 @@ Cabecera del pedido.
 | `customerUserId` | String | Cliente (ShopUser) |
 | `status` | String | Estado actual (ver tabla) |
 | `ticketChannelId` | String? | Canal temporal creado al aceptar |
-| `staffChannelId` | String? | ID del mensaje en el canal de staff |
+| `staffChannelId` | String? | Canal del staff asociado al pedido, si existe |
 | `acceptedByUserId` | String? | Staff que aceptó |
 | `rejectedByUserId` | String? | Staff que rechazó |
 | `closedByUserId` | String? | Staff que cerró |
 | `rejectionReason` | String? | Motivo de rechazo |
 | `cancelReason` | String? | Motivo de cancelación |
 | `subtotalAmount` | Decimal | Suma bruta de líneas |
-| `totalAmount` | Decimal | Total a pagar (= subtotal en V1) |
+| `totalDiscountAmount` | Decimal | Suma total de descuentos aplicados |
+| `totalAmount` | Decimal | Total final a pagar |
 
 **Estados:**
 
@@ -127,7 +135,7 @@ Cabecera del pedido.
 | `pending` | Recién creado, esperando decisión del staff |
 | `accepted` | Aceptado, stock reservado, canal creado |
 | `rejected` | Rechazado antes de reservar (stock no tocado) |
-| `closed` | Entregado, stock consumido, venta registrada |
+| `completed` | Entregado, stock consumido, venta registrada |
 | `cancelled` | Cancelado por staff (stock liberado si estaba reservado) |
 
 ### ShopOrderItem
@@ -139,6 +147,7 @@ Líneas del pedido. Una por producto.
 | `quantity` | Int | Cantidad pedida |
 | `unitPrice` | Decimal | Precio congelado al crear el pedido |
 | `grossLineTotal` | Decimal | `unitPrice × quantity` |
+| `netLineTotal` | Decimal | Total neto de la línea tras descuentos por ítem |
 | `reservedQuantity` | Int | Cantidad con stock reservado |
 | `deliveredQuantity` | Int | Cantidad finalmente entregada |
 | `notes` | String? | Notas del cliente |
@@ -149,12 +158,11 @@ Auditoría completa de todos los cambios de stock.
 | `movementType` | Cuándo se genera |
 |---|---|
 | `stock_add` | `/stock sumar` |
-| `stock_remove` | `/stock restar` |
 | `manual_adjustment` | `/stock actualizar` |
 | `reserve` | Al aceptar un pedido |
 | `release` | Al rechazar o cancelar un pedido aceptado |
-| `sale` | Al cerrar un pedido (entregado) |
-| `withdrawal` | (Reservado para retiros manuales vía tabla ShopWithdrawal) |
+| `sale` | Al completar un pedido (entregado) |
+| `withdrawal` | `/stock restar` y retiros manuales formales |
 
 > **Regla:** todo cambio de stock debe pasar por esta tabla.
 
@@ -164,16 +172,49 @@ Registro formal de venta cerrada (se crea al cerrar un pedido).
 ### ShopWithdrawal
 Retiros de inventario fuera del flujo de venta (consumo interno, pérdidas, regalos).
 
+### ShopDiscountPolicy
+Políticas estandarizadas de descuento.
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `name` | String | Nombre visible de la política |
+| `policyType` | String | `new_customer` \| `first_order` \| `volume` \| `seasonal` \| `manual_authorized` |
+| `scope` | String | `order` \| `item` |
+| `discountType` | String | `fixed` \| `percent` |
+| `discountValue` | Decimal | Valor base del descuento |
+| `isActive` | Boolean | Si la política está habilitada |
+| `priority` | Int | Prioridad de aplicación |
+| `startsAt` | DateTime? | Inicio de vigencia |
+| `endsAt` | DateTime? | Fin de vigencia |
+
+### ShopAppliedDiscount
+Descuentos realmente aplicados y congelados en el pedido.
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `discountPolicyId` | String? | Política origen, si aplica |
+| `orderId` | String? | Descuento global al pedido |
+| `orderItemId` | String? | Descuento aplicado a una línea |
+| `scope` | String | `order` \| `item` |
+| `discountType` | String | `fixed` \| `percent` |
+| `discountValue` | Decimal | Valor base de la política |
+| `discountAmount` | Decimal | Monto real descontado |
+| `reason` | String? | Motivo visible |
+| `appliedByUserId` | String? | Usuario o sistema que lo aplicó |
+
 ### ShopOrderEvent
 Bitácora del flujo del pedido. Se registra en cada transición de estado.
 
 | `eventType` | Cuándo |
 |---|---|
-| `created` | `/pedido crear` |
-| `accepted` | Botón ✅ Aceptar |
-| `rejected` | Modal de rechazo |
-| `closed` | Botón 📦 Marcar entregado |
-| `cancelled` | Modal de cancelación |
+| `order_created` | `/pedido crear` |
+| `order_accepted` | Botón ✅ Aceptar |
+| `stock_reserved` | Reserva exitosa de materiales |
+| `order_rejected` | Modal de rechazo |
+| `stock_released` | Liberación de reserva |
+| `delivery_completed` | Entrega de materiales al cliente |
+| `order_completed` | Cierre final del pedido |
+| `order_cancelled` | Modal de cancelación |
 
 ---
 
@@ -194,7 +235,9 @@ Bitácora del flujo del pedido. Se registra en cada transición de estado.
 ```
 Cliente: /pedido crear  producto:Piedra x64  cantidad:2
   → Crea ShopOrder (status: pending)
-  → Crea ShopOrderItem (qty: 2, unitPrice: 500, grossLineTotal: 1000)
+  → Congela precio vigente en ShopOrderItem.unitPrice
+  → Calcula grossLineTotal / netLineTotal
+  → Aplica descuentos automáticos vigentes, si existen
   → Publica embed en canal de staff con botones [✅ Aceptar] [❌ Rechazar]
   → Responde al cliente con el código AQ-XXXXXX
 
@@ -212,7 +255,7 @@ Staff: clic en [📦 Marcar entregado]
   → ShopInventory.reservedStock -= 128
   → ShopInventoryMovement (type: sale)
   → ShopSale creada
-  → ShopOrder.status = closed
+  → ShopOrder.status = completed
   → Actualiza embed (sin botones)
   → DM al cliente
   → Canal eliminado en 8 segundos
@@ -247,13 +290,28 @@ Staff: clic en [🚫 Cancelar]
 ```
 Staff: /stock restar  material:piedra  cantidad:100  motivo:consumo interno
   → Valida: cantidad <= currentStock - reservedStock
+  → Crea ShopWithdrawal
   → ShopInventory.currentStock -= 100
-  → ShopInventoryMovement (type: stock_remove)
+  → ShopInventoryMovement (type: withdrawal)
 ```
 
 ---
 
-## 4. Reglas de negocio
+## 4. Fuente de verdad
+
+El bot consulta exclusivamente la base de datos.
+
+Notas:
+
+- `ShopProduct` y `ShopProductPrice` definen el catálogo visible.
+- `ShopMaterial` y `ShopInventory` sostienen el inventario real.
+- `ShopProductComponent` define recetas y kits.
+- El panel administrativo es la superficie de gestión; el bot solo consume y opera sobre la BD.
+- Si un producto no es `service` y no tiene definición de inventario válida, no aparecerá en `/tienda ver`.
+
+---
+
+## 5. Reglas de negocio
 
 | # | Regla |
 |---|---|
@@ -267,11 +325,11 @@ Staff: /stock restar  material:piedra  cantidad:100  motivo:consumo interno
 | 8 | Al rechazar/cancelar se libera el stock solo si ya había sido reservado. |
 | 9 | Un producto sin componentes (ej: `service`) no afecta inventario en ningún paso. |
 | 10 | El código de pedido tiene formato `AQ-XXXXXX` (6 caracteres alfanuméricos en mayúscula). |
-| 11 | Los descuentos **no están implementados** en V1. `totalAmount = subtotalAmount`. |
+| 11 | Los descuentos afectan dinero, no inventario. El pedido guarda `subtotalAmount`, `totalDiscountAmount` y `totalAmount`. |
 
 ---
 
-## 5. Configuración del servidor
+## 6. Configuración del servidor
 
 Antes de usar la tienda, el servidor debe configurar:
 
@@ -291,7 +349,7 @@ Antes de usar la tienda, el servidor debe configurar:
 
 ---
 
-## 6. Permisos del bot necesarios
+## 7. Permisos del bot necesarios
 
 - `Gestionar canales` — para crear/eliminar canales de ticket de pedido
 - `Gestionar roles` — no requerido específicamente para tienda
@@ -299,7 +357,7 @@ Antes de usar la tienda, el servidor debe configurar:
 
 ---
 
-## 7. Referencia rápida de comandos
+## 8. Referencia rápida de comandos
 
 ### Para todos los usuarios
 

@@ -2,6 +2,7 @@ import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
 import { invalidateFilterCache } from '../../utils/filter.js';
+import { syncAutoModRule } from '../../utils/automod-sync.js';
 
 export const filterCommand: Command = {
   data: new SlashCommandBuilder()
@@ -44,6 +45,7 @@ export const filterCommand: Command = {
           data: { guildId, word, addedById: interaction.user.id },
         });
         invalidateFilterCache(guildId);
+        void syncAutoModRule(interaction.client, guildId);
         await interaction.editReply(`✅ Palabra **\`${word}\`** añadida al filtro.`);
       } catch {
         await interaction.editReply(`⚠️ Esa palabra ya está en el filtro.`);
@@ -62,6 +64,7 @@ export const filterCommand: Command = {
         await interaction.editReply(`❌ La palabra **\`${word}\`** no estaba en el filtro.`);
       } else {
         invalidateFilterCache(guildId);
+        void syncAutoModRule(interaction.client, guildId);
         await interaction.editReply(`✅ Palabra **\`${word}\`** eliminada del filtro.`);
       }
       return;

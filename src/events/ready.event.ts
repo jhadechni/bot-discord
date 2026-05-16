@@ -2,6 +2,7 @@ import type { BotEvent } from '../types/event.js';
 import { logger } from '../core/logger.js';
 import { startReminderScheduler } from '../utils/reminder-scheduler.js';
 import { reloadTaxonomyFromDatabase } from '../shop/taxonomy.js';
+import { syncAutoModRule } from '../utils/automod-sync.js';
 
 const readyEvent: BotEvent<'ready'> = {
   name: 'ready',
@@ -16,6 +17,11 @@ const readyEvent: BotEvent<'ready'> = {
       logger.info(`[taxonomy] ${categories.length} categoría(s) cargadas desde la base de datos`);
     } catch (err) {
       logger.warn({ err }, '[taxonomy] No se pudo cargar la taxonomía desde la base de datos al arrancar');
+    }
+
+    // Sincronizar reglas de AutoMod nativo con el filtro de palabras de cada servidor
+    for (const [guildId] of client.guilds.cache) {
+      void syncAutoModRule(client, guildId);
     }
   },
 };

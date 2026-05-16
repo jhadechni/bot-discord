@@ -16,6 +16,8 @@ import { remindCommand } from "./commands/remind/remind.command.js";
 import { adormirdaniCommand, atrabajardaniCommand } from "./commands/fun/adormirdani.command.js";
 import { tiendaCommand } from "./commands/shop/tienda.command.js";
 import { pedidoCommand, pedidosCommand } from "./commands/shop/pedido.command.js";
+import { jugadoresCommand } from "./commands/players/jugadores.command.js";
+import { kitCommand } from "./commands/kit/kit.command.js";
 
 // Events
 import readyEvent from "./events/ready.event.js";
@@ -44,6 +46,8 @@ for (const cmd of [
   tiendaCommand,
   pedidoCommand,
   pedidosCommand,
+  jugadoresCommand,
+  kitCommand,
 ]) {
   client.commands.set(cmd.data.name, cmd);
 }

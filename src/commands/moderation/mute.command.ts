@@ -1,10 +1,21 @@
-import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import { getLogChannel } from '../../utils/log-channel.js';
+import { formatTime } from '../../utils/time.js';
+import {
+  MODERATION_COLORS,
+  buildModerationErrorEmbed,
+  buildModerationLogEmbed,
+  buildModerationPublicEmbed,
+  buildModerationStaffEmbed,
+  buildModerationUserDmEmbed,
+  normalizeModerationReason,
+} from '../../utils/moderation-ui.js';
 
-const MAX_TIMEOUT_MS = 40_320 * 60 * 1000; // 28 días (máximo de Discord)
+const MAX_TIMEOUT_MINUTES = 40_320;
+const MAX_TIMEOUT_MS = MAX_TIMEOUT_MINUTES * 60 * 1000; // 28 días (máximo de Discord)
 
 export const muteCommand: Command = {
   data: new SlashCommandBuilder()
@@ -26,32 +37,58 @@ export const muteCommand: Command = {
 
     const target = interaction.options.getMember('usuario');
     if (!target || !('moderatable' in target) || !target.moderatable) {
-      await interaction.editReply('❌ No puedo silenciar a este usuario.');
+      await interaction.editReply({
+        embeds: [
+          buildModerationErrorEmbed(
+            'No se pudo aplicar el mute',
+            'No tengo permisos para silenciar a este usuario o su rol está por encima del mío.',
+          ),
+        ],
+      });
       return;
     }
 
-    const reason = interaction.options.getString('motivo') ?? 'Sin motivo';
+    const reason = normalizeModerationReason(interaction.options.getString('motivo'));
+    const durationLabel = formatTime(MAX_TIMEOUT_MINUTES);
     await target.timeout(MAX_TIMEOUT_MS, reason);
 
     const log = await prisma.moderationLog.create({
       data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'MUTE', reason },
     });
 
+    let dmDelivered = true;
+    try {
+      await target.user.send({
+        embeds: [
+          buildModerationUserDmEmbed({
+            title: 'Has sido silenciado/a',
+            color: MODERATION_COLORS.mute,
+            guildName: interaction.guild.name,
+            duration: durationLabel,
+            reason,
+          }),
+        ],
+      });
+    } catch {
+      dmDelivered = false;
+    }
+
     const config = await getOrCreateGuildConfig(guildId);
     const logsChannel = getLogChannel(interaction.guild, config, 'mod');
     if (logsChannel) {
       await logsChannel.send({
         embeds: [
-          new EmbedBuilder()
-            .setColor(0xfee75c)
-            .setTitle('🔇 Usuario silenciado')
-            .addFields(
-              { name: 'Usuario', value: `<@${target.id}>`, inline: true },
-              { name: 'Moderador', value: `<@${interaction.user.id}>`, inline: true },
-              { name: 'Motivo', value: reason },
-              { name: 'ID', value: log.id, inline: true },
-            )
-            .setTimestamp(),
+          buildModerationLogEmbed({
+            title: 'Usuario silenciado',
+            color: MODERATION_COLORS.mute,
+            targetId: target.id,
+            targetTag: target.user.tag,
+            moderatorId: interaction.user.id,
+            duration: durationLabel,
+            reason,
+            logId: log.id,
+            createdAt: log.createdAt,
+          }),
         ],
       });
     }
@@ -60,17 +97,30 @@ export const muteCommand: Command = {
     if (publicCh?.isTextBased() && !publicCh.isDMBased()) {
       await publicCh.send({
         embeds: [
-          new EmbedBuilder()
-            .setColor(0xfee75c)
-            .setTitle('🔇 Usuario silenciado')
-            .setDescription(`<@${target.id}> ha sido silenciado.`)
-            .addFields({ name: 'Motivo', value: reason })
-            .setTimestamp(),
+          buildModerationPublicEmbed({
+            title: 'Usuario silenciado',
+            color: MODERATION_COLORS.mute,
+            targetMention: `<@${target.id}>`,
+            duration: durationLabel,
+            reason,
+            description: `<@${target.id}> ha sido silenciado/a temporalmente.`,
+          }),
         ],
       });
     }
 
-    await interaction.editReply('✅ Hecho.');
+    await interaction.editReply({
+      embeds: [
+        buildModerationStaffEmbed({
+          title: 'Mute aplicado',
+          color: MODERATION_COLORS.success,
+          targetMention: `<@${target.id}>`,
+          duration: durationLabel,
+          reason,
+          dmDelivered,
+        }),
+      ],
+    });
   },
 };
 
@@ -97,34 +147,59 @@ export const tempmuteCommand: Command = {
 
     const target = interaction.options.getMember('usuario');
     if (!target || !('moderatable' in target) || !target.moderatable) {
-      await interaction.editReply('❌ No puedo silenciar a este usuario.');
+      await interaction.editReply({
+        embeds: [
+          buildModerationErrorEmbed(
+            'No se pudo aplicar el mute temporal',
+            'No tengo permisos para silenciar a este usuario o su rol está por encima del mío.',
+          ),
+        ],
+      });
       return;
     }
 
     const duration = interaction.options.getInteger('duracion', true);
-    const reason = interaction.options.getString('motivo') ?? 'Sin motivo';
+    const durationLabel = formatTime(duration);
+    const reason = normalizeModerationReason(interaction.options.getString('motivo'));
     await target.timeout(duration * 60 * 1000, reason);
 
     const log = await prisma.moderationLog.create({
       data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'TEMPMUTE', reason, duration },
     });
 
+    let dmDelivered = true;
+    try {
+      await target.user.send({
+        embeds: [
+          buildModerationUserDmEmbed({
+            title: 'Has recibido un mute temporal',
+            color: MODERATION_COLORS.mute,
+            guildName: interaction.guild.name,
+            duration: durationLabel,
+            reason,
+          }),
+        ],
+      });
+    } catch {
+      dmDelivered = false;
+    }
+
     const config = await getOrCreateGuildConfig(guildId);
     const logsChannel = getLogChannel(interaction.guild, config, 'mod');
     if (logsChannel) {
       await logsChannel.send({
         embeds: [
-          new EmbedBuilder()
-            .setColor(0xfee75c)
-            .setTitle('🔇 Mute temporal')
-            .addFields(
-              { name: 'Usuario', value: `<@${target.id}>`, inline: true },
-              { name: 'Moderador', value: `<@${interaction.user.id}>`, inline: true },
-              { name: 'Duración', value: `${duration} minutos`, inline: true },
-              { name: 'Motivo', value: reason },
-              { name: 'ID', value: log.id, inline: true },
-            )
-            .setTimestamp(),
+          buildModerationLogEmbed({
+            title: 'Mute temporal aplicado',
+            color: MODERATION_COLORS.mute,
+            targetId: target.id,
+            targetTag: target.user.tag,
+            moderatorId: interaction.user.id,
+            duration: durationLabel,
+            reason,
+            logId: log.id,
+            createdAt: log.createdAt,
+          }),
         ],
       });
     }
@@ -133,17 +208,30 @@ export const tempmuteCommand: Command = {
     if (publicCh?.isTextBased() && !publicCh.isDMBased()) {
       await publicCh.send({
         embeds: [
-          new EmbedBuilder()
-            .setColor(0xfee75c)
-            .setTitle('🔇 Usuario silenciado temporalmente')
-            .setDescription(`<@${target.id}> ha sido silenciado por **${duration} minutos**.`)
-            .addFields({ name: 'Motivo', value: reason })
-            .setTimestamp(),
+          buildModerationPublicEmbed({
+            title: 'Usuario silenciado temporalmente',
+            color: MODERATION_COLORS.mute,
+            targetMention: `<@${target.id}>`,
+            duration: durationLabel,
+            reason,
+            description: `<@${target.id}> ha sido silenciado/a temporalmente por **${durationLabel}**.`,
+          }),
         ],
       });
     }
 
-    await interaction.editReply('✅ Hecho.');
+    await interaction.editReply({
+      embeds: [
+        buildModerationStaffEmbed({
+          title: 'Mute temporal aplicado',
+          color: MODERATION_COLORS.success,
+          targetMention: `<@${target.id}>`,
+          duration: durationLabel,
+          reason,
+          dmDelivered,
+        }),
+      ],
+    });
   },
 };
 
@@ -167,11 +255,18 @@ export const unmuteCommand: Command = {
 
     const target = interaction.options.getMember('usuario');
     if (!target || !('moderatable' in target) || !target.moderatable) {
-      await interaction.editReply('❌ No puedo moderar a este usuario.');
+      await interaction.editReply({
+        embeds: [
+          buildModerationErrorEmbed(
+            'No se pudo quitar el mute',
+            'No tengo permisos para moderar a este usuario o su rol está por encima del mío.',
+          ),
+        ],
+      });
       return;
     }
 
-    const reason = interaction.options.getString('motivo') ?? 'Sin motivo';
+    const reason = normalizeModerationReason(interaction.options.getString('motivo'));
     await target.timeout(null, reason);
 
     const log = await prisma.moderationLog.create({
@@ -183,20 +278,29 @@ export const unmuteCommand: Command = {
     if (logsChannel) {
       await logsChannel.send({
         embeds: [
-          new EmbedBuilder()
-            .setColor(0x57f287)
-            .setTitle('🔊 Silencio eliminado')
-            .addFields(
-              { name: 'Usuario', value: `<@${target.id}>`, inline: true },
-              { name: 'Moderador', value: `<@${interaction.user.id}>`, inline: true },
-              { name: 'Motivo', value: reason },
-              { name: 'ID', value: log.id, inline: true },
-            )
-            .setTimestamp(),
+          buildModerationLogEmbed({
+            title: 'Mute eliminado',
+            color: MODERATION_COLORS.success,
+            targetId: target.id,
+            targetTag: target.user.tag,
+            moderatorId: interaction.user.id,
+            reason,
+            logId: log.id,
+            createdAt: log.createdAt,
+          }),
         ],
       });
     }
 
-    await interaction.editReply('✅ Hecho.');
+    await interaction.editReply({
+      embeds: [
+        buildModerationStaffEmbed({
+          title: 'Mute eliminado',
+          color: MODERATION_COLORS.success,
+          targetMention: `<@${target.id}>`,
+          reason,
+        }),
+      ],
+    });
   },
 };

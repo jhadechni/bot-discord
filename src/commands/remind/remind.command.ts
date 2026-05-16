@@ -1,39 +1,15 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+} from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
-
-// ── Parseo de tiempo ─────────────────────────────────────────────────────────
-
-/** Convierte un string como "1h30m", "2d", "45m" en minutos. Devuelve null si no se pudo parsear. */
-function parseTime(input: string): number | null {
-  const regex = /(\d+)\s*([dhm])/gi;
-  let minutes = 0;
-  let matched = false;
-  let match: RegExpExecArray | null;
-
-  while ((match = regex.exec(input)) !== null) {
-    matched = true;
-    const n = parseInt(match[1] ?? '0', 10);
-    const unit = (match[2] ?? '').toLowerCase();
-    if (unit === 'd') minutes += n * 1440;
-    else if (unit === 'h') minutes += n * 60;
-    else if (unit === 'm') minutes += n;
-  }
-
-  return matched ? minutes : null;
-}
-
-/** Formatea minutos como "1d 2h 30m". */
-function formatTime(minutes: number): string {
-  const d = Math.floor(minutes / 1440);
-  const h = Math.floor((minutes % 1440) / 60);
-  const m = minutes % 60;
-  const parts: string[] = [];
-  if (d > 0) parts.push(`${d}d`);
-  if (h > 0) parts.push(`${h}h`);
-  if (m > 0) parts.push(`${m}m`);
-  return parts.length > 0 ? parts.join(' ') : '0m';
-}
+import { parseTime, formatTime } from '../../utils/time.js';
 
 // ── Comando ───────────────────────────────────────────────────────────────────
 
@@ -106,6 +82,9 @@ export const remindCommand: Command = {
             .setDescription('Activar o desactivar la repetición automática')
             .setRequired(false),
         ),
+    )
+    .addSubcommand(sub =>
+      sub.setName('kit').setDescription('Gestionar recordatorios de kits del servidor'),
     ),
 
   async execute(interaction) {
@@ -283,6 +262,82 @@ export const remindCommand: Command = {
       await interaction.editReply(
         `✅ Recordatorio \`${shortId}\` actualizado:\n${cambios.map(c => `• ${c}`).join('\n')}`,
       );
+    }
+
+    // ── kit ───────────────────────────────────────────────────────────────────
+    if (sub === 'kit') {
+      if (!interaction.guildId) {
+        await interaction.editReply('❌ Este subcomando solo funciona en un servidor.');
+        return;
+      }
+
+      const templates = await prisma.reminderTemplate.findMany({
+        where: { guildId: interaction.guildId, isActive: true },
+        orderBy: { name: 'asc' },
+      });
+
+      if (templates.length === 0) {
+        await interaction.editReply('📭 No hay plantillas de kits configuradas en este servidor. Pide al staff que use `/kit crear`.');
+        return;
+      }
+
+      const activeKitReminders = await prisma.reminder.findMany({
+        where: { userId, guildId: interaction.guildId, active: true, templateId: { not: null } },
+        include: { template: true },
+        orderBy: { triggerAt: 'asc' },
+      });
+
+      const activeTemplateIds = new Set(activeKitReminders.map(r => r.templateId!));
+
+      // Embed
+      const lines = activeKitReminders.length > 0
+        ? activeKitReminders.map(r => {
+            const msLeft = r.triggerAt.getTime() - Date.now();
+            const timeLeft = msLeft > 0 ? formatTime(Math.ceil(msLeft / 60_000)) : 'vencido';
+            return `🎁 **${r.template!.name}** — en **${timeLeft}**  *(cada ${formatTime(r.template!.cooldownMin)})*`;
+          })
+        : ['No tienes recordatorios de kit activos. Selecciona abajo y guarda para activarlos.'];
+
+      const embed = new EmbedBuilder()
+        .setColor(0x5865f2)
+        .setTitle('🎁 Recordatorios de kits')
+        .setDescription(lines.join('\n'))
+        .setFooter({ text: 'Selecciona kits y pulsa Guardar · Pulsa Ya lo reclamé en el DM cuando lo hagas' });
+
+      // Select multi con pre-selección
+      const select = new StringSelectMenuBuilder()
+        .setCustomId('remind:kit:toggle')
+        .setPlaceholder('Selecciona los kits que quieres recordar...')
+        .setMinValues(0)
+        .setMaxValues(templates.length)
+        .addOptions(
+          templates.map(t =>
+            new StringSelectMenuOptionBuilder()
+              .setLabel(t.name)
+              .setDescription(t.description ?? `Cooldown: ${formatTime(t.cooldownMin)}`)
+              .setValue(t.id)
+              .setDefault(activeTemplateIds.has(t.id)),
+          ),
+        );
+
+      const saveBtn = new ButtonBuilder()
+        .setCustomId('remind:kit:save')
+        .setLabel('Guardar')
+        .setStyle(ButtonStyle.Primary);
+
+      const editBtn = new ButtonBuilder()
+        .setCustomId('remind:kit:edit_open')
+        .setLabel('Editar próximo aviso')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(activeKitReminders.length === 0);
+
+      await interaction.editReply({
+        embeds: [embed],
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select),
+          new ActionRowBuilder<ButtonBuilder>().addComponents(saveBtn, editBtn),
+        ],
+      });
     }
   },
 };
