@@ -1,6 +1,5 @@
 import {
   SlashCommandBuilder,
-  EmbedBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
   ButtonBuilder,
@@ -10,6 +9,12 @@ import {
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
 import { parseTime, formatTime } from '../../utils/time.js';
+import {
+  REMINDER_COLORS,
+  buildKitReminderListEmbed,
+  buildReminderErrorEmbed,
+  buildReminderNoticeEmbed,
+} from '../../utils/reminder-ui.js';
 
 // ── Comando ───────────────────────────────────────────────────────────────────
 
@@ -103,19 +108,33 @@ export const remindCommand: Command = {
       const minutes = parseTime(tiempoStr);
 
       if (!minutes || minutes < 5) {
-        await interaction.editReply('❌ Tiempo inválido. Mínimo 5 minutos. Ej: `5m`, `2h`, `1d`');
+        await interaction.editReply({
+          embeds: [
+            buildReminderErrorEmbed(
+              'Tiempo inválido',
+              'El mínimo es 5 minutos. Usa un formato como `5m`, `2h` o `1d`.',
+            ),
+          ],
+        });
         return;
       }
       if (minutes > 43_200) {
-        await interaction.editReply('❌ El tiempo máximo es 30 días.');
+        await interaction.editReply({
+          embeds: [buildReminderErrorEmbed('Tiempo inválido', 'El tiempo máximo es 30 días.')],
+        });
         return;
       }
 
       const activeCount = await prisma.reminder.count({ where: { userId, active: true } });
       if (activeCount >= 10) {
-        await interaction.editReply(
-          '❌ Ya tienes 10 recordatorios activos. Cancela alguno antes de crear uno nuevo.',
-        );
+        await interaction.editReply({
+          embeds: [
+            buildReminderErrorEmbed(
+              'Límite alcanzado',
+              'Ya tienes 10 recordatorios activos. Cancela alguno antes de crear uno nuevo.',
+            ),
+          ],
+        });
         return;
       }
 
@@ -132,10 +151,19 @@ export const remindCommand: Command = {
 
       const formatted = formatTime(minutes);
       const recurrenceNote = repetir ? ` *(se repetirá cada ${formatted})*` : '';
-      await interaction.editReply(
-        `✅ Recordatorio creado — te avisaré en **${formatted}**: "${mensaje}"${recurrenceNote}\n` +
-          `ID: \`${reminder.id.slice(0, 8)}\``,
-      );
+      await interaction.editReply({
+        embeds: [
+          buildReminderNoticeEmbed({
+            title: 'Recordatorio creado',
+            description: `Te avisaré en **${formatted}**.${recurrenceNote}`,
+            color: REMINDER_COLORS.success,
+            fields: [
+              { name: 'Mensaje', value: mensaje },
+              { name: 'ID', value: `\`${reminder.id.slice(0, 8)}\``, inline: true },
+            ],
+          }),
+        ],
+      });
       return;
     }
 
@@ -147,7 +175,15 @@ export const remindCommand: Command = {
       });
 
       if (reminders.length === 0) {
-        await interaction.editReply('📭 No tienes recordatorios activos.');
+        await interaction.editReply({
+          embeds: [
+            buildReminderNoticeEmbed({
+              title: 'Sin recordatorios',
+              description: 'No tienes recordatorios activos.',
+              color: REMINDER_COLORS.info,
+            }),
+          ],
+        });
         return;
       }
 
@@ -158,12 +194,11 @@ export const remindCommand: Command = {
         return `**${i + 1}.** \`${r.id.slice(0, 8)}\` — En **${timeLeft}** — "${r.message}"${recurrence}`;
       });
 
-      const embed = new EmbedBuilder()
-        .setColor(0x5865f2)
-        .setTitle('⏰ Tus recordatorios activos')
-        .setDescription(lines.join('\n'))
-        .setFooter({ text: 'Usa /remind cancelar <id> para eliminar uno' })
-        .setTimestamp();
+      const embed = buildReminderNoticeEmbed({
+        title: 'Tus recordatorios activos',
+        description: lines.join('\n'),
+        color: REMINDER_COLORS.info,
+      }).setFooter({ text: 'Aquaris • Recordatorios · Usa /remind cancelar <id> para eliminar uno' });
 
       await interaction.editReply({ embeds: [embed] });
       return;
@@ -178,9 +213,14 @@ export const remindCommand: Command = {
       });
 
       if (!reminder) {
-        await interaction.editReply(
-          '❌ No se encontró ese recordatorio. Usa `/remind lista` para ver tus IDs activos.',
-        );
+        await interaction.editReply({
+          embeds: [
+            buildReminderErrorEmbed(
+              'Recordatorio no encontrado',
+              'Usa `/remind lista` para ver tus IDs activos.',
+            ),
+          ],
+        });
         return;
       }
 
@@ -189,7 +229,15 @@ export const remindCommand: Command = {
         data: { active: false },
       });
 
-      await interaction.editReply(`✅ Recordatorio \`${shortId}\` cancelado.`);
+      await interaction.editReply({
+        embeds: [
+          buildReminderNoticeEmbed({
+            title: 'Recordatorio cancelado',
+            description: `El recordatorio \`${shortId}\` fue cancelado.`,
+            color: REMINDER_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -201,7 +249,14 @@ export const remindCommand: Command = {
       const repetir = interaction.options.getBoolean('repetir');
 
       if (!nuevoMensaje && !nuevoTiempo && repetir === null) {
-        await interaction.editReply('❌ Debes especificar al menos un campo a editar (`mensaje`, `tiempo` o `repetir`).');
+        await interaction.editReply({
+          embeds: [
+            buildReminderErrorEmbed(
+              'Sin cambios',
+              'Debes especificar al menos un campo a editar: `mensaje`, `tiempo` o `repetir`.',
+            ),
+          ],
+        });
         return;
       }
 
@@ -210,9 +265,14 @@ export const remindCommand: Command = {
       });
 
       if (!reminder) {
-        await interaction.editReply(
-          '❌ No se encontró ese recordatorio. Usa `/remind lista` para ver tus IDs activos.',
-        );
+        await interaction.editReply({
+          embeds: [
+            buildReminderErrorEmbed(
+              'Recordatorio no encontrado',
+              'Usa `/remind lista` para ver tus IDs activos.',
+            ),
+          ],
+        });
         return;
       }
 
@@ -225,11 +285,20 @@ export const remindCommand: Command = {
       if (nuevoTiempo) {
         const minutes = parseTime(nuevoTiempo);
         if (!minutes || minutes < 5) {
-          await interaction.editReply('❌ Tiempo inválido. Mínimo 5 minutos. Ej: `5m`, `2h`, `1d`');
+          await interaction.editReply({
+            embeds: [
+              buildReminderErrorEmbed(
+                'Tiempo inválido',
+                'El mínimo es 5 minutos. Usa un formato como `5m`, `2h` o `1d`.',
+              ),
+            ],
+          });
           return;
         }
         if (minutes > 43_200) {
-          await interaction.editReply('❌ El tiempo máximo es 30 días.');
+          await interaction.editReply({
+            embeds: [buildReminderErrorEmbed('Tiempo inválido', 'El tiempo máximo es 30 días.')],
+          });
           return;
         }
         updates['triggerAt'] = new Date(Date.now() + minutes * 60_000);
@@ -259,15 +328,29 @@ export const remindCommand: Command = {
       if (repetir === true) cambios.push('repetición activada');
       if (repetir === false) cambios.push('repetición desactivada');
 
-      await interaction.editReply(
-        `✅ Recordatorio \`${shortId}\` actualizado:\n${cambios.map(c => `• ${c}`).join('\n')}`,
-      );
+      await interaction.editReply({
+        embeds: [
+          buildReminderNoticeEmbed({
+            title: 'Recordatorio actualizado',
+            description: cambios.map(c => `• ${c}`).join('\n'),
+            color: REMINDER_COLORS.success,
+            fields: [{ name: 'ID', value: `\`${shortId}\``, inline: true }],
+          }),
+        ],
+      });
     }
 
     // ── kit ───────────────────────────────────────────────────────────────────
     if (sub === 'kit') {
       if (!interaction.guildId) {
-        await interaction.editReply('❌ Este subcomando solo funciona en un servidor.');
+        await interaction.editReply({
+          embeds: [
+            buildReminderErrorEmbed(
+              'Servidor requerido',
+              'Este subcomando solo funciona en un servidor.',
+            ),
+          ],
+        });
         return;
       }
 
@@ -277,7 +360,15 @@ export const remindCommand: Command = {
       });
 
       if (templates.length === 0) {
-        await interaction.editReply('📭 No hay plantillas de kits configuradas en este servidor. Pide al staff que use `/kit crear`.');
+        await interaction.editReply({
+          embeds: [
+            buildReminderNoticeEmbed({
+              title: 'Sin plantillas de kit',
+              description: 'No hay plantillas de kits configuradas en este servidor. Pide al staff que use `/kit crear`.',
+              color: REMINDER_COLORS.info,
+            }),
+          ],
+        });
         return;
       }
 
@@ -298,11 +389,10 @@ export const remindCommand: Command = {
           })
         : ['No tienes recordatorios de kit activos. Selecciona abajo y guarda para activarlos.'];
 
-      const embed = new EmbedBuilder()
-        .setColor(0x5865f2)
-        .setTitle('🎁 Recordatorios de kits')
-        .setDescription(lines.join('\n'))
-        .setFooter({ text: 'Selecciona kits y pulsa Guardar · Pulsa Ya lo reclamé en el DM cuando lo hagas' });
+      const embed = buildKitReminderListEmbed({
+        lines,
+        footerHint: 'Selecciona kits y pulsa Guardar · Pulsa Ya lo reclamé en el DM cuando lo hagas',
+      });
 
       // Select multi con pre-selección
       const select = new StringSelectMenuBuilder()

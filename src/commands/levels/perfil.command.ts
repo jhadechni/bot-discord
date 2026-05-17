@@ -1,7 +1,8 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
 import { xpProgress, progressBar, formatVoiceTime } from '../../utils/xp.js';
+import { buildLevelProfileEmbed } from '../../utils/levels-ui.js';
 
 export const perfilCommand: Command = {
   data: new SlashCommandBuilder()
@@ -35,23 +36,21 @@ export const perfilCommand: Command = {
     const member = await interaction.guild?.members.fetch(target.id).catch(() => null);
     const displayName = member?.displayName ?? target.username;
 
-    const embed = new EmbedBuilder()
-      .setColor(0x5865f2)
-      .setAuthor({ name: target.tag, iconURL: target.displayAvatarURL() })
-      .setTitle(`🎖️ Perfil de ${displayName}`)
-      .addFields(
-        { name: '⭐ Nivel', value: `**${level}**`, inline: true },
-        { name: '🏆 Ranking', value: `**#${rankAbove + 1}**`, inline: true },
-        { name: '✨ XP Total', value: `${xp.toLocaleString()}`, inline: true },
-        {
-          name: `📊 Progreso al nivel ${level + 1}`,
-          value: `${bar}  ${current.toLocaleString()} / ${required.toLocaleString()} XP`,
-        },
-        { name: '💬 Mensajes', value: `${(activity?.messageCount ?? 0).toLocaleString()}`, inline: true },
-        { name: '🎙️ Tiempo en voz', value: formatVoiceTime(activity?.voiceMinutes ?? 0), inline: true },
-      )
-      .setThumbnail(target.displayAvatarURL())
-      .setTimestamp();
+    const avatarUrl = target.displayAvatarURL();
+    const embed = buildLevelProfileEmbed({
+      userTag: target.tag,
+      displayName,
+      avatarUrl,
+      level,
+      rank: rankAbove + 1,
+      xp,
+      nextLevel: level + 1,
+      currentXp: current,
+      requiredXp: required,
+      progress: bar,
+      messageCount: activity?.messageCount ?? 0,
+      voiceTime: formatVoiceTime(activity?.voiceMinutes ?? 0),
+    });
 
     await interaction.editReply({ embeds: [embed] });
   },

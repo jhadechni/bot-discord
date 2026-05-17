@@ -1,6 +1,11 @@
-import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
+import {
+  MODERATION_COLORS,
+  buildModerationErrorEmbed,
+  buildModerationNoticeEmbed,
+} from '../../utils/moderation-ui.js';
 
 export const reasonCommand: Command = {
   data: new SlashCommandBuilder()
@@ -28,7 +33,14 @@ export const reasonCommand: Command = {
     });
 
     if (!entry) {
-      await interaction.editReply('❌ No se encontró ninguna acción con ese ID en este servidor.');
+      await interaction.editReply({
+        embeds: [
+          buildModerationErrorEmbed(
+            'Acción no encontrada',
+            'No se encontró ninguna acción con ese ID en este servidor.',
+          ),
+        ],
+      });
       return;
     }
 
@@ -37,18 +49,20 @@ export const reasonCommand: Command = {
       data: { reason: newReason },
     });
 
-    const embed = new EmbedBuilder()
-      .setColor(0x57f287)
-      .setTitle('✏️ Motivo actualizado')
-      .addFields(
-        { name: 'ID', value: `\`${id}\``, inline: true },
-        { name: 'Tipo', value: entry.type, inline: true },
-        { name: 'Usuario', value: `<@${entry.targetId}>`, inline: true },
-        { name: 'Motivo anterior', value: entry.reason ?? 'Sin motivo' },
-        { name: 'Motivo nuevo', value: newReason },
-      )
-      .setTimestamp();
-
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({
+      embeds: [
+        buildModerationNoticeEmbed({
+          title: 'Motivo actualizado',
+          color: MODERATION_COLORS.success,
+          fields: [
+            { name: 'ID interno', value: `\`${id}\``, inline: true },
+            { name: 'Tipo', value: entry.type, inline: true },
+            { name: 'Usuario', value: `<@${entry.targetId}>`, inline: true },
+            { name: 'Motivo anterior', value: entry.reason ?? 'Sin motivo' },
+            { name: 'Motivo nuevo', value: newReason },
+          ],
+        }),
+      ],
+    });
   },
 };

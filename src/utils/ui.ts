@@ -60,4 +60,4 @@ export function formatDate(date: Date): string {
 export const DIVIDER = '─────────────────────────────────────';
 
 /** Footer estándar para embeds de la tienda. */
-export const SHOP_FOOTER = { text: '🏪 Tienda Aquaris' } as const;
+export const SHOP_FOOTER = { text: 'Aquaris • Tienda' } as const;

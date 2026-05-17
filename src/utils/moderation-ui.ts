@@ -1,27 +1,37 @@
-import { EmbedBuilder } from 'discord.js';
-import { COLORS, formatDate } from './ui.js';
+import { EmbedBuilder, type APIEmbedField } from 'discord.js';
+import { formatDate } from './ui.js';
+import {
+  AQUARIS_COLORS,
+  AQUARIS_FOOTERS,
+  buildAquarisEmbed,
+  buildAquarisErrorEmbed,
+  buildAquarisNoticeEmbed,
+  normalizeMessageReason,
+  type AquarisEmbedOptions,
+  type AquarisColor,
+} from './message-ui.js';
 
 export const MODERATION_FOOTERS = {
-  logs: { text: 'Aquaris Logs • Moderación' },
-  moderation: { text: 'Aquaris • Moderación' },
-  system: { text: 'Aquaris • Sistema' },
-  shop: { text: 'Aquaris • Tienda' },
-  recruitment: { text: 'Aquaris • Reclutamiento' },
+  logs: AQUARIS_FOOTERS.logsModeration,
+  moderation: AQUARIS_FOOTERS.moderation,
+  system: AQUARIS_FOOTERS.system,
+  shop: AQUARIS_FOOTERS.shop,
+  recruitment: AQUARIS_FOOTERS.recruitment,
 } as const;
 
 export const MODERATION_COLORS = {
-  info: COLORS.info,
-  success: COLORS.success,
-  warning: COLORS.warning,
-  mute: COLORS.mute,
-  timeout: COLORS.timeout,
-  kick: COLORS.kick,
-  danger: COLORS.danger,
-  log: COLORS.blurple,
-  system: COLORS.system,
+  info: AQUARIS_COLORS.info,
+  success: AQUARIS_COLORS.success,
+  warning: AQUARIS_COLORS.warning,
+  mute: AQUARIS_COLORS.mute,
+  timeout: AQUARIS_COLORS.timeout,
+  kick: AQUARIS_COLORS.kick,
+  danger: AQUARIS_COLORS.danger,
+  log: AQUARIS_COLORS.log,
+  system: AQUARIS_COLORS.system,
 } as const;
 
-type EmbedColor = (typeof MODERATION_COLORS)[keyof typeof MODERATION_COLORS];
+type EmbedColor = AquarisColor;
 
 type ModerationLogEmbedOptions = {
   title: string;
@@ -48,15 +58,24 @@ type UserFacingModerationEmbedOptions = {
 type StaffModerationEmbedOptions = {
   title: string;
   color?: EmbedColor;
-  targetMention: string;
+  targetMention?: string;
   reason?: string;
   duration?: string;
   dmDelivered?: boolean;
+  description?: string;
+  fields?: APIEmbedField[];
+};
+
+type ModerationNoticeEmbedOptions = {
+  title: string;
+  description?: string;
+  color?: EmbedColor;
+  fields?: APIEmbedField[];
+  footer?: keyof typeof MODERATION_FOOTERS;
 };
 
 export function normalizeModerationReason(reason: string | null): string {
-  const trimmed = reason?.trim();
-  return trimmed && trimmed.length > 0 ? trimmed : 'Sin motivo especificado';
+  return normalizeMessageReason(reason);
 }
 
 export function buildModerationLogEmbed(options: ModerationLogEmbedOptions): EmbedBuilder {
@@ -79,12 +98,13 @@ export function buildModerationLogEmbed(options: ModerationLogEmbedOptions): Emb
     { name: 'ID interno', value: `\`${options.logId}\``, inline: true },
   );
 
-  return new EmbedBuilder()
-    .setColor(options.color)
-    .setTitle(options.title)
-    .addFields(fields)
-    .setFooter(MODERATION_FOOTERS.logs)
-    .setTimestamp(options.createdAt ?? new Date());
+  return buildAquarisEmbed({
+    title: options.title,
+    color: options.color,
+    footer: 'logsModeration',
+    fields,
+    timestamp: options.createdAt ?? new Date(),
+  });
 }
 
 export function buildModerationUserDmEmbed(options: UserFacingModerationEmbedOptions): EmbedBuilder {
@@ -94,12 +114,12 @@ export function buildModerationUserDmEmbed(options: UserFacingModerationEmbedOpt
     `Motivo: ${options.reason}`,
   ].filter((line): line is string => line !== null);
 
-  return new EmbedBuilder()
-    .setColor(options.color)
-    .setTitle(options.title)
-    .setDescription(details.join('\n'))
-    .setFooter(MODERATION_FOOTERS.moderation)
-    .setTimestamp();
+  return buildAquarisEmbed({
+    title: options.title,
+    description: details.join('\n'),
+    color: options.color,
+    footer: 'moderation',
+  });
 }
 
 export function buildModerationPublicEmbed(options: UserFacingModerationEmbedOptions): EmbedBuilder {
@@ -110,12 +130,12 @@ export function buildModerationPublicEmbed(options: UserFacingModerationEmbedOpt
       options.duration ? `Duración: **${options.duration}**` : null,
     ].filter((line): line is string => line !== null).join('\n');
 
-  const embed = new EmbedBuilder()
-    .setColor(options.color)
-    .setTitle(options.title)
-    .setDescription(description)
-    .setFooter(MODERATION_FOOTERS.moderation)
-    .setTimestamp();
+  const embed = buildAquarisEmbed({
+    title: options.title,
+    description,
+    color: options.color,
+    footer: 'moderation',
+  });
 
   if (options.reason) {
     embed.addFields({ name: 'Motivo', value: options.reason });
@@ -125,14 +145,14 @@ export function buildModerationPublicEmbed(options: UserFacingModerationEmbedOpt
 }
 
 export function buildModerationStaffEmbed(options: StaffModerationEmbedOptions): EmbedBuilder {
-  const embed = new EmbedBuilder()
-    .setColor(options.color ?? MODERATION_COLORS.success)
-    .setTitle(options.title)
-    .setDescription(`Usuario: ${options.targetMention}`)
-    .setFooter(MODERATION_FOOTERS.moderation)
-    .setTimestamp();
+  const embed = buildAquarisEmbed({
+    title: options.title,
+    description: options.description ?? (options.targetMention ? `Usuario: ${options.targetMention}` : null),
+    color: options.color ?? MODERATION_COLORS.success,
+    footer: 'moderation',
+  });
 
-  const fields = [];
+  const fields = [...(options.fields ?? [])];
   if (options.duration) {
     fields.push({ name: 'Duración', value: options.duration, inline: true });
   }
@@ -154,11 +174,24 @@ export function buildModerationStaffEmbed(options: StaffModerationEmbedOptions):
   return embed;
 }
 
+export function buildModerationNoticeEmbed(options: ModerationNoticeEmbedOptions): EmbedBuilder {
+  const embedOptions: AquarisEmbedOptions = {
+    title: options.title,
+    color: options.color ?? MODERATION_COLORS.info,
+    footer: options.footer === 'logs' ? 'logsModeration' : options.footer ?? 'moderation',
+  };
+
+  if (options.description) {
+    embedOptions.description = options.description;
+  }
+
+  if (options.fields) {
+    embedOptions.fields = options.fields;
+  }
+
+  return buildAquarisNoticeEmbed(embedOptions);
+}
+
 export function buildModerationErrorEmbed(title: string, description: string): EmbedBuilder {
-  return new EmbedBuilder()
-    .setColor(MODERATION_COLORS.danger)
-    .setTitle(title)
-    .setDescription(description)
-    .setFooter(MODERATION_FOOTERS.system)
-    .setTimestamp();
+  return buildAquarisErrorEmbed(title, description);
 }

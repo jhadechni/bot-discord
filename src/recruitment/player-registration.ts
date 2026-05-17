@@ -3,7 +3,6 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  EmbedBuilder,
   ModalBuilder,
   PermissionFlagsBits,
   StringSelectMenuBuilder,
@@ -14,6 +13,7 @@ import {
 import { z } from 'zod';
 import { getOrCreateGuildConfig } from '../database/guild-config.js';
 import { prisma } from '../database/prisma.js';
+import { buildRecruitmentNoticeEmbed, RECRUITMENT_COLORS } from '../utils/recruitment-ui.js';
 
 export const CLAN_PLAYER_CUSTOM_IDS = {
   basicsModal: 'clanplayer:s1:',
@@ -183,15 +183,14 @@ function formatFieldValue(value: string) {
 function buildPreviewEmbed(session: ClanPlayerRegistrationSession) {
   const draft = session.draft;
 
-  return new EmbedBuilder()
-    .setColor(0x5865f2)
-    .setTitle('🧾 Registro de jugador')
-    .setDescription(
+  return buildRecruitmentNoticeEmbed({
+    title: 'Registro de jugador',
+    color: RECRUITMENT_COLORS.log,
+    description:
       `Jugador: <@${session.applicantUserId}>\n` +
       `Ticket: \`${session.ticketId}\`\n` +
       'Al guardar se insertará el registro en la tabla de jugadores y se cerrará el canal de entrevista.',
-    )
-    .addFields(
+    fields: [
       { name: 'Discord', value: formatFieldValue(draft.discord), inline: true },
       { name: 'Nombre', value: formatFieldValue(draft.fullName), inline: true },
       { name: 'Nick Minecraft', value: formatFieldValue(draft.minecraftNick), inline: true },
@@ -202,9 +201,8 @@ function buildPreviewEmbed(session: ClanPlayerRegistrationSession) {
       { name: 'País', value: formatFieldValue(draft.country), inline: true },
       { name: 'UTC', value: formatFieldValue(draft.utcOffset), inline: true },
       { name: 'Notas', value: formatFieldValue(draft.notes) },
-    )
-    .setFooter({ text: 'Roster Aquaris' })
-    .setTimestamp();
+    ],
+  });
 }
 
 export async function canManageClanPlayers(member: GuildMember) {

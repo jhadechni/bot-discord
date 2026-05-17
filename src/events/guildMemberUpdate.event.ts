@@ -1,7 +1,8 @@
-import { EmbedBuilder, type GuildMember } from 'discord.js';
+import type { GuildMember } from 'discord.js';
 import type { BotEvent } from '../types/event.js';
 import { getOrCreateGuildConfig } from '../database/guild-config.js';
 import { prisma } from '../database/prisma.js';
+import { buildBoostPublicEmbed } from '../utils/community-ui.js';
 import { logger } from '../core/logger.js';
 
 // Extrae el nombre base quitando cualquier prefijo "ALGO | "
@@ -81,14 +82,12 @@ const guildMemberUpdateEvent: BotEvent<'guildMemberUpdate'> = {
           if (ch?.isTextBased()) {
             await ch.send({
               embeds: [
-                new EmbedBuilder()
-                  .setColor(0xff73fa)
-                  .setTitle('🚀 ¡Nuevo boost!')
-                  .setDescription(
-                    `<@${newMember.id}> ha boosteado el servidor. ¡Muchísimas gracias! 💜`,
-                  )
-                  .setThumbnail(newMember.user.displayAvatarURL())
-                  .setTimestamp(),
+                buildBoostPublicEmbed({
+                  userId: newMember.id,
+                  userTag: newMember.user.tag,
+                  guildName: newMember.guild.name,
+                  avatarUrl: newMember.user.displayAvatarURL(),
+                }),
               ],
             });
           }

@@ -1,6 +1,11 @@
-import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
+import {
+  MODERATION_COLORS,
+  buildModerationNoticeEmbed,
+} from '../../utils/moderation-ui.js';
+import { formatDate } from '../../utils/ui.js';
 
 export const warningsCommand: Command = {
   data: new SlashCommandBuilder()
@@ -26,22 +31,32 @@ export const warningsCommand: Command = {
     });
 
     if (warns.length === 0) {
-      await interaction.editReply(`✅ **${target.tag}** no tiene avisos.`);
+      await interaction.editReply({
+        embeds: [
+          buildModerationNoticeEmbed({
+            title: 'Sin advertencias',
+            description: `**${target.tag}** no tiene advertencias registradas.`,
+            color: MODERATION_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
     const fields = warns.map((w, i) => ({
-      name: `#${i + 1} — ${w.createdAt.toLocaleDateString('es-ES')}`,
+      name: `#${i + 1} — ${formatDate(w.createdAt)}`,
       value: `**Motivo:** ${w.reason ?? 'Sin motivo'}\n**Moderador:** <@${w.moderatorId}>\n**ID:** \`${w.id}\``,
     }));
 
-    const embed = new EmbedBuilder()
-      .setColor(0xfee75c)
-      .setTitle(`⚠️ Avisos de ${target.tag}`)
-      .setDescription(`Total: **${warns.length}** (últimos 10)`)
-      .addFields(fields)
-      .setTimestamp();
-
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({
+      embeds: [
+        buildModerationNoticeEmbed({
+          title: `Advertencias de ${target.tag}`,
+          description: `Total mostrado: **${warns.length}** (últimas 10)`,
+          color: MODERATION_COLORS.warning,
+          fields,
+        }),
+      ],
+    });
   },
 };

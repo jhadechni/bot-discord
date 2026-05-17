@@ -1,6 +1,7 @@
 import { PermissionFlagsBits, SlashCommandBuilder, type GuildMember, type ChatInputCommandInteraction } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
+import { FUN_COLORS, buildFunErrorEmbed, buildFunNoticeEmbed } from '../../utils/fun-ui.js';
 
 const SEVEN_HOURS_MS = 7 * 60 * 60 * 1000;
 
@@ -29,7 +30,10 @@ export const adormirdaniCommand: Command = {
     if (!interaction.guild) return;
     const config = await getOrCreateGuildConfig(interaction.guildId!);
     if (!hasStaffPermission(interaction, config.staffRoleId ?? null)) {
-      await interaction.reply({ content: '❌ Solo el staff puede usar este comando.', ephemeral: true });
+      await interaction.reply({
+        embeds: [buildFunErrorEmbed('Permiso insuficiente', 'Solo el staff puede usar este comando.')],
+        ephemeral: true,
+      });
       return;
     }
 
@@ -37,17 +41,32 @@ export const adormirdaniCommand: Command = {
     const member = await interaction.guild.members.fetch(target.id).catch(() => null);
 
     if (!member) {
-      await interaction.reply({ content: '❌ No encontré a ese usuario en el servidor.', ephemeral: true });
+      await interaction.reply({
+        embeds: [buildFunErrorEmbed('Usuario no encontrado', 'No encontré a ese usuario en el servidor.')],
+        ephemeral: true,
+      });
       return;
     }
 
     if (!member.moderatable) {
-      await interaction.reply({ content: '❌ No puedo silenciar a esa persona.', ephemeral: true });
+      await interaction.reply({
+        embeds: [buildFunErrorEmbed('Acción no disponible', 'No puedo silenciar a esa persona.')],
+        ephemeral: true,
+      });
       return;
     }
 
     await member.timeout(SEVEN_HOURS_MS, 'Hora de dormir 😴');
-    await interaction.reply({ content: `😴 Buenas noches, <@${target.id}>. Nos vemos en 7 horas.`, ephemeral: true });
+    await interaction.reply({
+      embeds: [
+        buildFunNoticeEmbed(
+          'Buenas noches',
+          `<@${target.id}> quedó en descanso por **7 horas**.`,
+          FUN_COLORS.warning,
+        ),
+      ],
+      ephemeral: true,
+    });
   },
 };
 
@@ -64,7 +83,10 @@ export const atrabajardaniCommand: Command = {
     if (!interaction.guild) return;
     const config = await getOrCreateGuildConfig(interaction.guildId!);
     if (!hasStaffPermission(interaction, config.staffRoleId ?? null)) {
-      await interaction.reply({ content: '❌ Solo el staff puede usar este comando.', ephemeral: true });
+      await interaction.reply({
+        embeds: [buildFunErrorEmbed('Permiso insuficiente', 'Solo el staff puede usar este comando.')],
+        ephemeral: true,
+      });
       return;
     }
 
@@ -72,16 +94,31 @@ export const atrabajardaniCommand: Command = {
     const member = await interaction.guild.members.fetch(target.id).catch(() => null);
 
     if (!member) {
-      await interaction.reply({ content: '❌ No encontré a ese usuario en el servidor.', ephemeral: true });
+      await interaction.reply({
+        embeds: [buildFunErrorEmbed('Usuario no encontrado', 'No encontré a ese usuario en el servidor.')],
+        ephemeral: true,
+      });
       return;
     }
 
     if (!member.moderatable) {
-      await interaction.reply({ content: '❌ No puedo quitar el timeout a esa persona.', ephemeral: true });
+      await interaction.reply({
+        embeds: [buildFunErrorEmbed('Acción no disponible', 'No puedo quitar el timeout a esa persona.')],
+        ephemeral: true,
+      });
       return;
     }
 
     await member.timeout(null, 'Buenos días ☀️');
-    await interaction.reply({ content: `☀️ ¡Despierta, <@${target.id}>! A trabajar.`, ephemeral: true });
+    await interaction.reply({
+      embeds: [
+        buildFunNoticeEmbed(
+          'Timeout retirado',
+          `<@${target.id}> ya puede volver a participar.`,
+          FUN_COLORS.success,
+        ),
+      ],
+      ephemeral: true,
+    });
   },
 };

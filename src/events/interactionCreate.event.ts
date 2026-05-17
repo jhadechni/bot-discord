@@ -18,7 +18,12 @@ import type { AquarisClient } from '../core/client.js';
 import { prisma } from '../database/prisma.js';
 import { getOrCreateGuildConfig } from '../database/guild-config.js';
 import { getLogChannel } from '../utils/log-channel.js';
-import { buildSuggestionEmbed } from '../utils/suggestion.js';
+import {
+  SUGGESTION_COLORS,
+  buildSuggestionErrorEmbed,
+  buildSuggestionNoticeEmbed,
+  buildSuggestionPublicEmbed,
+} from '../utils/suggestion-ui.js';
 import { getFilteredWords, findBannedWord } from '../utils/filter.js';
 import { parseTime, formatTime } from '../utils/time.js';
 import { logger } from '../core/logger.js';
@@ -69,6 +74,28 @@ import {
   getClanPlayerSession,
   saveClanPlayerRegistration,
 } from '../recruitment/player-registration.js';
+import {
+  RECRUITMENT_COLORS,
+  buildRecruitmentApplicationEmbed,
+  buildRecruitmentErrorEmbed,
+  buildRecruitmentNoticeEmbed,
+  buildRecruitmentTicketWelcomeEmbed,
+  buildRecruitmentUserMessageEmbed,
+  normalizeRecruitmentReason,
+} from '../utils/recruitment-ui.js';
+import {
+  REMINDER_COLORS,
+  buildKitReminderListEmbed,
+  buildReminderErrorEmbed,
+  buildReminderNoticeEmbed,
+} from '../utils/reminder-ui.js';
+import {
+  SHOP_COLORS,
+  buildOrderReceivedEmbed,
+  buildShopErrorEmbed,
+  buildShopNoticeEmbed,
+} from '../utils/shop-ui.js';
+import { buildSystemErrorEmbed } from '../utils/system-ui.js';
 
 // ── Cooldowns (en memoria para sugerencias, DB para apply) ───────────────────
 const SUGGEST_COOLDOWN_MS = 5 * 60 * 1000;  // 5 minutos
@@ -96,18 +123,18 @@ function buildManualDiscountPrompt(params: {
   options: Awaited<ReturnType<typeof getEligibleManualVolumeDiscounts>>;
   orderCode: string;
 }) {
-  const embed = new EmbedBuilder()
-    .setTitle(`🏷️ Descuentos elegibles para ${params.orderCode}`)
-    .setDescription(
-      'Selecciona los descuentos manuales que quieres aplicar. Solo se ofrece el tramo más alto elegible por producto.',
-    )
-    .addFields({
-      name: '📋 Opciones',
+  const embed = buildShopNoticeEmbed({
+    title: `Descuentos elegibles para ${params.orderCode}`,
+    description: 'Selecciona los descuentos manuales que quieres aplicar. Solo se ofrece el tramo más alto elegible por producto.',
+    color: SHOP_COLORS.info,
+    fields: [{
+      name: 'Opciones',
       value: params.options.slice(0, 25).map(option =>
         `• **${option.productName}**: ${formatDiscountLabel(option.discountType, option.discountValue)} ` +
         `(cantidad ${option.aggregatedQuantity}, tramo ${option.minQuantity}+)`,
       ).join('\n'),
-    });
+    }],
+  });
 
   const select = new StringSelectMenuBuilder()
     .setCustomId(`shop:discount_select:${params.orderCode}:${params.channelId}:${params.messageId}`)
@@ -223,7 +250,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         await command.execute(interaction);
       } catch (err) {
         logger.error({ err, command: interaction.commandName }, 'Error ejecutando comando');
-        const msg = { content: '❌ Ocurrió un error al ejecutar este comando.', ephemeral: true };
+        const msg = {
+          embeds: [
+            buildSystemErrorEmbed(
+              'Error al ejecutar comando',
+              'Ocurrio un error al ejecutar este comando. Intentalo de nuevo.',
+            ),
+          ],
+          ephemeral: true,
+        };
         if (interaction.replied || interaction.deferred) {
           await interaction.followUp(msg);
         } else {
@@ -248,7 +283,14 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const staffRoles = [guildConfig.staffRoleId, guildConfig.liderRoleId, guildConfig.coLiderRoleId].filter(Boolean) as string[];
       const isKitStaff = staffRoles.some(r => member.roles.cache.has(r)) || member.permissions.has('Administrator');
       if (!isKitStaff) {
-        await interaction.editReply('❌ Solo el staff puede crear plantillas de kits.');
+        await interaction.editReply({
+          embeds: [
+            buildReminderErrorEmbed(
+              'Permiso insuficiente',
+              'Solo el staff puede crear plantillas de kits.',
+            ),
+          ],
+        });
         return;
       }
 
@@ -258,13 +300,27 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const cooldownMin = parseTime(cooldownStr);
       if (!cooldownMin || cooldownMin < 1) {
-        await interaction.editReply('❌ Cooldown inválido. Usa formato como `7d`, `24h`, `3d12h`.');
+        await interaction.editReply({
+          embeds: [
+            buildReminderErrorEmbed(
+              'Cooldown inválido',
+              'Usa un formato como `7d`, `24h` o `3d12h`.',
+            ),
+          ],
+        });
         return;
       }
 
       const existing = await prisma.reminderTemplate.findFirst({ where: { guildId, name, isActive: true } });
       if (existing) {
-        await interaction.editReply(`❌ Ya existe una plantilla llamada **${name}**.`);
+        await interaction.editReply({
+          embeds: [
+            buildReminderErrorEmbed(
+              'Plantilla duplicada',
+              `Ya existe una plantilla llamada **${name}**.`,
+            ),
+          ],
+        });
         return;
       }
 
@@ -274,9 +330,16 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         update: { description: description ?? null, cooldownMin, isActive: true },
       });
 
-      await interaction.editReply(
-        `✅ Plantilla **${template.name}** creada — cooldown: **${formatTime(template.cooldownMin)}**`,
-      );
+      await interaction.editReply({
+        embeds: [
+          buildReminderNoticeEmbed({
+            title: 'Plantilla creada',
+            description: `**${template.name}** fue creada correctamente.`,
+            color: REMINDER_COLORS.success,
+            fields: [{ name: 'Cooldown', value: formatTime(template.cooldownMin), inline: true }],
+          }),
+        ],
+      });
       return;
     }
 
@@ -323,11 +386,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         ? templates.filter(t => selected.includes(t.id)).map(t => `🎁 ${t.name}`).join('\n')
         : 'Ninguno seleccionado — guardar desactivará todos los recordatorios de kit.';
 
-      const updatedEmbed = new EmbedBuilder()
-        .setColor(0x5865f2)
-        .setTitle('🎁 Recordatorios de kits')
-        .setDescription(selectedLabel)
-        .setFooter({ text: 'Pulsa Guardar para aplicar los cambios' });
+      const updatedEmbed = buildKitReminderListEmbed({
+        lines: [selectedLabel],
+        footerHint: 'Pulsa Guardar para aplicar los cambios',
+      });
 
       await interaction.editReply({
         embeds: [updatedEmbed],
@@ -405,11 +467,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           })
         : ['No tienes recordatorios de kit activos.'];
 
-      const embed = new EmbedBuilder()
-        .setColor(0x57f287)
-        .setTitle('✅ Recordatorios de kits actualizados')
-        .setDescription(lines.join('\n'))
-        .setFooter({ text: 'Recibirás un DM cuando sea momento de reclamar cada kit' });
+      const embed = buildKitReminderListEmbed({
+        title: 'Recordatorios de kits actualizados',
+        lines,
+        color: REMINDER_COLORS.success,
+        footerHint: 'Recibirás un DM cuando sea momento de reclamar cada kit',
+      });
 
       const select = new StringSelectMenuBuilder()
         .setCustomId('remind:kit:toggle')
@@ -451,7 +514,16 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       });
 
       if (activeReminders.length === 0) {
-        await interaction.followUp({ ephemeral: true, content: 'No tienes recordatorios de kit activos para editar.' });
+        await interaction.followUp({
+          embeds: [
+            buildReminderNoticeEmbed({
+              title: 'Sin recordatorios activos',
+              description: 'No tienes recordatorios de kit activos para editar.',
+              color: REMINDER_COLORS.info,
+            }),
+          ],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -474,10 +546,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         .setLabel('← Volver')
         .setStyle(ButtonStyle.Secondary);
 
-      const embed = new EmbedBuilder()
-        .setColor(0x5865f2)
-        .setTitle('🎁 Editar próximo aviso')
-        .setDescription('Selecciona el kit y establece en cuánto tiempo debe dispararse el siguiente recordatorio.');
+      const embed = buildReminderNoticeEmbed({
+        title: 'Editar próximo aviso',
+        description: 'Selecciona el kit y establece en cuánto tiempo debe dispararse el siguiente recordatorio.',
+      });
 
       await interaction.editReply({
         embeds: [embed],
@@ -523,7 +595,14 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const minutes = parseTime(newTimeStr);
 
       if (!minutes || minutes < 5) {
-        await interaction.editReply('❌ Tiempo inválido. Mínimo 5 minutos. Ej: `5m`, `2h`, `1d`.');
+        await interaction.editReply({
+          embeds: [
+            buildReminderErrorEmbed(
+              'Tiempo inválido',
+              'El mínimo es 5 minutos. Usa un formato como `5m`, `2h` o `1d`.',
+            ),
+          ],
+        });
         return;
       }
 
@@ -533,16 +612,29 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       });
 
       if (!reminder) {
-        await interaction.editReply('❌ No se encontró ese recordatorio o ya no está activo.');
+        await interaction.editReply({
+          embeds: [
+            buildReminderErrorEmbed(
+              'Recordatorio no encontrado',
+              'No se encontró ese recordatorio o ya no está activo.',
+            ),
+          ],
+        });
         return;
       }
 
       const newTrigger = new Date(Date.now() + minutes * 60_000);
       await prisma.reminder.update({ where: { id: reminderId }, data: { triggerAt: newTrigger } });
 
-      await interaction.editReply(
-        `✅ **${reminder.template?.name ?? reminder.message}** — próximo aviso en **${formatTime(minutes)}**.`,
-      );
+      await interaction.editReply({
+        embeds: [
+          buildReminderNoticeEmbed({
+            title: 'Próximo aviso actualizado',
+            description: `**${reminder.template?.name ?? reminder.message}** te avisará en **${formatTime(minutes)}**.`,
+            color: REMINDER_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -572,11 +664,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           })
         : ['No tienes recordatorios de kit activos.'];
 
-      const embed = new EmbedBuilder()
-        .setColor(0x5865f2)
-        .setTitle('🎁 Recordatorios de kits')
-        .setDescription(lines.join('\n'))
-        .setFooter({ text: 'Selecciona kits y pulsa Guardar · Pulsa Ya lo reclamé en el DM cuando lo hagas' });
+      const embed = buildKitReminderListEmbed({
+        lines,
+        footerHint: 'Selecciona kits y pulsa Guardar · Pulsa Ya lo reclamé en el DM cuando lo hagas',
+      });
 
       const select = new StringSelectMenuBuilder()
         .setCustomId('remind:kit:toggle')
@@ -621,7 +712,14 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       });
 
       if (!template) {
-        await interaction.editReply('❌ Esta plantilla de kit ya no está disponible.');
+        await interaction.editReply({
+          embeds: [
+            buildReminderErrorEmbed(
+              'Plantilla no disponible',
+              'Esta plantilla de kit ya no está disponible.',
+            ),
+          ],
+        });
         return;
       }
 
@@ -633,7 +731,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       if (existing) {
         const msLeft = existing.triggerAt.getTime() - Date.now();
         const timeLeft = msLeft > 0 ? formatTime(Math.ceil(msLeft / 60_000)) : 'ahora mismo';
-        await interaction.editReply(`⏳ Ya tienes un recordatorio activo para **${template.name}** — en **${timeLeft}**.`);
+        await interaction.editReply({
+          embeds: [
+            buildReminderNoticeEmbed({
+              title: 'Recordatorio ya activo',
+              description: `Ya tienes un recordatorio activo para **${template.name}** — en **${timeLeft}**.`,
+              color: REMINDER_COLORS.warning,
+            }),
+          ],
+        });
         return;
       }
 
@@ -649,9 +755,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         },
       });
 
-      await interaction.editReply(
-        `✅ ¡Anotado! Te recordaré reclamar **${template.name}** en **${formatTime(template.cooldownMin)}**.`,
-      );
+      await interaction.editReply({
+        embeds: [
+          buildReminderNoticeEmbed({
+            title: 'Kit reprogramado',
+            description: `Te recordaré reclamar **${template.name}** en **${formatTime(template.cooldownMin)}**.`,
+            color: REMINDER_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -670,7 +782,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const remaining = SUGGEST_COOLDOWN_MS - (Date.now() - lastUsed);
       if (remaining > 0) {
         const mins = Math.ceil(remaining / 60_000);
-        await interaction.editReply(`⏳ Puedes enviar otra sugerencia en **${mins} minuto${mins === 1 ? '' : 's'}**.`);
+        await interaction.editReply({
+          embeds: [
+            buildSuggestionNoticeEmbed({
+              title: 'Espera antes de sugerir',
+              description: `Puedes enviar otra sugerencia en **${mins} minuto${mins === 1 ? '' : 's'}**.`,
+              color: SUGGESTION_COLORS.warning,
+            }),
+          ],
+        });
         return;
       }
 
@@ -678,22 +798,41 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const filterWords = await getFilteredWords(guildId);
       const banned = findBannedWord(content, filterWords);
       if (banned) {
-        await interaction.editReply('🚫 Tu sugerencia contiene una palabra no permitida.');
+        await interaction.editReply({
+          embeds: [
+            buildSuggestionErrorEmbed(
+              'Sugerencia bloqueada',
+              'Tu sugerencia contiene una palabra no permitida. Revisa el contenido e intenta de nuevo.',
+            ),
+          ],
+        });
         return;
       }
 
       const config = await getOrCreateGuildConfig(guildId);
 
       if (!config.suggestionsChannelId) {
-        await interaction.editReply(
-          '⚠️ El canal de sugerencias no está configurado. Pide al staff que use `/config set-suggestions`.',
-        );
+        await interaction.editReply({
+          embeds: [
+            buildSuggestionErrorEmbed(
+              'Canal no configurado',
+              'El canal de sugerencias no está configurado. Pide al staff que use `/config set-suggestions`.',
+            ),
+          ],
+        });
         return;
       }
 
       const channel = interaction.guild?.channels.cache.get(config.suggestionsChannelId);
       if (!channel?.isTextBased()) {
-        await interaction.editReply('⚠️ El canal de sugerencias configurado no es válido.');
+        await interaction.editReply({
+          embeds: [
+            buildSuggestionErrorEmbed(
+              'Canal inválido',
+              'El canal de sugerencias configurado no es válido.',
+            ),
+          ],
+        });
         return;
       }
 
@@ -701,7 +840,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         data: { guildId, userId: interaction.user.id, content },
       });
 
-      const embed = buildSuggestionEmbed(content, interaction.user.id, suggestion.id);
+      const embed = buildSuggestionPublicEmbed(content, interaction.user.id);
       const msg = await channel.send({ embeds: [embed] });
       await msg.react('👍');
       await msg.react('👎');
@@ -712,7 +851,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       });
 
       suggestCooldown.set(cooldownKey, Date.now());
-      await interaction.editReply('✅ Tu sugerencia fue enviada.');
+      await interaction.editReply({
+        embeds: [
+          buildSuggestionNoticeEmbed({
+            title: 'Sugerencia enviada',
+            description: 'Tu sugerencia fue publicada para votación.',
+            color: SUGGESTION_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -727,9 +874,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const config = await getOrCreateGuildConfig(guildId);
 
       if (!config.shopStaffChannelId) {
-        await interaction.editReply(
-          '⚠️ La tienda no tiene configurado un canal de staff para solicitudes libres.',
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopNoticeEmbed({
+              title: 'Canal staff no configurado',
+              description: 'La tienda no tiene configurado un canal de staff para solicitudes libres.',
+              color: SHOP_COLORS.warning,
+            }),
+          ],
+        });
         return;
       }
 
@@ -738,27 +891,39 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         ?? await guild.channels.fetch(config.shopStaffChannelId).catch(() => null);
 
       if (!staffChannel?.isTextBased()) {
-        await interaction.editReply('⚠️ El canal de staff configurado para la tienda no es válido.');
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Canal staff inválido',
+              'El canal de staff configurado para la tienda no es válido.',
+            ),
+          ],
+        });
         return;
       }
 
       await upsertShopUser(guildId, interaction.user);
 
-      const embed = new EmbedBuilder()
-        .setTitle('📝 Solicitud libre de tienda')
-        .setColor(0xfee75c)
-        .setDescription(requestText)
-        .addFields(
-          { name: '👤 Cliente', value: `<@${interaction.user.id}>`, inline: true },
-          { name: '🧭 Tipo', value: 'Solicitud fuera de catálogo', inline: true },
-        )
-        .setFooter({ text: 'Tienda Aquaris  ·  Solicitud manual' })
-        .setTimestamp();
+      const embed = buildShopNoticeEmbed({
+        title: 'Solicitud libre de tienda',
+        description: requestText,
+        color: SHOP_COLORS.warning,
+        fields: [
+          { name: 'Cliente', value: `<@${interaction.user.id}>`, inline: true },
+          { name: 'Tipo', value: 'Solicitud fuera de catálogo', inline: true },
+        ],
+      });
 
       await staffChannel.send({ embeds: [embed] });
-      await interaction.editReply(
-        '✅ Tu solicitud fue enviada al staff. Te contactarán si necesitan más detalles.',
-      );
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Solicitud enviada',
+            description: 'Tu solicitud fue enviada al staff. Te contactarán si necesitan más detalles.',
+            color: SHOP_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -800,10 +965,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         .setStyle(ButtonStyle.Primary)
         .setDisabled(false);
 
-      const updatedEmbed = new EmbedBuilder()
-        .setColor(0x5865f2)
-        .setTitle('Solicitud de ingreso — Aquaris')
-        .setDescription(`Roles: **${selected.join(', ')}**\n\nPulsa **Continuar** para abrir el formulario.`);
+      const updatedEmbed = buildRecruitmentNoticeEmbed({
+        title: 'Solicitud de ingreso',
+        description: `Roles: **${selected.join(', ')}**\n\nPulsa **Continuar** para abrir el formulario.`,
+      });
 
       await interaction.editReply({
         embeds: [updatedEmbed],
@@ -832,9 +997,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         const remaining = APPLY_COOLDOWN_MS - (Date.now() - lastApplyTicket.createdAt.getTime());
         if (remaining > 0) {
           const hours = Math.ceil(remaining / (60 * 60 * 1000));
-          await interaction.editReply(
-            `⏳ Ya tienes una solicitud reciente. Podrás volver a aplicar en **${hours} hora${hours === 1 ? '' : 's'}**.`,
-          );
+          await interaction.editReply({
+            embeds: [
+              buildRecruitmentNoticeEmbed({
+                title: 'Solicitud en espera',
+                description: `Ya tienes una solicitud reciente. Podrás volver a aplicar en **${hours} hora${hours === 1 ? '' : 's'}**.`,
+                color: RECRUITMENT_COLORS.warning,
+              }),
+            ],
+          });
           return;
         }
       }
@@ -851,7 +1022,14 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const recruitTexts = [experience, contribution, availability];
       const recruitBanned = recruitTexts.map(t => findBannedWord(t, recruitFilterWords)).find(Boolean);
       if (recruitBanned) {
-        await interaction.editReply('🚫 Tu solicitud contiene una palabra no permitida. Revisa tus respuestas.');
+        await interaction.editReply({
+          embeds: [
+            buildRecruitmentErrorEmbed(
+              'Solicitud bloqueada',
+              'Tu solicitud contiene una palabra no permitida. Revisa tus respuestas e intenta de nuevo.',
+            ),
+          ],
+        });
         return;
       }
 
@@ -902,21 +1080,17 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         }
       }
 
-      const staffEmbed = new EmbedBuilder()
-        .setColor(0x5865f2)
-        .setTitle('📋 Nueva solicitud de reclutamiento')
-        .setDescription(`**<@${interaction.user.id}>** ha solicitado unirse al clan Aquaris.`)
-        .addFields(
-          { name: '👤 Solicitante', value: `<@${interaction.user.id}>\n\`${interaction.user.username}\``, inline: true },
-          { name: '🎮 Rol solicitado', value: role, inline: true },
-          { name: '🎂 Edad', value: age, inline: true },
-          { name: '⏱️ Experiencia en Minecraft', value: experience },
-          { name: '📅 Disponibilidad semanal', value: availability },
-          { name: '💡 Aportación al clan', value: contribution },
-        )
-        .setThumbnail(interaction.user.displayAvatarURL())
-        .setFooter({ text: `Ticket ${ticket.id}  ·  Aquaris Reclutamiento` })
-        .setTimestamp();
+      const staffEmbed = buildRecruitmentApplicationEmbed({
+        applicantId: interaction.user.id,
+        username: interaction.user.username,
+        role,
+        age,
+        experience,
+        availability,
+        contribution,
+        ticketId: ticket.id,
+        avatarUrl: interaction.user.displayAvatarURL(),
+      });
 
       const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
@@ -935,22 +1109,19 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         const ticketChannel = interaction.guild.channels.cache.get(channelId);
         if (ticketChannel?.isTextBased()) {
           // Bienvenida al solicitante en su canal privado
-          const welcomeEmbed = new EmbedBuilder()
-            .setColor(0x5865f2)
-            .setTitle('Bienvenido a tu solicitud — Aquaris')
-            .setDescription(
-              `Hola <@${interaction.user.id}>, tu solicitud ha sido enviada correctamente.\n\n` +
-              'El staff revisará tu perfil y te responderá aquí. ' +
-              'Puedes añadir más información o aclarar cualquier punto mientras esperamos.',
-            )
-            .setFooter({ text: `Ticket ${ticket.id}  ·  Aquaris Reclutamiento` })
-            .setTimestamp();
+          const welcomeEmbed = buildRecruitmentTicketWelcomeEmbed(interaction.user.id);
           await ticketChannel.send({ embeds: [welcomeEmbed] });
 
           if (roles.includes('Builder')) {
-            await ticketChannel.send(
-              `📸 <@${interaction.user.id}> Ya que aplicas como **Builder**, sube aquí capturas de tus construcciones o proyectos. El staff las revisará junto con tu solicitud.`,
-            );
+            await ticketChannel.send({
+              embeds: [
+                buildRecruitmentNoticeEmbed({
+                  title: 'Material adicional para Builder',
+                  description: `<@${interaction.user.id}> sube aquí capturas de tus construcciones o proyectos. El staff las revisará junto con tu solicitud.`,
+                  color: RECRUITMENT_COLORS.info,
+                }),
+              ],
+            });
           }
 
           // Embed de revisión para el staff (sin mención al usuario para no notificarle otra vez)
@@ -961,16 +1132,28 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         if (recruitLogCh) {
           await recruitLogCh.send({ embeds: [staffEmbed], components: [buttons] });
           if (roles.includes('Builder')) {
-            await recruitLogCh.send(
-              `📸 <@${interaction.user.id}> Ya que aplicas como **Builder**, sube aquí capturas de tus construcciones o proyectos.`,
-            );
+            await recruitLogCh.send({
+              embeds: [
+                buildRecruitmentNoticeEmbed({
+                  title: 'Material adicional para Builder',
+                  description: `<@${interaction.user.id}> aplica como **Builder**. Puede aportar capturas de construcciones o proyectos.`,
+                  color: RECRUITMENT_COLORS.info,
+                }),
+              ],
+            });
           }
         }
       }
 
-      await interaction.editReply(
-        '✅ **Solicitud enviada.** El staff revisará tu aplicación y te responderá en tu canal privado.',
-      );
+      await interaction.editReply({
+        embeds: [
+          buildRecruitmentNoticeEmbed({
+            title: 'Solicitud enviada',
+            description: 'El staff revisará tu aplicación y te responderá en tu canal privado.',
+            color: RECRUITMENT_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -981,7 +1164,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
       if (!actor || !(await canManageClanPlayers(actor))) {
         await interaction.reply({
-          content: '❌ Solo el staff puede registrar jugadores en el roster.',
+          embeds: [
+            buildRecruitmentErrorEmbed(
+              'Permiso insuficiente',
+              'Solo el staff puede registrar jugadores en el roster.',
+            ),
+          ],
           ephemeral: true,
         });
         return;
@@ -998,7 +1186,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       if (!session) {
         await interaction.reply({
-          content: '❌ La sesión expiró. Ejecuta el comando otra vez.',
+          embeds: [
+            buildRecruitmentErrorEmbed(
+              'Sesión expirada',
+              'La sesión expiró. Ejecuta el comando otra vez.',
+            ),
+          ],
           ephemeral: true,
         });
         return;
@@ -1018,7 +1211,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
       if (!actor || !(await canManageClanPlayers(actor))) {
         await interaction.reply({
-          content: '❌ Solo el staff puede registrar jugadores en el roster.',
+          embeds: [
+            buildRecruitmentErrorEmbed(
+              'Permiso insuficiente',
+              'Solo el staff puede registrar jugadores en el roster.',
+            ),
+          ],
           ephemeral: true,
         });
         return;
@@ -1032,7 +1230,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       if (!session) {
         await interaction.reply({
-          content: '❌ La sesión expiró. Ejecuta el comando otra vez.',
+          embeds: [
+            buildRecruitmentErrorEmbed(
+              'Sesión expirada',
+              'La sesión expiró. Ejecuta el comando otra vez.',
+            ),
+          ],
           ephemeral: true,
         });
         return;
@@ -1052,7 +1255,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
       if (!actor || !(await canManageClanPlayers(actor))) {
         await interaction.reply({
-          content: '❌ Solo el staff puede registrar jugadores en el roster.',
+          embeds: [
+            buildRecruitmentErrorEmbed(
+              'Permiso insuficiente',
+              'Solo el staff puede registrar jugadores en el roster.',
+            ),
+          ],
           ephemeral: true,
         });
         return;
@@ -1064,8 +1272,13 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         const sessionId = customId.slice(CLAN_PLAYER_CUSTOM_IDS.cancelButton.length);
         clearClanPlayerRegistrationSession(sessionId);
         await interaction.update({
-          content: '✅ Registro cancelado.',
-          embeds: [],
+          embeds: [
+            buildRecruitmentNoticeEmbed({
+              title: 'Registro cancelado',
+              description: 'La sesión de registro fue cancelada.',
+              color: RECRUITMENT_COLORS.success,
+            }),
+          ],
           components: [],
         });
         return;
@@ -1085,7 +1298,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       if (!session) {
         await interaction.reply({
-          content: '❌ La sesión expiró. Ejecuta el comando otra vez.',
+          embeds: [
+            buildRecruitmentErrorEmbed(
+              'Sesión expirada',
+              'La sesión expiró. Ejecuta el comando otra vez.',
+            ),
+          ],
           ephemeral: true,
         });
         return;
@@ -1105,14 +1323,25 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         const result = await saveClanPlayerRegistration(sessionId);
         if (!result.ok) {
           await interaction.reply({
-            content: `❌ ${result.message}`,
+            embeds: [
+              buildRecruitmentErrorEmbed(
+                'No se pudo registrar',
+                result.message,
+              ),
+            ],
             ephemeral: true,
           });
           return;
         }
 
         await interaction.reply({
-          content: `✅ Jugador **${result.player.minecraftNick}** registrado en el roster. Cerrando canal de entrevista...`,
+          embeds: [
+            buildRecruitmentNoticeEmbed({
+              title: 'Jugador registrado',
+              description: `**${result.player.minecraftNick}** fue registrado en el roster. Cerrando canal de entrevista...`,
+              color: RECRUITMENT_COLORS.success,
+            }),
+          ],
           ephemeral: true,
         });
 
@@ -1123,7 +1352,13 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         if (interviewChannel && 'delete' in interviewChannel) {
           await interviewChannel.delete('Jugador registrado en el roster desde el flujo de entrevista').catch(async () => {
             await interaction.followUp({
-              content: '⚠️ El jugador se registró, pero no pude cerrar el canal de entrevista automáticamente.',
+              embeds: [
+                buildRecruitmentNoticeEmbed({
+                  title: 'Canal no cerrado',
+                  description: 'El jugador se registró, pero no pude cerrar el canal de entrevista automáticamente.',
+                  color: RECRUITMENT_COLORS.warning,
+                }),
+              ],
               ephemeral: true,
             }).catch(() => undefined);
           });
@@ -1153,7 +1388,13 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           const hours = Math.ceil(remaining / (60 * 60 * 1000));
           await interaction.reply({
             ephemeral: true,
-            content: `⏳ Ya tienes una solicitud reciente. Podrás volver a aplicar en **${hours} hora${hours === 1 ? '' : 's'}**.`,
+            embeds: [
+              buildRecruitmentNoticeEmbed({
+                title: 'Solicitud en espera',
+                description: `Ya tienes una solicitud reciente. Podrás volver a aplicar en **${hours} hora${hours === 1 ? '' : 's'}**.`,
+                color: RECRUITMENT_COLORS.warning,
+              }),
+            ],
           });
           return;
         }
@@ -1231,7 +1472,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
         if (!hasPermission) {
           await interaction.reply({
-            content: '❌ Solo el staff puede aceptar o rechazar solicitudes.',
+            embeds: [
+              buildRecruitmentErrorEmbed(
+                'Permiso insuficiente',
+                'Solo el staff puede aceptar o rechazar solicitudes.',
+              ),
+            ],
             ephemeral: true,
           });
           return;
@@ -1262,7 +1508,16 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
         const ticket = await prisma.recruitmentTicket.findUnique({ where: { id: ticketId } });
         if (!ticket || ticket.status !== 'OPEN') {
-          await interaction.followUp({ content: '⚠️ Este ticket ya fue procesado.', ephemeral: true });
+          await interaction.followUp({
+            embeds: [
+              buildRecruitmentNoticeEmbed({
+                title: 'Ticket ya procesado',
+                description: 'Este ticket ya fue procesado.',
+                color: RECRUITMENT_COLORS.warning,
+              }),
+            ],
+            ephemeral: true,
+          });
           return;
         }
 
@@ -1277,15 +1532,22 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           if (cfg.aspirantRoleId && applicant.roles.cache.has(cfg.aspirantRoleId)) {
             await applicant.roles.remove(cfg.aspirantRoleId);
           }
-          await applicant.user.send(
-            `✅ ¡Tu solicitud en **${guild.name}** fue **aceptada**! El staff se pondrá en contacto contigo para coordinar la entrevista.`,
-          );
+          await applicant.user.send({
+            embeds: [
+              buildRecruitmentUserMessageEmbed({
+                title: 'Solicitud aceptada',
+                description: 'El staff se pondrá en contacto contigo para coordinar la entrevista.',
+                guildName: guild.name,
+                color: RECRUITMENT_COLORS.success,
+              }),
+            ],
+          });
         } catch { /* DMs desactivados o sin permisos */ }
 
         const acceptedEmbed = EmbedBuilder.from(interaction.message.embeds[0] ?? new EmbedBuilder())
-          .setColor(0x57f287)
-          .setTitle('✅ Solicitud aceptada')
-          .setFooter({ text: `Aceptado por ${interaction.user.tag}` });
+          .setColor(RECRUITMENT_COLORS.success)
+          .setTitle('Solicitud aceptada')
+          .setFooter({ text: `Aquaris • Reclutamiento · Aceptado por ${interaction.user.tag}` });
 
         await interaction.editReply({ embeds: [acceptedEmbed], components: [] });
 
@@ -1296,11 +1558,18 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
             const applicantMember = await guild.members.fetch(ticket.userId).catch(() => null);
             const username = applicantMember?.user.username ?? ticket.userId;
             await ticketChannel.setName(`entrevista-${username}`);
-            await ticketChannel.send(
-              `✅ **Solicitud aceptada** por <@${interaction.user.id}>.\n\n` +
-              `<@${ticket.userId}> — El staff se pondrá en contacto contigo aquí para coordinar la entrevista. ` +
-              `Una vez aprobada la entrevista, el staff te asignará el rol **Aquaris** manualmente.`,
-            );
+            await ticketChannel.send({
+              embeds: [
+                buildRecruitmentNoticeEmbed({
+                  title: 'Solicitud aceptada',
+                  description:
+                    `Solicitud aceptada por <@${interaction.user.id}>.\n\n` +
+                    `<@${ticket.userId}> el staff se pondrá en contacto contigo aquí para coordinar la entrevista. ` +
+                    'Una vez aprobada la entrevista, el staff te asignará el rol **Aquaris** manualmente.',
+                  color: RECRUITMENT_COLORS.success,
+                }),
+              ],
+            });
           } catch (err) {
             logger.warn({ err }, 'No se pudo renombrar el canal de entrevista');
           }
@@ -1325,7 +1594,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         (cfg.staffRoleId != null && actor.roles.cache.has(cfg.staffRoleId));
 
       if (!hasPermission) {
-        await interaction.reply({ content: '❌ Solo el staff puede gestionar pedidos.', ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Permiso insuficiente', 'Solo el staff puede gestionar pedidos.')],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -1338,7 +1610,16 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           include: { customer: true },
         });
         if (!order || order.status !== 'pending') {
-          await interaction.followUp({ content: '⚠️ Este pedido ya fue procesado.', ephemeral: true });
+          await interaction.followUp({
+            embeds: [
+              buildShopNoticeEmbed({
+                title: 'Pedido ya procesado',
+                description: 'Este pedido ya fue procesado.',
+                color: SHOP_COLORS.warning,
+              }),
+            ],
+            ephemeral: true,
+          });
           return;
         }
 
@@ -1364,10 +1645,17 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
               ],
             });
             ticketChannelId = ticketCh.id;
-            await ticketCh.send(
-              `✅ Tu pedido **${orderCode}** fue **aceptado** por <@${interaction.user.id}>.\n` +
-              `<@${order.customer.discordUserId}> — El staff coordinará la entrega contigo aquí.`,
-            );
+            await ticketCh.send({
+              embeds: [
+                buildShopNoticeEmbed({
+                  title: 'Pedido aceptado',
+                  description:
+                    `Tu pedido **${orderCode}** fue aceptado.\n` +
+                    `<@${order.customer.discordUserId}> el staff coordinará la entrega contigo aquí.`,
+                  color: SHOP_COLORS.success,
+                }),
+              ],
+            });
           } catch (err) {
             logger.warn({ err }, 'No se pudo crear canal de pedido');
           }
@@ -1402,9 +1690,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
             if (ticketCh?.isTextBased()) {
               try {
                 const managementMessage = await ticketCh.send({
-                  content:
-                    `📦 Pedido **${orderCode}** aceptado por <@${interaction.user.id}>.\n` +
-                    `<@${order.customer.discordUserId}> — toda la gestión de este pedido continuará en este canal.`,
+                  content: `<@${order.customer.discordUserId}>`,
                   embeds: [buildOrderEmbed(updatedOrder)],
                   components: [buildAcceptedButtons(orderCode)],
                 });
@@ -1431,10 +1717,17 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
         try {
           const customerMember = await guild.members.fetch(order.customer.discordUserId);
-          await customerMember.user.send(
-            `✅ Tu pedido **${orderCode}** en **${guild.name}** fue **aceptado**.\n` +
-            (ticketChannelId ? `Se ha creado un canal temporal para coordinar la entrega.` : ''),
-          );
+          await customerMember.user.send({
+            embeds: [
+              buildShopNoticeEmbed({
+                title: 'Pedido aceptado',
+                description:
+                  `Tu pedido **${orderCode}** en **${guild.name}** fue aceptado.` +
+                  (ticketChannelId ? '\nSe creó un canal temporal para coordinar la entrega.' : ''),
+                color: SHOP_COLORS.success,
+              }),
+            ],
+          });
         } catch { /* DMs desactivados */ }
 
         const eligibleDiscounts = await getEligibleManualVolumeDiscounts(order.id).catch(() => []);
@@ -1451,9 +1744,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         }
 
         await interaction.followUp({
-          content: movedToTicketChannel && ticketChannelId
-            ? `✅ Pedido aceptado y movido a <#${ticketChannelId}> para su gestión.`
-            : '✅ Pedido aceptado. La gestión se mantiene en el canal de pedidos porque no se pudo mover al canal temporal.',
+          embeds: [
+            buildShopNoticeEmbed({
+              title: 'Pedido aceptado',
+              description: movedToTicketChannel && ticketChannelId
+                ? `Pedido movido a <#${ticketChannelId}> para su gestión.`
+                : 'La gestión se mantiene en el canal de pedidos porque no se pudo mover al canal temporal.',
+              color: SHOP_COLORS.success,
+            }),
+          ],
           ephemeral: true,
         });
         return;
@@ -1464,7 +1763,13 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         const order = await prisma.shopOrder.findUnique({ where: { orderCode } });
         if (!order || order.status !== 'accepted') {
           await interaction.reply({
-            content: '⚠️ Solo se pueden aplicar descuentos a pedidos aceptados.',
+            embeds: [
+              buildShopNoticeEmbed({
+                title: 'Descuento no disponible',
+                description: 'Solo se pueden aplicar descuentos a pedidos aceptados.',
+                color: SHOP_COLORS.warning,
+              }),
+            ],
             ephemeral: true,
           });
           return;
@@ -1473,7 +1778,13 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         const eligibleDiscounts = await getEligibleManualVolumeDiscounts(order.id);
         if (eligibleDiscounts.length === 0) {
           await interaction.reply({
-            content: 'ℹ️ No hay descuentos manuales elegibles para este pedido.',
+            embeds: [
+              buildShopNoticeEmbed({
+                title: 'Sin descuentos elegibles',
+                description: 'No hay descuentos manuales elegibles para este pedido.',
+                color: SHOP_COLORS.neutral,
+              }),
+            ],
             ephemeral: true,
           });
           return;
@@ -1495,7 +1806,16 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       if (action === 'reject') {
         const order = await prisma.shopOrder.findUnique({ where: { orderCode } });
         if (!order || order.status !== 'pending') {
-          await interaction.reply({ content: '⚠️ Este pedido ya fue procesado.', ephemeral: true });
+          await interaction.reply({
+            embeds: [
+              buildShopNoticeEmbed({
+                title: 'Pedido ya procesado',
+                description: 'Este pedido ya fue procesado.',
+                color: SHOP_COLORS.warning,
+              }),
+            ],
+            ephemeral: true,
+          });
           return;
         }
 
@@ -1526,7 +1846,16 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           include: { customer: true },
         });
         if (!order || order.status !== 'accepted') {
-          await interaction.followUp({ content: '⚠️ Solo se pueden cerrar pedidos aceptados.', ephemeral: true });
+          await interaction.followUp({
+            embeds: [
+              buildShopNoticeEmbed({
+                title: 'Pedido no cerrable',
+                description: 'Solo se pueden cerrar pedidos aceptados.',
+                color: SHOP_COLORS.warning,
+              }),
+            ],
+            ephemeral: true,
+          });
           return;
         }
 
@@ -1549,11 +1878,16 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           const stockAssessment = await getOrderStockAssessment(order.id).catch(() => null);
           const shortageLines = stockAssessment?.shortages.slice(0, 6).map(formatOrderStockStatusLine) ?? [];
           await interaction.followUp({
-            content: [
-              `❌ No se puede marcar como entregado: ${err instanceof Error ? err.message : 'Error al consumir stock.'}`,
-              'Repón o prepara los materiales faltantes antes de cerrar el pedido.',
-              ...shortageLines,
-            ].join('\n'),
+            embeds: [
+              buildShopErrorEmbed(
+                'No se puede entregar',
+                [
+                  err instanceof Error ? err.message : 'Error al consumir stock.',
+                  'Repón o prepara los materiales faltantes antes de cerrar el pedido.',
+                  ...shortageLines,
+                ].join('\n'),
+              ),
+            ],
             ephemeral: true,
           });
           return;
@@ -1606,9 +1940,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
         try {
           const customerMember = await guild.members.fetch(order.customer.discordUserId);
-          await customerMember.user.send(
-            `📦 Tu pedido **${orderCode}** en **${guild.name}** fue marcado como **entregado**. ¡Gracias!`,
-          );
+          await customerMember.user.send({
+            embeds: [
+              buildShopNoticeEmbed({
+                title: 'Pedido entregado',
+                description: `Tu pedido **${orderCode}** en **${guild.name}** fue marcado como entregado. Gracias por comprar en Aquaris.`,
+                color: SHOP_COLORS.success,
+              }),
+            ],
+          });
         } catch { /* DMs desactivados */ }
 
         if (order.ticketChannelId) {
@@ -1626,7 +1966,16 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       if (action === 'cancel') {
         const order = await prisma.shopOrder.findUnique({ where: { orderCode } });
         if (!order || !['pending', 'accepted'].includes(order.status)) {
-          await interaction.reply({ content: '⚠️ Este pedido no se puede cancelar.', ephemeral: true });
+          await interaction.reply({
+            embeds: [
+              buildShopNoticeEmbed({
+                title: 'Pedido no cancelable',
+                description: 'Este pedido no se puede cancelar.',
+                color: SHOP_COLORS.warning,
+              }),
+            ],
+            ephemeral: true,
+          });
           return;
         }
 
@@ -1656,7 +2005,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
       if (!actor || !(await canManageClanPlayers(actor))) {
         await interaction.reply({
-          content: '❌ Solo el staff puede registrar jugadores en el roster.',
+          embeds: [
+            buildRecruitmentErrorEmbed(
+              'Permiso insuficiente',
+              'Solo el staff puede registrar jugadores en el roster.',
+            ),
+          ],
           ephemeral: true,
         });
         return;
@@ -1675,7 +2029,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       if (!session) {
         await interaction.reply({
-          content: '❌ La sesión expiró. Ejecuta el comando otra vez.',
+          embeds: [
+            buildRecruitmentErrorEmbed(
+              'Sesión expirada',
+              'La sesión expiró. Ejecuta el comando otra vez.',
+            ),
+          ],
           ephemeral: true,
         });
         return;
@@ -1704,13 +2063,23 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         (cfg.staffRoleId != null && actor.roles.cache.has(cfg.staffRoleId));
 
       if (!hasPermission) {
-        await interaction.editReply('❌ Solo el staff puede aplicar descuentos.');
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Permiso insuficiente', 'Solo el staff puede aplicar descuentos.')],
+        });
         return;
       }
 
       const order = await prisma.shopOrder.findUnique({ where: { orderCode } });
       if (!order || order.status !== 'accepted') {
-        await interaction.editReply('⚠️ Este pedido ya no admite descuentos manuales.');
+        await interaction.editReply({
+          embeds: [
+            buildShopNoticeEmbed({
+              title: 'Descuento no disponible',
+              description: 'Este pedido ya no admite descuentos manuales.',
+              color: SHOP_COLORS.warning,
+            }),
+          ],
+        });
         return;
       }
 
@@ -1724,7 +2093,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         });
 
         if (appliedDiscounts.length === 0) {
-          await interaction.editReply('ℹ️ No había descuentos nuevos para aplicar.');
+          await interaction.editReply({
+            embeds: [
+              buildShopNoticeEmbed({
+                title: 'Sin descuentos nuevos',
+                description: 'No había descuentos nuevos para aplicar.',
+                color: SHOP_COLORS.neutral,
+              }),
+            ],
+          });
           return;
         }
 
@@ -1760,19 +2137,29 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           orderMessageUpdated = orderMessageUpdated || refreshedEmbeds > 0;
         }
 
-        await interaction.editReply(
-          [
-            '✅ Descuentos aplicados:',
-            ...appliedDiscounts.map(discount =>
-              `• ${discount.productName}: ${formatDiscountLabel(discount.discountType, discount.discountValue)} (${discount.minQuantity}+)`,
-            ),
-            orderMessageUpdated ? '' : '⚠️ El descuento se guardó, pero no pude refrescar el embed de la orden automáticamente.',
-          ].filter(Boolean).join('\n'),
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopNoticeEmbed({
+              title: 'Descuentos aplicados',
+              description: [
+                ...appliedDiscounts.map(discount =>
+                  `• ${discount.productName}: ${formatDiscountLabel(discount.discountType, discount.discountValue)} (${discount.minQuantity}+)`,
+                ),
+                orderMessageUpdated ? '' : 'El descuento se guardó, pero no pude refrescar el embed de la orden automáticamente.',
+              ].filter(Boolean).join('\n'),
+              color: SHOP_COLORS.success,
+            }),
+          ],
+        });
       } catch (err) {
-        await interaction.editReply(
-          `❌ ${err instanceof Error ? err.message : 'No se pudieron aplicar los descuentos.'}`,
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'No se pudieron aplicar descuentos',
+              err instanceof Error ? err.message : 'No se pudieron aplicar los descuentos.',
+            ),
+          ],
+        });
       }
 
       return;
@@ -1860,7 +2247,16 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
         const products = await queryCartProducts(guildId);
         if (products.length === 0) {
-          await interaction.editReply({ content: '🏪 La tienda no tiene productos disponibles en este momento.', embeds: [], components: [] });
+          await interaction.editReply({
+            embeds: [
+              buildShopNoticeEmbed({
+                title: 'Tienda sin productos',
+                description: 'La tienda no tiene productos disponibles en este momento.',
+                color: SHOP_COLORS.neutral,
+              }),
+            ],
+            components: [],
+          });
           return;
         }
 
@@ -1936,7 +2332,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const cart = getCart(guildId, interaction.user.id);
       if (!cart) {
-        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Carrito expirado', 'Usa `/pedido carrito` de nuevo.')],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -1964,7 +2363,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const cart = getCart(guildId, interaction.user.id);
       if (!cart) {
-        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Carrito expirado', 'Usa `/pedido carrito` de nuevo.')],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -1987,7 +2389,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const cart = getCart(guildId, interaction.user.id);
       if (!cart) {
-        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Carrito expirado', 'Usa `/pedido carrito` de nuevo.')],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -2011,7 +2416,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const cart = getCart(guildId, interaction.user.id);
       if (!cart) {
-        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Carrito expirado', 'Usa `/pedido carrito` de nuevo.')],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -2033,7 +2441,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const cart = getCart(guildId, interaction.user.id);
       if (!cart) {
-        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Carrito expirado', 'Usa `/pedido carrito` de nuevo.')],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -2044,7 +2455,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const product = view.state.pageProducts[productIndex];
 
       if (!product) {
-        await interaction.reply({ content: '⚠️ Ese producto ya no está disponible en esta página.', ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Producto no disponible', 'Ese producto ya no está disponible en esta página.')],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -2061,7 +2475,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const idx  = parseInt(interaction.values[0]!, 10);
       const cart = getCart(guildId, interaction.user.id);
       if (!cart) {
-        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Carrito expirado', 'Usa `/pedido carrito` de nuevo.')],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -2082,7 +2499,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const cart = getCart(guildId, interaction.user.id);
       if (!cart) {
-        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Carrito expirado', 'Usa `/pedido carrito` de nuevo.')],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -2103,14 +2523,20 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const cart = getCart(guildId, interaction.user.id);
       if (!cart?.pendingProductId) {
-        await interaction.reply({ content: '⚠️ Tu carrito expiró. Usa `/pedido carrito` de nuevo.', ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Carrito expirado', 'Usa `/pedido carrito` de nuevo.')],
+          ephemeral: true,
+        });
         return;
       }
 
       const qtyRaw = interaction.fields.getTextInputValue('qty');
       const qty    = parseInt(qtyRaw, 10);
       if (isNaN(qty) || qty < 1) {
-        await interaction.reply({ content: '❌ La cantidad debe ser un número entero mayor a 0.', ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Cantidad inválida', 'La cantidad debe ser un número entero mayor a 0.')],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -2134,13 +2560,21 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       });
 
       if (!product || !product.isActive) {
-        await interaction.reply({ content: '❌ Ese producto ya no está disponible.', ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Producto no disponible', 'Ese producto ya no está disponible.')],
+          ephemeral: true,
+        });
         return;
       }
 
       if (!hasProductInventoryDefinition(product)) {
         await interaction.reply({
-          content: `❌ **${product.name}** no tiene una definición de inventario válida y no se puede vender todavía.`,
+          embeds: [
+            buildShopErrorEmbed(
+              'Producto no vendible',
+              `**${product.name}** no tiene una definición de inventario válida y no se puede vender todavía.`,
+            ),
+          ],
           ephemeral: true,
         });
         return;
@@ -2148,7 +2582,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const priceRecord = product.prices[0];
       if (!priceRecord) {
-        await interaction.reply({ content: `❌ **${product.name}** no tiene precio configurado.`, ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Precio no configurado', `**${product.name}** no tiene precio configurado.`)],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -2192,7 +2629,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const cart = getCart(guildId, interaction.user.id);
       if (!cart || cart.items.length === 0) {
-        await interaction.reply({ content: '⚠️ El carrito está vacío.', ephemeral: true });
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Carrito vacío', 'El carrito está vacío.')],
+          ephemeral: true,
+        });
         return;
       }
 
@@ -2214,7 +2654,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         });
       } catch (err) {
         await interaction.followUp({
-          content: `❌ ${err instanceof Error ? err.message : 'No se pudo crear el pedido.'}`,
+          embeds: [
+            buildShopErrorEmbed(
+              'No se pudo crear el pedido',
+              err instanceof Error ? err.message : 'No se pudo crear el pedido.',
+            ),
+          ],
           ephemeral: true,
         });
         return;
@@ -2236,35 +2681,20 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       deleteCart(guildId, interaction.user.id);
 
-      // Actualizar el embed del carrito con confirmación
-      const { COLORS, formatPrice, SHOP_FOOTER } = await import('../utils/ui.js');
-      const { EmbedBuilder } = await import('discord.js');
       const isFullyAvailable = stockAssessment?.isFullyAvailable ?? true;
-      const confirmEmbed = new EmbedBuilder()
-        .setTitle('📝 Pedido recibido')
-        .setColor(COLORS.warning)
-        .setDescription(
-          isFullyAvailable
-            ? `Tu pedido **${orderCode}** fue recibido y quedó pendiente de revisión por el staff.`
-            : `Tu pedido **${orderCode}** fue recibido.\nEl staff preparará tu pedido lo antes posible y te avisará cuando haya novedades.`,
-        )
-        .addFields(
-          { name: '🛍️ Productos', value: cart.items.map(i => `${i.productName} × ${i.quantity}`).join('\n') },
-          { name: '💰 Total',     value: `**${formatPrice(orderFull?.totalAmount ?? 0)}**`, inline: true },
-          { name: '📋 Estado',    value: '🟡 En revisión del staff',                 inline: true },
-        )
-        .setFooter({ text: `${SHOP_FOOTER.text}  ·  Usa /pedido estado ${orderCode} para consultar` })
-        .setTimestamp();
 
-      if (orderFull && orderFull.totalDiscountAmount.toString() !== '0') {
-        confirmEmbed.addFields({
-          name: '🏷️ Descuentos',
-          value: `-${formatPrice(orderFull.totalDiscountAmount)}`,
-          inline: true,
-        });
-      }
-
-      await interaction.editReply({ embeds: [confirmEmbed], components: [] });
+      await interaction.editReply({
+        embeds: [
+          buildOrderReceivedEmbed({
+            orderCode,
+            productLabel: cart.items.map(item => `${item.productName} x ${item.quantity}`).join('\n'),
+            totalAmount: orderFull?.totalAmount ?? 0,
+            discountAmount: orderFull?.totalDiscountAmount ?? 0,
+            isFullyAvailable,
+          }),
+        ],
+        components: [],
+      });
       return;
     }
 
@@ -2283,11 +2713,19 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const channelId = parts[parts.length - 2];
       const ticketId = parts.slice(0, parts.length - 2).join('_');
 
-      const reason = interaction.fields.getTextInputValue('reject_reason');
+      const reason = normalizeRecruitmentReason(interaction.fields.getTextInputValue('reject_reason'));
 
       const ticket = await prisma.recruitmentTicket.findUnique({ where: { id: ticketId } });
       if (!ticket || ticket.status !== 'OPEN') {
-        await interaction.editReply('⚠️ Este ticket ya fue procesado.');
+        await interaction.editReply({
+          embeds: [
+            buildRecruitmentNoticeEmbed({
+              title: 'Ticket ya procesado',
+              description: 'Este ticket ya fue procesado.',
+              color: RECRUITMENT_COLORS.warning,
+            }),
+          ],
+        });
         return;
       }
 
@@ -2303,9 +2741,17 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         if (rejectCfg.aspirantRoleId && applicant.roles.cache.has(rejectCfg.aspirantRoleId)) {
           await applicant.roles.remove(rejectCfg.aspirantRoleId);
         }
-        await applicant.user.send(
-          `❌ Tu solicitud en **${guild.name}** fue **rechazada**.\nMotivo: ${reason}\n\nPuedes intentarlo de nuevo en el futuro.`,
-        );
+        await applicant.user.send({
+          embeds: [
+            buildRecruitmentUserMessageEmbed({
+              title: 'Solicitud rechazada',
+              description: 'Puedes intentarlo de nuevo en el futuro.',
+              guildName: guild.name,
+              reason,
+              color: RECRUITMENT_COLORS.danger,
+            }),
+          ],
+        });
       } catch { /* DMs desactivados o sin permisos */ }
 
       // Actualizar el embed original si está accesible
@@ -2315,10 +2761,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         if (originalChannel?.isTextBased()) {
           const originalMsg = await originalChannel.messages.fetch(messageId);
           const rejectedEmbed = EmbedBuilder.from(originalMsg.embeds[0] ?? new EmbedBuilder())
-            .setColor(0xed4245)
-            .setTitle('❌ Solicitud rechazada')
+            .setColor(RECRUITMENT_COLORS.danger)
+            .setTitle('Solicitud rechazada')
             .addFields({ name: 'Motivo del rechazo', value: reason })
-            .setFooter({ text: `Rechazado por ${interaction.user.tag}` });
+            .setFooter({ text: `Aquaris • Reclutamiento · Rechazado por ${interaction.user.tag}` });
           await originalMsg.edit({ embeds: [rejectedEmbed], components: [] });
         }
       } catch (err) {
@@ -2335,7 +2781,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         }
       }
 
-      await interaction.editReply('✅ Solicitud rechazada. El usuario fue notificado con el motivo.');
+      await interaction.editReply({
+        embeds: [
+          buildRecruitmentNoticeEmbed({
+            title: 'Solicitud rechazada',
+            description: 'El usuario fue notificado con el motivo.',
+            color: RECRUITMENT_COLORS.success,
+          }),
+        ],
+      });
     }
 
     // --- Modal: rechazo de pedido ---
@@ -2358,7 +2812,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         include: { customer: true },
       });
       if (!order || order.status !== 'pending') {
-        await interaction.editReply('⚠️ Este pedido ya fue procesado.');
+        await interaction.editReply({
+          embeds: [
+            buildShopNoticeEmbed({
+              title: 'Pedido ya procesado',
+              description: 'Este pedido ya fue procesado.',
+              color: SHOP_COLORS.warning,
+            }),
+          ],
+        });
         return;
       }
 
@@ -2399,12 +2861,26 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       try {
         const customerMember = await guild.members.fetch(order.customer.discordUserId);
-        await customerMember.user.send(
-          `❌ Tu pedido **${orderCode}** en **${guild.name}** fue **rechazado**.\nMotivo: ${reason}`,
-        );
+        await customerMember.user.send({
+          embeds: [
+            buildShopNoticeEmbed({
+              title: 'Pedido rechazado',
+              description: `Tu pedido **${orderCode}** en **${guild.name}** fue rechazado.\nMotivo: ${reason}`,
+              color: SHOP_COLORS.danger,
+            }),
+          ],
+        });
       } catch { /* DMs desactivados */ }
 
-      await interaction.editReply('✅ Pedido rechazado. El cliente fue notificado.');
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Pedido rechazado',
+            description: 'El cliente fue notificado.',
+            color: SHOP_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -2428,7 +2904,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         include: { customer: true },
       });
       if (!order || !['pending', 'accepted'].includes(order.status)) {
-        await interaction.editReply('⚠️ Este pedido no se puede cancelar.');
+        await interaction.editReply({
+          embeds: [
+            buildShopNoticeEmbed({
+              title: 'Pedido no cancelable',
+              description: 'Este pedido no se puede cancelar.',
+              color: SHOP_COLORS.warning,
+            }),
+          ],
+        });
         return;
       }
 
@@ -2482,9 +2966,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       try {
         const customerMember = await guild.members.fetch(order.customer.discordUserId);
-        await customerMember.user.send(
-          `🚫 Tu pedido **${orderCode}** en **${guild.name}** fue **cancelado**.\nMotivo: ${reason}`,
-        );
+        await customerMember.user.send({
+          embeds: [
+            buildShopNoticeEmbed({
+              title: 'Pedido cancelado',
+              description: `Tu pedido **${orderCode}** en **${guild.name}** fue cancelado.\nMotivo: ${reason}`,
+              color: SHOP_COLORS.warning,
+            }),
+          ],
+        });
       } catch { /* DMs desactivados */ }
 
       if (order.ticketChannelId) {
@@ -2496,7 +2986,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         }
       }
 
-      await interaction.editReply('✅ Pedido cancelado. El cliente fue notificado.');
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Pedido cancelado',
+            description: 'El cliente fue notificado.',
+            color: SHOP_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
     } catch (err) {
@@ -2510,7 +3008,15 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       logger.error(context, 'Error no capturado en interactionCreate');
 
       try {
-        const msg = { content: '❌ Ocurrió un error interno. Inténtalo de nuevo.', ephemeral: true };
+        const msg = {
+          embeds: [
+            buildSystemErrorEmbed(
+              'Error interno',
+              'Ocurrio un error interno. Intentalo de nuevo.',
+            ),
+          ],
+          ephemeral: true,
+        };
         if ('replied' in interaction && 'deferred' in interaction) {
           if (interaction.replied || interaction.deferred) {
             await interaction.followUp(msg);

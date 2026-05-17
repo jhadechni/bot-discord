@@ -1,8 +1,16 @@
-import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import { getLogChannel } from '../../utils/log-channel.js';
+import {
+  MODERATION_COLORS,
+  buildModerationErrorEmbed,
+  buildModerationLogEmbed,
+  buildModerationStaffEmbed,
+  buildModerationUserDmEmbed,
+  normalizeModerationReason,
+} from '../../utils/moderation-ui.js';
 
 export const banCommand: Command = {
   data: new SlashCommandBuilder()
@@ -31,21 +39,36 @@ export const banCommand: Command = {
     if (!guildId) return;
 
     const target = interaction.options.getUser('usuario', true);
-    const reason = interaction.options.getString('motivo') ?? 'Sin motivo';
+    const reason = normalizeModerationReason(interaction.options.getString('motivo'));
     const deleteMessageSeconds = (interaction.options.getInteger('borrar_mensajes') ?? 0) * 86400;
 
     const member = interaction.guild?.members.cache.get(target.id);
     if (member && !member.bannable) {
-      await interaction.editReply('❌ No tengo permisos para banear a este usuario.');
+      await interaction.editReply({
+        embeds: [
+          buildModerationErrorEmbed(
+            'No se pudo aplicar el ban',
+            'No tengo permisos para banear a este usuario o su rol está por encima del mío.',
+          ),
+        ],
+      });
       return;
     }
 
+    let dmDelivered = true;
     try {
-      await target.send(
-        `🔨 Has sido baneado de **${interaction.guild?.name}**.\nMotivo: ${reason}`,
-      );
+      await target.send({
+        embeds: [
+          buildModerationUserDmEmbed({
+            title: 'Has sido baneado/a',
+            color: MODERATION_COLORS.danger,
+            guildName: interaction.guild?.name ?? 'este servidor',
+            reason,
+          }),
+        ],
+      });
     } catch {
-      // DMs desactivados
+      dmDelivered = false;
     }
 
     await interaction.guild?.members.ban(target, { reason, deleteMessageSeconds });
@@ -63,19 +86,32 @@ export const banCommand: Command = {
     const config = await getOrCreateGuildConfig(guildId);
     const logsChannel = getLogChannel(interaction.guild!, config, 'mod');
     if (logsChannel) {
-      const embed = new EmbedBuilder()
-        .setColor(0x992d22)
-        .setTitle('🔨 Usuario baneado')
-        .addFields(
-          { name: 'Usuario', value: `${target.tag} (${target.id})`, inline: true },
-          { name: 'Moderador', value: `<@${interaction.user.id}>`, inline: true },
-          { name: 'Motivo', value: reason },
-          { name: 'ID', value: log.id, inline: true },
-        )
-        .setTimestamp();
-      await logsChannel.send({ embeds: [embed] });
+      await logsChannel.send({
+        embeds: [
+          buildModerationLogEmbed({
+            title: 'Usuario baneado',
+            color: MODERATION_COLORS.danger,
+            targetId: target.id,
+            targetTag: target.tag,
+            moderatorId: interaction.user.id,
+            reason,
+            logId: log.id,
+            createdAt: log.createdAt,
+          }),
+        ],
+      });
     }
 
-    await interaction.editReply(`✅ **${target.tag}** fue baneado.`);
+    await interaction.editReply({
+      embeds: [
+        buildModerationStaffEmbed({
+          title: 'Ban aplicado',
+          color: MODERATION_COLORS.success,
+          targetMention: `<@${target.id}>`,
+          reason,
+          dmDelivered,
+        }),
+      ],
+    });
   },
 };

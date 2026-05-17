@@ -1,6 +1,5 @@
 import {
   SlashCommandBuilder,
-  EmbedBuilder,
   PermissionFlagsBits,
   type AutocompleteInteraction,
   type ChatInputCommandInteraction,
@@ -15,6 +14,13 @@ import {
   convertCaptureQuantityToBase,
   formatCaptureInput,
 } from '../../shop/quantities.js';
+import {
+  SHOP_COLORS,
+  buildInventoryEmbed,
+  buildLowStockEmbed,
+  buildShopErrorEmbed,
+  buildShopNoticeEmbed,
+} from '../../utils/shop-ui.js';
 
 function hasStaffPermission(
   interaction: ChatInputCommandInteraction | AutocompleteInteraction,
@@ -178,7 +184,7 @@ export const stockCommand: Command = {
     const config = await getOrCreateGuildConfig(guildId);
     if (!hasStaffPermission(interaction, config.staffRoleId ?? null)) {
       await interaction.reply({
-        content: '❌ Solo el staff puede gestionar el inventario.',
+        embeds: [buildShopErrorEmbed('Permiso insuficiente', 'Solo el staff puede gestionar el inventario.')],
         ephemeral: true,
       });
       return;
@@ -196,32 +202,19 @@ export const stockCommand: Command = {
       });
 
       if (inventories.length === 0) {
-        await interaction.editReply('📦 No hay materiales registrados. Usa `/tienda material-agregar`.');
+        await interaction.editReply({
+          embeds: [
+            buildShopNoticeEmbed({
+              title: 'Sin materiales',
+              description: 'No hay materiales registrados. Usa `/tienda material-agregar`.',
+              color: SHOP_COLORS.neutral,
+            }),
+          ],
+        });
         return;
       }
 
-      const embed = new EmbedBuilder()
-        .setTitle('📦 Inventario de materiales')
-        .setColor(0x5865f2)
-        .setTimestamp();
-
-      for (const inv of inventories.slice(0, 25)) {
-        const disponible = inv.currentStock - inv.reservedStock;
-        const alerta     = inv.minStockAlert > 0 && disponible <= inv.minStockAlert ? ' ⚠️' : '';
-        embed.addFields({
-          name:   `${inv.material.name}${alerta}`,
-          value:  [
-            `Total: **${inv.currentStock}** ${inv.material.baseUnit}`,
-            `Stack max: ${inv.material.stackSize}`,
-            `Reservado: ${inv.reservedStock}`,
-            `Disponible: **${disponible}**`,
-            inv.minStockAlert > 0 ? `Alerta: < ${inv.minStockAlert}` : '',
-          ].filter(Boolean).join('  ·  '),
-          inline: false,
-        });
-      }
-
-      await interaction.editReply({ embeds: [embed] });
+      await interaction.editReply({ embeds: [buildInventoryEmbed(inventories)] });
       return;
     }
 
@@ -238,25 +231,19 @@ export const stockCommand: Command = {
       );
 
       if (bajos.length === 0) {
-        await interaction.editReply('✅ Todos los materiales están por encima del umbral de alerta.');
+        await interaction.editReply({
+          embeds: [
+            buildShopNoticeEmbed({
+              title: 'Stock en orden',
+              description: 'Todos los materiales están por encima del umbral de alerta.',
+              color: SHOP_COLORS.success,
+            }),
+          ],
+        });
         return;
       }
 
-      const embed = new EmbedBuilder()
-        .setTitle('⚠️ Stock bajo')
-        .setColor(0xffa500)
-        .setTimestamp();
-
-      for (const inv of bajos) {
-        const disponible = inv.currentStock - inv.reservedStock;
-        embed.addFields({
-          name:   inv.material.name,
-          value:  `Disponible: **${disponible}** / Mínimo: ${inv.minStockAlert}`,
-          inline: true,
-        });
-      }
-
-      await interaction.editReply({ embeds: [embed] });
+      await interaction.editReply({ embeds: [buildLowStockEmbed(bajos)] });
       return;
     }
 
@@ -269,7 +256,9 @@ export const stockCommand: Command = {
       include: { inventory: true },
     });
     if (!material?.inventory) {
-      await interaction.editReply(`❌ Material **${nombreMaterial}** no encontrado.`);
+      await interaction.editReply({
+        embeds: [buildShopErrorEmbed('Material no encontrado', `Material **${nombreMaterial}** no encontrado.`)],
+      });
       return;
     }
 

@@ -10,6 +10,7 @@ import {
   findAcceptedInterviewTicket,
   startClanPlayerRegistrationSession,
 } from '../../recruitment/player-registration.js';
+import { buildRecruitmentErrorEmbed } from '../../utils/recruitment-ui.js';
 
 export const jugadoresCommand: Command = {
   data: new SlashCommandBuilder()
@@ -27,7 +28,12 @@ export const jugadoresCommand: Command = {
     const guild = interaction.guild;
     if (!guildId || !guild) {
       await interaction.reply({
-        content: '❌ Este comando solo se puede usar dentro del servidor.',
+        embeds: [
+          buildRecruitmentErrorEmbed(
+            'Servidor requerido',
+            'Este comando solo se puede usar dentro del servidor.',
+          ),
+        ],
         ephemeral: true,
       });
       return;
@@ -39,7 +45,12 @@ export const jugadoresCommand: Command = {
 
     if (!member || !(await canManageClanPlayers(member))) {
       await interaction.reply({
-        content: '❌ Solo el staff puede registrar jugadores en el roster.',
+        embeds: [
+          buildRecruitmentErrorEmbed(
+            'Permiso insuficiente',
+            'Solo el staff puede registrar jugadores en el roster.',
+          ),
+        ],
         ephemeral: true,
       });
       return;
@@ -48,7 +59,12 @@ export const jugadoresCommand: Command = {
     const ticket = await findAcceptedInterviewTicket(guildId, interaction.channelId);
     if (!ticket) {
       await interaction.reply({
-        content: '❌ Usa este comando dentro del canal privado de una entrevista aceptada.',
+        embeds: [
+          buildRecruitmentErrorEmbed(
+            'Entrevista no encontrada',
+            'Usa este comando dentro del canal privado de una entrevista aceptada.',
+          ),
+        ],
         ephemeral: true,
       });
       return;

@@ -16,6 +16,7 @@ import { timeoutCommand, untimeoutCommand } from './timeout.command.js';
 import { unbanCommand } from './unban.command.js';
 import { warnCommand } from './warn.command.js';
 import { warningsCommand } from './warnings.command.js';
+import { buildModerationErrorEmbed } from '../../utils/moderation-ui.js';
 
 function resolveRequiredPermission(
   group: string | null,
@@ -54,7 +55,12 @@ async function ensureSubcommandPermission(
   }
 
   await interaction.reply({
-    content: `❌ Necesitas el permiso **${resolvePermissionLabel(requiredPermission)}** para usar este subcomando.`,
+    embeds: [
+      buildModerationErrorEmbed(
+        'Permiso insuficiente',
+        `Necesitas el permiso **${resolvePermissionLabel(requiredPermission)}** para usar este subcomando.`,
+      ),
+    ],
     ephemeral: true,
   });
   return false;
@@ -356,7 +362,12 @@ export const modCommand: Command = {
     }
 
     await interaction.reply({
-      content: '❌ Subcomando de moderación no soportado.',
+      embeds: [
+        buildModerationErrorEmbed(
+          'Subcomando no soportado',
+          'Este subcomando de moderación no está disponible.',
+        ),
+      ],
       ephemeral: true,
     });
   },

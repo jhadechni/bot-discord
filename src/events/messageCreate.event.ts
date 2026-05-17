@@ -2,9 +2,19 @@ import type { BotEvent } from '../types/event.js';
 import { prisma } from '../database/prisma.js';
 import { getOrCreateGuildConfig } from '../database/guild-config.js';
 import { getLogChannel } from '../utils/log-channel.js';
+import {
+  buildAutomodFilterDmEmbed,
+  buildAutomodFilterLogEmbed,
+  buildAutomodSpamDmEmbed,
+  buildAutomodSpamLogEmbed,
+  buildAutomodSpamPublicEmbed,
+  buildAutomodToxicityDmEmbed,
+  buildAutomodToxicityLogEmbed,
+} from '../utils/automod-ui.js';
+import { buildLevelUpEmbed } from '../utils/levels-ui.js';
 import { calcLevel, randomMessageXp } from '../utils/xp.js';
 import { logger } from '../core/logger.js';
-import { EmbedBuilder, type Message } from 'discord.js';
+import type { Message } from 'discord.js';
 import type { GuildConfig } from '../generated/prisma/client.js';
 
 // ── Anti-spam tracking (en memoria) ──────────────────────────────────────────
@@ -66,13 +76,7 @@ async function trackMessageXp(
         const ch = message.guild.channels.cache.get(config.levelUpChannelId);
         if (ch?.isTextBased()) {
           await ch.send({
-            embeds: [
-              new EmbedBuilder()
-                .setColor(0xf1c40f)
-                .setTitle('⬆️ ¡Subiste de nivel!')
-                .setDescription(`<@${userId}> ha alcanzado el **nivel ${newLevel}** 🎉`)
-                .setTimestamp(),
-            ],
+            embeds: [buildLevelUpEmbed(userId, newLevel)],
           });
         }
       }
@@ -111,9 +115,7 @@ const messageCreateEvent: BotEvent<'messageCreate'> = {
         } catch { /* mensaje ya eliminado */ }
 
         try {
-          await message.author.send(
-            `🚫 Tu mensaje en **${message.guild.name}** fue eliminado por contener una palabra no permitida.`,
-          );
+          await message.author.send({ embeds: [buildAutomodFilterDmEmbed(message.guild.name)] });
         } catch { /* DMs desactivados */ }
 
         const log = await prisma.moderationLog.create({
@@ -130,17 +132,14 @@ const messageCreateEvent: BotEvent<'messageCreate'> = {
         if (automodLogCh) {
           await automodLogCh.send({
             embeds: [
-              new EmbedBuilder()
-                .setColor(0xed4245)
-                .setTitle('🚫 Mensaje filtrado')
-                .addFields(
-                  { name: 'Usuario', value: `<@${userId}> (${message.author.tag})`, inline: true },
-                  { name: 'Canal', value: `<#${message.channelId}>`, inline: true },
-                  { name: 'Palabra detectada', value: `\`${matched}\``, inline: true },
-                  { name: 'Contenido', value: message.content.slice(0, 500) },
-                  { name: 'ID Log', value: log.id, inline: true },
-                )
-                .setTimestamp(),
+              buildAutomodFilterLogEmbed({
+                userId,
+                userTag: message.author.tag,
+                channelId: message.channelId,
+                matched,
+                content: message.content,
+                logId: log.id,
+              }),
             ],
           });
         }
@@ -160,9 +159,7 @@ const messageCreateEvent: BotEvent<'messageCreate'> = {
         } catch { /* mensaje ya eliminado */ }
 
         try {
-          await message.author.send(
-            `🚫 Tu mensaje en **${message.guild.name}** fue eliminado por contenido inapropiado.`,
-          );
+          await message.author.send({ embeds: [buildAutomodToxicityDmEmbed(message.guild.name)] });
         } catch { /* DMs desactivados */ }
 
         const log = await prisma.moderationLog.create({
@@ -179,17 +176,14 @@ const messageCreateEvent: BotEvent<'messageCreate'> = {
         if (automodLogCh) {
           await automodLogCh.send({
             embeds: [
-              new EmbedBuilder()
-                .setColor(0xed4245)
-                .setTitle('🤖 Mensaje eliminado (IA)')
-                .addFields(
-                  { name: 'Usuario', value: `<@${userId}> (${message.author.tag})`, inline: true },
-                  { name: 'Canal', value: `<#${message.channelId}>`, inline: true },
-                  { name: 'Toxicidad', value: `${(score * 100).toFixed(0)}%`, inline: true },
-                  { name: 'Contenido', value: message.content.slice(0, 500) },
-                  { name: 'ID Log', value: log.id, inline: true },
-                )
-                .setTimestamp(),
+              buildAutomodToxicityLogEmbed({
+                userId,
+                userTag: message.author.tag,
+                channelId: message.channelId,
+                score,
+                content: message.content,
+                logId: log.id,
+              }),
             ],
           });
         }
@@ -244,6 +238,7 @@ const messageCreateEvent: BotEvent<'messageCreate'> = {
     spamMap.delete(key);
 
     const spamType = isMentionSpam ? 'mention spam' : 'spam de mensajes';
+    const spamDurationLabel = '10 minutos';
 
     // Borrar los mensajes recientes del spammer en el canal
     try {
@@ -271,9 +266,9 @@ const messageCreateEvent: BotEvent<'messageCreate'> = {
 
     // Notificar al usuario
     try {
-      await message.author.send(
-        `⚠️ Has sido silenciado temporalmente en **${message.guild.name}** por ${spamType}.\nDuración: 10 minutos.`,
-      );
+      await message.author.send({
+        embeds: [buildAutomodSpamDmEmbed(message.guild.name, spamType, spamDurationLabel)],
+      });
     } catch { /* DMs desactivados */ }
 
     const log = await prisma.moderationLog.create({
@@ -291,13 +286,7 @@ const messageCreateEvent: BotEvent<'messageCreate'> = {
     const publicCh = message.guild.channels.cache.get(message.channelId);
     if (publicCh?.isTextBased() && !publicCh.isDMBased()) {
       await publicCh.send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor(0xe67e22)
-            .setTitle('📵 Usuario silenciado automáticamente')
-            .setDescription(`<@${userId}> ha sido silenciado por **10 minutos** por ${spamType}.`)
-            .setTimestamp(),
-        ],
+        embeds: [buildAutomodSpamPublicEmbed(userId, spamType, spamDurationLabel)],
       });
     }
 
@@ -305,17 +294,14 @@ const messageCreateEvent: BotEvent<'messageCreate'> = {
     if (automodLogCh) {
       await automodLogCh.send({
         embeds: [
-          new EmbedBuilder()
-            .setColor(0xe67e22)
-            .setTitle('📵 Anti-spam activado')
-            .addFields(
-              { name: 'Usuario', value: `<@${userId}> (${message.author.tag})`, inline: true },
-              { name: 'Canal', value: `<#${message.channelId}>`, inline: true },
-              { name: 'Tipo', value: spamType, inline: true },
-              { name: 'Acción', value: 'Timeout 10 minutos + mensajes eliminados' },
-              { name: 'ID Log', value: log.id, inline: true },
-            )
-            .setTimestamp(),
+          buildAutomodSpamLogEmbed({
+            userId,
+            userTag: message.author.tag,
+            channelId: message.channelId,
+            spamType,
+            durationLabel: spamDurationLabel,
+            logId: log.id,
+          }),
         ],
       });
     }

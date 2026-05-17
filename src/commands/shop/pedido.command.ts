@@ -1,8 +1,6 @@
 import {
   SlashCommandBuilder,
-  EmbedBuilder,
   PermissionFlagsBits,
-  ChannelType,
   type AutocompleteInteraction,
   type ChatInputCommandInteraction,
   type GuildMember,
@@ -19,13 +17,19 @@ import {
   getOrderFull,
   getOrderStockAssessment,
 } from '../../shop/order-utils.js';
-import { COLORS, formatPrice, SHOP_FOOTER } from '../../utils/ui.js';
 import {
   queryCartProducts,
   buildCartView,
   setCart,
 } from '../../shop/cart.js';
 import { buildShopGuildWhere, findFirstInShopScopes } from '../../shop/scope.js';
+import {
+  SHOP_COLORS,
+  buildActiveOrdersEmbed,
+  buildOrderReceivedEmbed,
+  buildShopErrorEmbed,
+  buildShopNoticeEmbed,
+} from '../../utils/shop-ui.js';
 
 function hasStaffPermission(
   interaction: ChatInputCommandInteraction | AutocompleteInteraction,
@@ -129,7 +133,9 @@ export const pedidoCommand: Command = {
       );
 
       if (!product || !product.isActive) {
-        await interaction.editReply(`❌ El producto **${nombreProducto}** no está disponible.`);
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Producto no disponible', `**${nombreProducto}** no está disponible.`)],
+        });
         return;
       }
       const customer  = await upsertShopUser(guildId, interaction.user);
@@ -142,9 +148,14 @@ export const pedidoCommand: Command = {
           staffChannelId: config.shopStaffChannelId ?? null,
         });
       } catch (err) {
-        await interaction.editReply(
-          `❌ ${err instanceof Error ? err.message : 'No se pudo crear el pedido.'}`,
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'No se pudo crear el pedido',
+              err instanceof Error ? err.message : 'No se pudo crear el pedido.',
+            ),
+          ],
+        });
         return;
       }
       const orderCode = createdOrder.orderCode;
@@ -163,33 +174,18 @@ export const pedidoCommand: Command = {
       }
 
       const isFullyAvailable = stockAssessment?.isFullyAvailable ?? true;
-      const confirmEmbed = new EmbedBuilder()
-        .setTitle('📝 Pedido recibido')
-        .setColor(COLORS.warning)
-        .setDescription(
-          isFullyAvailable
-            ? `Tu pedido **${orderCode}** fue recibido y quedó pendiente de revisión por el staff.`
-            : `Tu pedido **${orderCode}** fue recibido.\nEl staff revisará tu pedido lo antes posible y te avisará cuando haya novedades.`,
-        )
-        .addFields(
-          { name: '🛍️ Producto',  value: `**${nombreProducto}** × ${cantidad}`, inline: true },
-          { name: '💰 Total',     value: `**${formatPrice(orderFull?.totalAmount ?? 0)}**`, inline: true },
-          { name: '📋 Estado',    value: '🟡 En revisión del staff',              inline: true },
-        )
-        .setFooter({ text: `${SHOP_FOOTER.text}  ·  Usa /pedido estado para consultar` })
-        .setTimestamp();
-
-      if ((orderFull?.totalDiscountAmount ?? 0).toString() !== '0') {
-        confirmEmbed.addFields({
-          name: '🏷️ Descuentos',
-          value: `-${formatPrice(orderFull?.totalDiscountAmount ?? 0)}`,
-          inline: true,
-        });
-      }
-
-      if (notas) confirmEmbed.addFields({ name: '📝 Notas', value: notas });
-
-      await interaction.editReply({ embeds: [confirmEmbed] });
+      await interaction.editReply({
+        embeds: [
+          buildOrderReceivedEmbed({
+            orderCode,
+            productLabel: `**${nombreProducto}** x ${cantidad}`,
+            totalAmount: orderFull?.totalAmount ?? 0,
+            discountAmount: orderFull?.totalDiscountAmount ?? 0,
+            isFullyAvailable,
+            notes: notas,
+          }),
+        ],
+      });
       return;
     }
 
@@ -200,7 +196,15 @@ export const pedidoCommand: Command = {
       const products = await queryCartProducts(guildId);
 
       if (products.length === 0) {
-        await interaction.editReply('🏪 La tienda no tiene productos disponibles en este momento.');
+        await interaction.editReply({
+          embeds: [
+            buildShopNoticeEmbed({
+              title: 'Tienda sin productos',
+              description: 'La tienda no tiene productos disponibles en este momento.',
+              color: SHOP_COLORS.neutral,
+            }),
+          ],
+        });
         return;
       }
 
@@ -240,7 +244,9 @@ export const pedidoCommand: Command = {
       const order  = await getOrderFull(codigo);
 
       if (!order || order.guildId !== guildId) {
-        await interaction.editReply(`❌ No se encontró el pedido **${codigo}**.`);
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Pedido no encontrado', `No se encontró el pedido **${codigo}**.`)],
+        });
         return;
       }
 
@@ -248,7 +254,9 @@ export const pedidoCommand: Command = {
       const isStaff    = hasStaffPermission(interaction, config.staffRoleId ?? null);
 
       if (!isCustomer && !isStaff) {
-        await interaction.editReply('❌ Solo puedes consultar tus propios pedidos.');
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Acceso restringido', 'Solo puedes consultar tus propios pedidos.')],
+        });
         return;
       }
 
@@ -281,7 +289,7 @@ export const pedidosCommand: Command = {
     const config = await getOrCreateGuildConfig(guildId);
     if (!hasStaffPermission(interaction, config.staffRoleId ?? null)) {
       await interaction.reply({
-        content: '❌ Solo el staff puede ver la lista de pedidos.',
+        embeds: [buildShopErrorEmbed('Permiso insuficiente', 'Solo el staff puede ver la lista de pedidos.')],
         ephemeral: true,
       });
       return;
@@ -297,42 +305,18 @@ export const pedidosCommand: Command = {
     });
 
     if (orders.length === 0) {
-      await interaction.editReply('📋 No hay pedidos activos en este momento.');
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Sin pedidos activos',
+            description: 'No hay pedidos pendientes ni aceptados en este momento.',
+            color: SHOP_COLORS.neutral,
+          }),
+        ],
+      });
       return;
     }
 
-    const pending  = orders.filter(order => order.status === 'pending');
-    const accepted = orders.filter(order => order.status === 'accepted');
-
-    const embed = new EmbedBuilder()
-      .setTitle('📋 Pedidos activos')
-      .setColor(COLORS.blurple)
-      .setDescription(
-        `🟡 **${pending.length}** pendiente${pending.length !== 1 ? 's' : ''}` +
-        `  ·  🟢 **${accepted.length}** aceptado${accepted.length !== 1 ? 's' : ''}`,
-      )
-      .setFooter(SHOP_FOOTER)
-      .setTimestamp();
-
-    const addOrderField = (order: typeof orders[0]) => {
-      const items = order.items.map(item => `${item.product.name} ×${item.quantity}`).join(', ');
-      const ts = `<t:${Math.floor(order.createdAt.getTime() / 1000)}:R>`;
-      embed.addFields({
-        name: `${order.status === 'pending' ? '🟡' : '🟢'} ${order.orderCode}`,
-        value: `<@${order.customer.discordUserId}>  ·  ${items}  ·  **${formatPrice(order.totalAmount)}**\n${ts}`,
-      });
-    };
-
-    if (pending.length > 0) {
-      embed.addFields({ name: '─── Pendientes ───', value: '\u200B' });
-      pending.forEach(addOrderField);
-    }
-
-    if (accepted.length > 0) {
-      embed.addFields({ name: '─── Aceptados ───', value: '\u200B' });
-      accepted.forEach(addOrderField);
-    }
-
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [buildActiveOrdersEmbed(orders)] });
   },
 };

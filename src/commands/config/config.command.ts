@@ -1,12 +1,12 @@
 import {
   SlashCommandBuilder,
-  EmbedBuilder,
   PermissionFlagsBits,
   ChannelType,
 } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
+import { buildConfigOverviewEmbeds, buildSystemNoticeEmbed } from '../../utils/system-ui.js';
 
 export const configCommand: Command = {
   data: new SlashCommandBuilder()
@@ -173,50 +173,7 @@ export const configCommand: Command = {
 
     if (sub === 'ver') {
       const config = await getOrCreateGuildConfig(guildId);
-      const ch = (id: string | null | undefined) => (id ? `<#${id}>` : '—');
-      const ro = (id: string | null | undefined) => (id ? `<@&${id}>` : '—');
-      const id = (v: string | null | undefined) => (v ? `\`${v}\`` : '—');
-
-      const embedCanales = new EmbedBuilder()
-        .setColor(0x57f287)
-        .setTitle('⚙️ Configuración del servidor')
-        .setDescription('**📢 Canales principales**')
-        .addFields(
-          { name: '👋 Bienvenida / Despedida', value: ch(config.welcomeChannelId), inline: true },
-          { name: '💡 Sugerencias',            value: ch(config.suggestionsChannelId), inline: true },
-          { name: '⭐ Subida de nivel',         value: ch(config.levelUpChannelId), inline: true },
-          { name: '🚀 Boost',                   value: ch(config.boostChannelId), inline: true },
-          { name: '🎯 Categoría reclutamiento', value: id(config.recruitmentCategoryId), inline: true },
-        )
-        .setTimestamp();
-
-      const embedLogs = new EmbedBuilder()
-        .setColor(0x5865f2)
-        .setDescription('**📋 Canales de logs**')
-        .addFields(
-          { name: '📋 General (fallback)', value: ch(config.logsChannelId),        inline: true },
-          { name: '🔨 Moderación',         value: ch(config.logsModChannelId),     inline: true },
-          { name: '🤖 Auto-moderación',    value: ch(config.logsAutomodChannelId), inline: true },
-          { name: '📥 Reclutamiento',      value: ch(config.logsRecruitChannelId), inline: true },
-          { name: '👤 Entradas (joins)',   value: ch(config.logsJoinsChannelId),   inline: true },
-          { name: '🚪 Salidas (leaves)',   value: ch(config.logsLeavesChannelId),  inline: true },
-        );
-
-      const embedRoles = new EmbedBuilder()
-        .setColor(0xfaa61a)
-        .setDescription('**🎭 Roles  ·  🏪 Tienda**')
-        .addFields(
-          { name: '🟢 Visitante',   value: ro(config.visitorRoleId),  inline: true },
-          { name: '🔵 Aspirante',   value: ro(config.aspirantRoleId), inline: true },
-          { name: '👑 Lider',       value: ro(config.liderRoleId),    inline: true },
-          { name: '🥈 Co-Lider',    value: ro(config.coLiderRoleId),  inline: true },
-          { name: '💧 Aquaris',     value: ro(config.aquarisRoleId),  inline: true },
-          { name: '🛡️ Staff',      value: ro(config.staffRoleId),    inline: true },
-          { name: '📣 Canal staff (pedidos)',    value: ch(config.shopStaffChannelId), inline: true },
-          { name: '🗂️ Categoría tickets pedido', value: id(config.shopCategoryId),    inline: true },
-        );
-
-      await interaction.editReply({ embeds: [embedCanales, embedLogs, embedRoles] });
+      await interaction.editReply({ embeds: buildConfigOverviewEmbeds(config) });
       return;
     }
 
@@ -227,7 +184,9 @@ export const configCommand: Command = {
         update: { welcomeChannelId: channel.id },
         create: { guildId, welcomeChannelId: channel.id },
       });
-      await interaction.editReply(`✅ Canal de bienvenida: <#${channel.id}>`);
+      await interaction.editReply({
+        embeds: [buildSystemNoticeEmbed('Canal de bienvenida actualizado', `Nuevo canal: <#${channel.id}>`)],
+      });
       return;
     }
 
@@ -249,7 +208,9 @@ export const configCommand: Command = {
         logsJoinsChannelId: 'Entradas',
         logsLeavesChannelId: 'Salidas',
       };
-      await interaction.editReply(`✅ Logs **${labels[tipo]}**: <#${channel.id}>`);
+      await interaction.editReply({
+        embeds: [buildSystemNoticeEmbed('Canal de logs actualizado', `**${labels[tipo]}** ahora usa <#${channel.id}>.`)],
+      });
       return;
     }
 
@@ -260,7 +221,9 @@ export const configCommand: Command = {
         update: { suggestionsChannelId: channel.id },
         create: { guildId, suggestionsChannelId: channel.id },
       });
-      await interaction.editReply(`✅ Canal de sugerencias: <#${channel.id}>`);
+      await interaction.editReply({
+        embeds: [buildSystemNoticeEmbed('Canal de sugerencias actualizado', `Nuevo canal: <#${channel.id}>`)],
+      });
       return;
     }
 
@@ -271,7 +234,9 @@ export const configCommand: Command = {
         update: { recruitmentCategoryId: categoryId },
         create: { guildId, recruitmentCategoryId: categoryId },
       });
-      await interaction.editReply(`✅ Categoría de reclutamiento: \`${categoryId}\``);
+      await interaction.editReply({
+        embeds: [buildSystemNoticeEmbed('Categoria de reclutamiento actualizada', `Nueva categoria: \`${categoryId}\``)],
+      });
       return;
     }
 
@@ -282,7 +247,9 @@ export const configCommand: Command = {
         update: { levelUpChannelId: channel.id },
         create: { guildId, levelUpChannelId: channel.id },
       });
-      await interaction.editReply(`✅ Canal de subida de nivel: <#${channel.id}>`);
+      await interaction.editReply({
+        embeds: [buildSystemNoticeEmbed('Canal de niveles actualizado', `Nuevo canal: <#${channel.id}>`)],
+      });
       return;
     }
 
@@ -293,7 +260,9 @@ export const configCommand: Command = {
         update: { boostChannelId: channel.id },
         create: { guildId, boostChannelId: channel.id },
       });
-      await interaction.editReply(`✅ Canal de boost: <#${channel.id}>`);
+      await interaction.editReply({
+        embeds: [buildSystemNoticeEmbed('Canal de boost actualizado', `Nuevo canal: <#${channel.id}>`)],
+      });
       return;
     }
 
@@ -311,7 +280,9 @@ export const configCommand: Command = {
         update: { [tipo]: rol.id },
         create: { guildId, [tipo]: rol.id },
       });
-      await interaction.editReply(`✅ Rol actualizado: <@&${rol.id}>`);
+      await interaction.editReply({
+        embeds: [buildSystemNoticeEmbed('Rol actualizado', `Nuevo rol: <@&${rol.id}>`)],
+      });
       return;
     }
 
@@ -322,7 +293,9 @@ export const configCommand: Command = {
         update: { shopStaffChannelId: channel.id },
         create: { guildId, shopStaffChannelId: channel.id },
       });
-      await interaction.editReply(`✅ Canal de notificaciones de tienda: <#${channel.id}>`);
+      await interaction.editReply({
+        embeds: [buildSystemNoticeEmbed('Canal staff de tienda actualizado', `Nuevo canal: <#${channel.id}>`)],
+      });
       return;
     }
 
@@ -333,7 +306,9 @@ export const configCommand: Command = {
         update: { shopCategoryId: categoryId },
         create: { guildId, shopCategoryId: categoryId },
       });
-      await interaction.editReply(`✅ Categoría de canales de pedido: \`${categoryId}\``);
+      await interaction.editReply({
+        embeds: [buildSystemNoticeEmbed('Categoria de pedidos actualizada', `Nueva categoria: \`${categoryId}\``)],
+      });
       return;
     }
 
@@ -344,14 +319,18 @@ export const configCommand: Command = {
         update: {},
         create: { guildId, roleId: rol.id },
       });
-      await interaction.editReply(`✅ <@&${rol.id}> agregado al autonickname.`);
+      await interaction.editReply({
+        embeds: [buildSystemNoticeEmbed('Rol agregado al autonickname', `Rol: <@&${rol.id}>`)],
+      });
       return;
     }
 
     if (sub === 'nick-rol-quitar') {
       const rol = interaction.options.getRole('rol', true);
       await prisma.nicknameRole.deleteMany({ where: { guildId, roleId: rol.id } });
-      await interaction.editReply(`✅ <@&${rol.id}> quitado del autonickname.`);
+      await interaction.editReply({
+        embeds: [buildSystemNoticeEmbed('Rol quitado del autonickname', `Rol: <@&${rol.id}>`)],
+      });
     }
   },
 };

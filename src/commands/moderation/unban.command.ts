@@ -1,8 +1,15 @@
-import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import { getLogChannel } from '../../utils/log-channel.js';
+import {
+  MODERATION_COLORS,
+  buildModerationErrorEmbed,
+  buildModerationLogEmbed,
+  buildModerationStaffEmbed,
+  normalizeModerationReason,
+} from '../../utils/moderation-ui.js';
 
 export const unbanCommand: Command = {
   data: new SlashCommandBuilder()
@@ -23,12 +30,19 @@ export const unbanCommand: Command = {
     if (!guildId || !interaction.guild) return;
 
     const userId = interaction.options.getString('user_id', true);
-    const reason = interaction.options.getString('motivo') ?? 'Sin motivo';
+    const reason = normalizeModerationReason(interaction.options.getString('motivo'));
 
     try {
       await interaction.guild.members.unban(userId, reason);
     } catch {
-      await interaction.editReply('❌ No se pudo desbanear. Verifica que el ID sea correcto y que el usuario esté baneado.');
+      await interaction.editReply({
+        embeds: [
+          buildModerationErrorEmbed(
+            'No se pudo desbanear',
+            'Verifica que el ID sea correcto y que el usuario esté baneado.',
+          ),
+        ],
+      });
       return;
     }
 
@@ -41,20 +55,28 @@ export const unbanCommand: Command = {
     if (logsChannel) {
       await logsChannel.send({
         embeds: [
-          new EmbedBuilder()
-            .setColor(0x57f287)
-            .setTitle('🔓 Usuario desbaneado')
-            .addFields(
-              { name: 'Usuario ID', value: userId, inline: true },
-              { name: 'Moderador', value: `<@${interaction.user.id}>`, inline: true },
-              { name: 'Motivo', value: reason },
-              { name: 'ID', value: log.id, inline: true },
-            )
-            .setTimestamp(),
+          buildModerationLogEmbed({
+            title: 'Usuario desbaneado',
+            color: MODERATION_COLORS.success,
+            targetId: userId,
+            moderatorId: interaction.user.id,
+            reason,
+            logId: log.id,
+            createdAt: log.createdAt,
+          }),
         ],
       });
     }
 
-    await interaction.editReply(`✅ Usuario \`${userId}\` desbaneado.`);
+    await interaction.editReply({
+      embeds: [
+        buildModerationStaffEmbed({
+          title: 'Usuario desbaneado',
+          color: MODERATION_COLORS.success,
+          description: `Usuario ID: \`${userId}\``,
+          reason,
+        }),
+      ],
+    });
   },
 };

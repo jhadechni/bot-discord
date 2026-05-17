@@ -1,6 +1,11 @@
-import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
+import {
+  MODERATION_COLORS,
+  buildModerationNoticeEmbed,
+} from '../../utils/moderation-ui.js';
+import { formatDate } from '../../utils/ui.js';
 
 const TYPE_LABELS: Record<string, string> = {
   WARN: '⚠️ Aviso',
@@ -50,24 +55,34 @@ export const logsCommand: Command = {
     ]);
 
     if (total === 0) {
-      await interaction.editReply(`✅ **${target.tag}** no tiene historial de moderación.`);
+      await interaction.editReply({
+        embeds: [
+          buildModerationNoticeEmbed({
+            title: 'Sin historial',
+            description: `**${target.tag}** no tiene acciones de moderación registradas.`,
+            color: MODERATION_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
     const fields = entries.map(e => ({
-      name: `${TYPE_LABELS[e.type] ?? e.type} — ${e.createdAt.toLocaleDateString('es-ES')}`,
+      name: `${TYPE_LABELS[e.type] ?? e.type} — ${formatDate(e.createdAt)}`,
       value: `**Motivo:** ${e.reason ?? 'Sin motivo'}\n**Moderador:** <@${e.moderatorId}>\n**ID:** \`${e.id}\``,
     }));
 
     const totalPages = Math.ceil(total / pageSize);
 
-    const embed = new EmbedBuilder()
-      .setColor(0x5865f2)
-      .setTitle(`📋 Historial de ${target.tag}`)
-      .setDescription(`Total de acciones: **${total}** • Página ${page + 1}/${totalPages}`)
-      .addFields(fields)
-      .setTimestamp();
-
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({
+      embeds: [
+        buildModerationNoticeEmbed({
+          title: `Historial de ${target.tag}`,
+          description: `Total de acciones: **${total}** • Página ${page + 1}/${totalPages}`,
+          color: MODERATION_COLORS.log,
+          fields,
+        }),
+      ],
+    });
   },
 };

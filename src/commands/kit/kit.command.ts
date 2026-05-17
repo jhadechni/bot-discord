@@ -1,6 +1,5 @@
 import {
   SlashCommandBuilder,
-  EmbedBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
@@ -13,6 +12,11 @@ import { prisma } from '../../database/prisma.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import { logger } from '../../core/logger.js';
 import { parseTime, formatTime } from '../../utils/time.js';
+import {
+  REMINDER_COLORS,
+  buildReminderErrorEmbed,
+  buildReminderNoticeEmbed,
+} from '../../utils/reminder-ui.js';
 
 async function hasStaffAccess(guildId: string, userId: string, guild: Guild): Promise<boolean> {
   const config = await getOrCreateGuildConfig(guildId);
@@ -68,12 +72,23 @@ export const kitCommand: Command = {
     const guildId = interaction.guildId;
     const guild = interaction.guild;
     if (!guildId || !guild) {
-      await interaction.reply({ content: '❌ Este comando solo funciona en un servidor.', ephemeral: true });
+      await interaction.reply({
+        embeds: [buildReminderErrorEmbed('Servidor requerido', 'Este comando solo funciona en un servidor.')],
+        ephemeral: true,
+      });
       return;
     }
 
     if (!(await hasStaffAccess(guildId, interaction.user.id, guild))) {
-      await interaction.reply({ content: '❌ Solo el staff puede gestionar las plantillas de kits.', ephemeral: true });
+      await interaction.reply({
+        embeds: [
+          buildReminderErrorEmbed(
+            'Permiso insuficiente',
+            'Solo el staff puede gestionar las plantillas de kits.',
+          ),
+        ],
+        ephemeral: true,
+      });
       return;
     }
 
@@ -127,22 +142,28 @@ export const kitCommand: Command = {
       });
 
       if (templates.length === 0) {
-        await interaction.editReply('📭 No hay plantillas configuradas. Usa `/kit crear` para añadir una.');
+        await interaction.editReply({
+          embeds: [
+            buildReminderNoticeEmbed({
+              title: 'Sin plantillas',
+              description: 'No hay plantillas configuradas. Usa `/kit crear` para añadir una.',
+              color: REMINDER_COLORS.info,
+            }),
+          ],
+        });
         return;
       }
 
-      const embed = new EmbedBuilder()
-        .setColor(0x5865f2)
-        .setTitle('🎁 Plantillas de kits')
-        .addFields(
+      const embed = buildReminderNoticeEmbed({
+        title: 'Plantillas de kits',
+        color: REMINDER_COLORS.info,
+        fields:
           templates.map(t => ({
             name: t.name,
             value: `Cooldown: **${formatTime(t.cooldownMin)}**${t.description ? `\n${t.description}` : ''}`,
             inline: true,
           })),
-        )
-        .setFooter({ text: `${templates.length} plantilla${templates.length === 1 ? '' : 's'} · /remind kit para activar recordatorios` })
-        .setTimestamp();
+      }).setFooter({ text: `Aquaris • Recordatorios · ${templates.length} plantilla${templates.length === 1 ? '' : 's'} · /remind kit para activar recordatorios` });
 
       await interaction.editReply({ embeds: [embed] });
       return;
@@ -156,7 +177,14 @@ export const kitCommand: Command = {
       });
 
       if (!template) {
-        await interaction.editReply(`❌ No se encontró ninguna plantilla llamada **${nombre}**.`);
+        await interaction.editReply({
+          embeds: [
+            buildReminderErrorEmbed(
+              'Plantilla no encontrada',
+              `No se encontró ninguna plantilla llamada **${nombre}**.`,
+            ),
+          ],
+        });
         return;
       }
 
@@ -166,7 +194,15 @@ export const kitCommand: Command = {
         data: { isActive: false },
       });
 
-      await interaction.editReply(`✅ Plantilla **${nombre}** eliminada.`);
+      await interaction.editReply({
+        embeds: [
+          buildReminderNoticeEmbed({
+            title: 'Plantilla eliminada',
+            description: `La plantilla **${nombre}** fue desactivada.`,
+            color: REMINDER_COLORS.success,
+          }),
+        ],
+      });
     }
   },
 };

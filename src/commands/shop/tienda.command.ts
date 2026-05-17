@@ -1,6 +1,5 @@
 import {
   SlashCommandBuilder,
-  EmbedBuilder,
   PermissionFlagsBits,
   type AutocompleteInteraction,
   type ChatInputCommandInteraction,
@@ -29,6 +28,11 @@ import {
   listSubcategoryDefinitions,
   reloadTaxonomyFromDatabase,
 } from '../../shop/taxonomy.js';
+import {
+  SHOP_COLORS,
+  buildShopNoticeEmbed,
+  buildShopStatsEmbed,
+} from '../../utils/shop-ui.js';
 
 function hasStaffPermission(
   interaction: ChatInputCommandInteraction | AutocompleteInteraction,
@@ -1067,59 +1071,20 @@ export const catalogoCommand: Command = {
         .sort((a, b) => b[1].total - a[1].total)
         .slice(0, 5);
 
-      const fmt = (n: number) =>
-        n.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-
-      const embed = new EmbedBuilder()
-        .setTitle('📊 Estadísticas — Tienda Aquaris')
-        .setColor(0x5865f2)
-        .setFooter({ text: `Período: ${periodoLabel}` })
-        .setTimestamp()
-        .addFields(
-          {
-            name:   '💰 Ingresos',
-            value:  `**${fmt(totalRevenue)} $**`,
-            inline: true,
-          },
-          {
-            name:   '📦 Pedidos entregados',
-            value:  `**${sales.length}**`,
-            inline: true,
-          },
-          {
-            name:   '📈 Promedio por pedido',
-            value:  sales.length > 0 ? `**${fmt(avgOrder)} $**` : '—',
-            inline: true,
-          },
-        );
-
-      if (topProducts.length > 0) {
-        embed.addFields({
-          name:  '🏆 Top productos (unidades vendidas)',
-          value: topProducts
-            .map(([name, qty], i) => `${i + 1}. **${name}** — ${qty}`)
-            .join('\n'),
-          inline: false,
-        });
-      }
-
-      if (topBuyers.length > 0) {
-        embed.addFields({
-          name:  '👤 Top compradores (gasto)',
-          value: topBuyers
-            .map(([, { name, total }], i) => `${i + 1}. **${name}** — ${fmt(total)} $`)
-            .join('\n'),
-          inline: false,
-        });
-      }
-
-      embed.addFields({
-        name:  '🔄 Pedidos activos ahora',
-        value: `🟡 Pendientes: **${pendingCount}**  ·  🟢 Aceptados: **${acceptedCount}**`,
-        inline: false,
+      await interaction.editReply({
+        embeds: [
+          buildShopStatsEmbed({
+            acceptedCount,
+            averageOrder: avgOrder,
+            pendingCount,
+            periodLabel: periodoLabel,
+            salesCount: sales.length,
+            topBuyers: topBuyers.map(([, buyer]) => ({ name: buyer.name, total: buyer.total })),
+            topProducts: topProducts.map(([name, quantity]) => ({ name, quantity })),
+            totalRevenue,
+          }),
+        ],
       });
-
-      await interaction.editReply({ embeds: [embed] });
       return;
     }
   },
@@ -1145,7 +1110,15 @@ export const tiendaCommand: Command = {
     const products = await queryCatalogProducts(guildId);
 
     if (products.length === 0) {
-      await interaction.editReply('🏪 La tienda está vacía por el momento.');
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Tienda vacía',
+            description: 'La tienda está vacía por el momento.',
+            color: SHOP_COLORS.neutral,
+          }),
+        ],
+      });
       return;
     }
 

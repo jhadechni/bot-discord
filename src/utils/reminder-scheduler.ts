@@ -1,8 +1,9 @@
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { prisma } from '../database/prisma.js';
 import { client } from '../core/client.js';
 import { logger } from '../core/logger.js';
 import { formatTime } from './time.js';
+import { REMINDER_COLORS, buildReminderDmEmbed } from './reminder-ui.js';
 
 const REMINDER_POLL_MS = 60_000;
 const DB_RETRY_DELAY_MS = 1_000;
@@ -82,12 +83,13 @@ export function startReminderScheduler(): void {
 
           if (reminder.template) {
             // Recordatorio de kit — embed + botón "Ya lo reclamé"
-            const embed = new EmbedBuilder()
-              .setColor(0xfee75c)
-              .setTitle('⏰ ¡Es momento de reclamar tu kit!')
-              .setDescription(`**${reminder.template.name}** está disponible para reclamar.`)
-              .setFooter({ text: `Cooldown: ${formatTime(reminder.template.cooldownMin)} · Pulsa el botón después de reclamarlo` })
-              .setTimestamp();
+            const embed = buildReminderDmEmbed(
+              'Es momento de reclamar tu kit',
+              `**${reminder.template.name}** está disponible para reclamar.`,
+              REMINDER_COLORS.warning,
+            ).setFooter({
+              text: `Aquaris • Recordatorios · Cooldown: ${formatTime(reminder.template.cooldownMin)} · Pulsa el botón después de reclamarlo`,
+            });
 
             const claimBtn = new ButtonBuilder()
               .setCustomId(`remind:kit:claimed:${reminder.template.id}:${reminder.guildId}`)
@@ -100,8 +102,15 @@ export function startReminderScheduler(): void {
               components: [new ActionRowBuilder<ButtonBuilder>().addComponents(claimBtn)],
             });
           } else {
-            // Recordatorio personalizado — texto plano
-            await user.send(`⏰ **Recordatorio:** ${reminder.message}`);
+            await user.send({
+              embeds: [
+                buildReminderDmEmbed(
+                  'Recordatorio',
+                  reminder.message,
+                  REMINDER_COLORS.info,
+                ),
+              ],
+            });
           }
         } catch {
           // DMs desactivados o usuario no encontrado — continúa

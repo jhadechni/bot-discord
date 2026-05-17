@@ -1,7 +1,7 @@
-import { EmbedBuilder } from 'discord.js';
 import type { BotEvent } from '../types/event.js';
 import { getOrCreateGuildConfig } from '../database/guild-config.js';
 import { getLogChannel } from '../utils/log-channel.js';
+import { buildLeaveLogEmbed } from '../utils/community-ui.js';
 
 const guildMemberRemoveEvent: BotEvent<'guildMemberRemove'> = {
   name: 'guildMemberRemove',
@@ -13,16 +13,12 @@ const guildMemberRemoveEvent: BotEvent<'guildMemberRemove'> = {
 
     await leavesLogCh.send({
       embeds: [
-        new EmbedBuilder()
-          .setColor(0xed4245)
-          .setTitle('📤 Miembro ha salido')
-          .addFields(
-            { name: 'Usuario', value: `${member.user.tag}`, inline: true },
-            { name: 'ID', value: member.id, inline: true },
-          )
-          .setThumbnail(member.user.displayAvatarURL())
-          .setFooter({ text: `Ahora hay ${member.guild.memberCount} miembros` })
-          .setTimestamp(),
+        buildLeaveLogEmbed({
+          userId: member.id,
+          userTag: member.user.tag,
+          memberCount: member.guild.memberCount,
+          avatarUrl: member.user.displayAvatarURL(),
+        }),
       ],
     });
   },

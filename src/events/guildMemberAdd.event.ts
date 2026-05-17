@@ -1,7 +1,7 @@
-import { EmbedBuilder } from 'discord.js';
 import type { BotEvent } from '../types/event.js';
 import { getOrCreateGuildConfig } from '../database/guild-config.js';
 import { getLogChannel } from '../utils/log-channel.js';
+import { buildJoinLogEmbed, buildWelcomePublicEmbed } from '../utils/community-ui.js';
 import { logger } from '../core/logger.js';
 
 const guildMemberAddEvent: BotEvent<'guildMemberAdd'> = {
@@ -22,16 +22,13 @@ const guildMemberAddEvent: BotEvent<'guildMemberAdd'> = {
     if (config.welcomeChannelId) {
       const channel = member.guild.channels.cache.get(config.welcomeChannelId);
       if (channel?.isTextBased()) {
-        const embed = new EmbedBuilder()
-          .setColor(0x57f287)
-          .setTitle('👋 ¡Bienvenido al servidor!')
-          .setDescription(
-            `Hola <@${member.id}>, bienvenido a **${member.guild.name}**.\n\n` +
-              `Eres el miembro número **${member.guild.memberCount}**.\n` +
-              `Revisa los canales de información para orientarte.`,
-          )
-          .setThumbnail(member.user.displayAvatarURL())
-          .setTimestamp();
+        const embed = buildWelcomePublicEmbed({
+          userId: member.id,
+          userTag: member.user.tag,
+          guildName: member.guild.name,
+          memberCount: member.guild.memberCount,
+          avatarUrl: member.user.displayAvatarURL(),
+        });
         await channel.send({ embeds: [embed] });
       }
     }
@@ -41,16 +38,12 @@ const guildMemberAddEvent: BotEvent<'guildMemberAdd'> = {
     if (joinsLogCh) {
       await joinsLogCh.send({
         embeds: [
-          new EmbedBuilder()
-            .setColor(0x57f287)
-            .setTitle('📥 Nuevo miembro')
-            .addFields(
-              { name: 'Usuario', value: `<@${member.id}> (${member.user.tag})`, inline: true },
-              { name: 'ID', value: member.id, inline: true },
-              { name: 'Miembro nº', value: `${member.guild.memberCount}`, inline: true },
-            )
-            .setThumbnail(member.user.displayAvatarURL())
-            .setTimestamp(),
+          buildJoinLogEmbed({
+            userId: member.id,
+            userTag: member.user.tag,
+            memberCount: member.guild.memberCount,
+            avatarUrl: member.user.displayAvatarURL(),
+          }),
         ],
       });
     }

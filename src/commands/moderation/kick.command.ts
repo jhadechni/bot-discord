@@ -1,8 +1,16 @@
-import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import { getLogChannel } from '../../utils/log-channel.js';
+import {
+  MODERATION_COLORS,
+  buildModerationErrorEmbed,
+  buildModerationLogEmbed,
+  buildModerationStaffEmbed,
+  buildModerationUserDmEmbed,
+  normalizeModerationReason,
+} from '../../utils/moderation-ui.js';
 
 export const kickCommand: Command = {
   data: new SlashCommandBuilder()
@@ -24,22 +32,44 @@ export const kickCommand: Command = {
 
     const target = interaction.options.getMember('usuario');
     if (!target || !('kickable' in target)) {
-      await interaction.editReply('❌ No se encontró al usuario en el servidor.');
+      await interaction.editReply({
+        embeds: [
+          buildModerationErrorEmbed(
+            'No se pudo aplicar la expulsión',
+            'No encontré a ese usuario dentro del servidor.',
+          ),
+        ],
+      });
       return;
     }
     if (!target.kickable) {
-      await interaction.editReply('❌ No tengo permisos para expulsar a este usuario.');
+      await interaction.editReply({
+        embeds: [
+          buildModerationErrorEmbed(
+            'No se pudo aplicar la expulsión',
+            'No tengo permisos para expulsar a este usuario o su rol está por encima del mío.',
+          ),
+        ],
+      });
       return;
     }
 
-    const reason = interaction.options.getString('motivo') ?? 'Sin motivo';
+    const reason = normalizeModerationReason(interaction.options.getString('motivo'));
 
+    let dmDelivered = true;
     try {
-      await target.user.send(
-        `👢 Has sido expulsado de **${interaction.guild?.name}**.\nMotivo: ${reason}`,
-      );
+      await target.user.send({
+        embeds: [
+          buildModerationUserDmEmbed({
+            title: 'Has sido expulsado/a',
+            color: MODERATION_COLORS.kick,
+            guildName: interaction.guild?.name ?? 'este servidor',
+            reason,
+          }),
+        ],
+      });
     } catch {
-      // DMs desactivados
+      dmDelivered = false;
     }
 
     await target.kick(reason);
@@ -57,19 +87,32 @@ export const kickCommand: Command = {
     const config = await getOrCreateGuildConfig(guildId);
     const logsChannel = getLogChannel(interaction.guild!, config, 'mod');
     if (logsChannel) {
-      const embed = new EmbedBuilder()
-        .setColor(0xed4245)
-        .setTitle('👢 Usuario expulsado')
-        .addFields(
-          { name: 'Usuario', value: `${target.user.tag} (${target.id})`, inline: true },
-          { name: 'Moderador', value: `<@${interaction.user.id}>`, inline: true },
-          { name: 'Motivo', value: reason },
-          { name: 'ID', value: log.id, inline: true },
-        )
-        .setTimestamp();
-      await logsChannel.send({ embeds: [embed] });
+      await logsChannel.send({
+        embeds: [
+          buildModerationLogEmbed({
+            title: 'Usuario expulsado',
+            color: MODERATION_COLORS.kick,
+            targetId: target.id,
+            targetTag: target.user.tag,
+            moderatorId: interaction.user.id,
+            reason,
+            logId: log.id,
+            createdAt: log.createdAt,
+          }),
+        ],
+      });
     }
 
-    await interaction.editReply(`✅ **${target.user.tag}** fue expulsado.`);
+    await interaction.editReply({
+      embeds: [
+        buildModerationStaffEmbed({
+          title: 'Expulsión aplicada',
+          color: MODERATION_COLORS.success,
+          targetMention: `<@${target.id}>`,
+          reason,
+          dmDelivered,
+        }),
+      ],
+    });
   },
 };

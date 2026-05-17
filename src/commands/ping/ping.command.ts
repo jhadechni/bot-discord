@@ -1,6 +1,7 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
+import { buildPingEmbed } from '../../utils/system-ui.js';
 
 export const pingCommand: Command = {
   data: new SlashCommandBuilder()
@@ -19,15 +20,6 @@ export const pingCommand: Command = {
       dbStatus = 'Error de conexión';
     }
 
-    const embed = new EmbedBuilder()
-      .setColor(0x00bfff)
-      .setTitle('🏓 Pong!')
-      .addFields(
-        { name: 'Latencia WebSocket', value: `${wsLatency}ms`, inline: true },
-        { name: 'Base de datos', value: dbStatus, inline: true },
-      )
-      .setTimestamp();
-
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [buildPingEmbed(wsLatency, dbStatus)] });
   },
 };

@@ -1,5 +1,10 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import type { Command } from '../../types/command.js';
+import {
+  MODERATION_COLORS,
+  buildModerationErrorEmbed,
+  buildModerationNoticeEmbed,
+} from '../../utils/moderation-ui.js';
 
 export const clearCommand: Command = {
   data: new SlashCommandBuilder()
@@ -23,7 +28,14 @@ export const clearCommand: Command = {
 
     const channel = interaction.channel;
     if (!channel?.isTextBased() || !('bulkDelete' in channel)) {
-      await interaction.editReply('❌ No se puede usar este comando en este canal.');
+      await interaction.editReply({
+        embeds: [
+          buildModerationErrorEmbed(
+            'No se pudo limpiar el canal',
+            'Este comando solo puede usarse en canales de texto donde pueda borrar mensajes.',
+          ),
+        ],
+      });
       return;
     }
 
@@ -44,11 +56,34 @@ export const clearCommand: Command = {
     toDelete = toDelete.filter(m => m.createdTimestamp > twoWeeksAgo).slice(0, amount);
 
     if (toDelete.length === 0) {
-      await interaction.editReply('⚠️ No hay mensajes recientes que eliminar.');
+      await interaction.editReply({
+        embeds: [
+          buildModerationNoticeEmbed({
+            title: 'Sin mensajes recientes',
+            description: 'No encontré mensajes recientes que Discord permita eliminar en lote.',
+            color: MODERATION_COLORS.warning,
+          }),
+        ],
+      });
       return;
     }
 
     const deleted = await channel.bulkDelete(toDelete, true);
-    await interaction.editReply(`🗑️ Se eliminaron **${deleted.size}** mensajes.`);
+    await interaction.editReply({
+      embeds: [
+        buildModerationNoticeEmbed({
+          title: 'Chat limpiado',
+          color: MODERATION_COLORS.success,
+          fields: [
+            { name: 'Mensajes eliminados', value: `${deleted.size}`, inline: true },
+            {
+              name: 'Filtro',
+              value: filterUser ? `<@${filterUser.id}>` : 'Todos los usuarios',
+              inline: true,
+            },
+          ],
+        }),
+      ],
+    });
   },
 };

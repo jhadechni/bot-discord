@@ -1,5 +1,5 @@
 import type { BotEvent } from '../types/event.js';
-import { updateSuggestionVotes } from '../utils/suggestion.js';
+import { updateSuggestionVotes } from '../utils/suggestion-ui.js';
 import { logger } from '../core/logger.js';
 
 const messageReactionRemoveEvent: BotEvent<'messageReactionRemove'> = {

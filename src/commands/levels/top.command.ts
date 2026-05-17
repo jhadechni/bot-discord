@@ -1,7 +1,8 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
 import { formatVoiceTime } from '../../utils/xp.js';
+import { buildLevelEmptyEmbed, buildLevelTopEmbed } from '../../utils/levels-ui.js';
 
 export const topCommand: Command = {
   data: new SlashCommandBuilder()
@@ -37,7 +38,7 @@ export const topCommand: Command = {
     });
 
     if (top.length === 0) {
-      await interaction.editReply('📭 Todavía no hay actividad registrada en este servidor.');
+      await interaction.editReply({ embeds: [buildLevelEmptyEmbed()] });
       return;
     }
 
@@ -66,12 +67,11 @@ export const topCommand: Command = {
       voz: '🎙️ Top Tiempo en Voz',
     };
 
-    const embed = new EmbedBuilder()
-      .setColor(0xf1c40f)
-      .setTitle(titles[tipo] ?? '⭐ Top XP')
-      .setDescription(lines.join('\n'))
-      .setFooter({ text: `${interaction.guild?.name ?? 'Servidor'}` })
-      .setTimestamp();
+    const embed = buildLevelTopEmbed({
+      title: titles[tipo] ?? 'Top XP',
+      lines,
+      guildName: interaction.guild?.name ?? 'Servidor',
+    });
 
     await interaction.editReply({ embeds: [embed] });
   },

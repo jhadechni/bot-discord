@@ -1,7 +1,7 @@
-import { EmbedBuilder } from 'discord.js';
 import type { BotEvent } from '../types/event.js';
 import { prisma } from '../database/prisma.js';
 import { getOrCreateGuildConfig } from '../database/guild-config.js';
+import { buildLevelUpEmbed } from '../utils/levels-ui.js';
 import { calcLevel } from '../utils/xp.js';
 import { logger } from '../core/logger.js';
 
@@ -63,13 +63,7 @@ const voiceStateUpdateEvent: BotEvent<'voiceStateUpdate'> = {
             const ch = newState.guild.channels.cache.get(config.levelUpChannelId);
             if (ch?.isTextBased()) {
               await ch.send({
-                embeds: [
-                  new EmbedBuilder()
-                    .setColor(0xf1c40f)
-                    .setTitle('⬆️ ¡Subiste de nivel!')
-                    .setDescription(`<@${userId}> ha alcanzado el **nivel ${newLevel}** 🎉`)
-                    .setTimestamp(),
-                ],
+                embeds: [buildLevelUpEmbed(userId, newLevel)],
               });
             }
           }
