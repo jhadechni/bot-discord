@@ -29,11 +29,12 @@ Estado: footers principales, colores y tipos base de modulo/contexto/intencion d
 
 ## Tienda
 
+- Definir el flujo oficial externo para administrar catalogo, productos y materiales.
 - Revisar si el canal temporal de pedido necesita un mensaje de bienvenida mas especifico.
 - Revisar si se requiere log interno separado para ventas, cancelaciones o descuentos manuales.
 - Revisar manualmente capturas reales de catalogo/carrito en Discord con productos largos.
 
-Estado: migracion visual principal completada con `src/utils/shop-ui.ts`, incluyendo CRUD interno de materiales/productos.
+Estado: migracion visual principal completada con `src/utils/shop-ui.ts`. La gestion de catalogo/materiales/productos no queda expuesta en Discord.
 
 ## Bienvenida, salidas y boost
 

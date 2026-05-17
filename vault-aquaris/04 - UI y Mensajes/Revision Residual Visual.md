@@ -12,7 +12,7 @@ Se buscaron:
 
 ## Ajustes aplicados
 
-El residuo mas claro estaba en el CRUD interno de tienda:
+El residuo mas claro estaba en el CRUD interno de tienda. Esa superficie fue retirada de Discord:
 
 - Materiales.
 - Productos.

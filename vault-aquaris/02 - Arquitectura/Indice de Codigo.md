@@ -29,7 +29,7 @@
 
 ### Tienda
 
-- `src/commands/shop/tienda.command.ts`: catalogo administrativo y vista de tienda.
+- `src/commands/shop/tienda.command.ts`: vista publica de tienda.
 - `src/commands/shop/pedido.command.ts`: pedidos.
 - `src/commands/shop/stock.command.ts`: stock.
 

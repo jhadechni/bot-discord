@@ -206,7 +206,7 @@ export const stockCommand: Command = {
           embeds: [
             buildShopNoticeEmbed({
               title: 'Sin materiales',
-              description: 'No hay materiales registrados. Usa `/tienda material-agregar`.',
+              description: 'No hay materiales registrados. El catálogo y los materiales se administran fuera de Discord.',
               color: SHOP_COLORS.neutral,
             }),
           ],

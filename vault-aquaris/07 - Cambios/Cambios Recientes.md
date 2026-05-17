@@ -186,7 +186,6 @@ Se migraron en primera capa:
 - Confirmaciones y errores principales de pedidos.
 - Vista de pedidos activos.
 - Vista de inventario y stock bajo.
-- Estadisticas de tienda.
 - Solicitud libre desde catalogo.
 - Confirmacion de pedido desde carrito.
 - Errores principales del carrito.
@@ -214,15 +213,7 @@ La verificacion `npm run build` paso correctamente.
 
 Se hizo una busqueda general de mensajes planos y embeds directos.
 
-Se migraron los residuos principales de `src/commands/shop/tienda.command.ts`:
-
-- CRUD de materiales.
-- CRUD de productos.
-- Presentaciones.
-- Clasificacion.
-- Componentes.
-- Precios.
-- Activacion/desactivacion.
+El CRUD de catalogo, materiales, productos, presentaciones, clasificacion, componentes, precios y activacion/desactivacion fue retirado de la superficie de comandos de Discord.
 
 Resultado: no quedan coincidencias relevantes de respuestas planas con el patron revisado.
 
@@ -247,6 +238,16 @@ Archivos ajustados:
 - `src/shop/order-utils.ts`
 
 La verificacion `npm run build` paso correctamente.
+
+## Gestion de catalogo fuera de Discord
+
+Se elimino `catalogoCommand` de `src/commands/shop/tienda.command.ts`.
+
+Decision: la administracion de catalogo, productos y materiales no debe ejecutarse desde Discord. La tienda conserva la vista publica `/tienda ver`, pedidos, carrito, inventario operativo y gestion de pedidos.
+
+La verificacion `npm run build` paso correctamente.
+
+`git diff --check` paso correctamente.
 
 ## Consistencia global de mensajes
 

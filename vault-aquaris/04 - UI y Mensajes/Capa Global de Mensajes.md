@@ -28,6 +28,9 @@ La capa global centraliza:
 - `AQUARIS_COLORS`
 - `AquarisFooterKey`
 - `AquarisColor`
+- `AquarisModule`
+- `AquarisMessageContext`
+- `AquarisMessageIntent`
 - `AquarisEmbedOptions`
 - `AquarisUserFacingOptions`
 - `normalizeMessageReason`
@@ -63,6 +66,14 @@ Esto permite migrar los siguientes modulos sin duplicar:
 
 Cada modulo conserva su tono y datos propios, pero usa la misma identidad base.
 
-## Siguiente modulo
+## Revision de consistencia global
 
-El siguiente modulo en el orden acordado es Reclutamiento.
+La revision global dejo cerrados estos criterios:
+
+- Los footers de modulo viven en `AQUARIS_FOOTERS`.
+- Los colores de identidad viven en `AQUARIS_COLORS` y toman sus valores desde `src/utils/ui.ts`.
+- Los tipos `AquarisModule`, `AquarisMessageContext` y `AquarisMessageIntent` documentan el vocabulario comun de mensajes.
+- Los logs de comunidad usan footer propio: `Aquaris Logs • Comunidad`.
+- Los adaptadores por modulo siguen siendo la capa correcta para decidir tono, campos y exposicion de datos.
+
+Estado: capa global activa y consistente con los modulos migrados.

@@ -25,14 +25,12 @@ Tambien se alineo el footer compartido de tienda:
 - Vista de inventario `/stock ver`.
 - Vista de stock bajo `/stock bajo`.
 - Errores principales de inventario.
-- Estadisticas de tienda.
 - Tienda vacia.
 - Solicitud libre desde catalogo.
 - Confirmacion de pedido desde carrito.
 - Errores principales del carrito.
 - DMs principales de pedido aceptado, entregado, rechazado y cancelado.
 - Confirmaciones staff de aceptar, rechazar, cancelar y descuentos.
-- CRUD interno de materiales y productos.
 - Pulido visual de catalogo, carrito y pedidos.
 
 ## Criterio visual
@@ -50,6 +48,7 @@ Decisiones aplicadas:
 - Catalogo ya no usa grilla de tres columnas; prioriza lectura vertical.
 - Footers de catalogo se acortaron para evitar ruido visual.
 - Carrito y pedidos redujeron iconos en titulos/campos para verse mas limpios.
+- La gestion de catalogo, productos y materiales no se expone como comando de Discord.
 
 ## Builders actuales
 
@@ -75,6 +74,7 @@ Decisiones aplicadas:
 
 ## Pendientes
 
+- Definir el flujo oficial externo para administrar catalogo, productos y materiales.
 - Revisar si el canal temporal de pedido necesita un mensaje de bienvenida mas especifico.
 - Revisar si se requiere log interno separado para ventas, cancelaciones o descuentos manuales.
 - Revisar manualmente capturas reales de catalogo/carrito en Discord con productos largos.
