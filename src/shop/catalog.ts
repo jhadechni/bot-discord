@@ -17,7 +17,8 @@ import {
   getSubcategoryDefinition,
   reloadTaxonomyFromDatabase,
 } from './taxonomy.js';
-import { COLORS, formatPrice, SHOP_FOOTER } from '../utils/ui.js';
+import { formatPrice, SHOP_FOOTER } from '../utils/ui.js';
+import { SHOP_COLORS } from '../utils/shop-ui.js';
 import { resolvePresentationLabel } from './quantities.js';
 import { buildProductContentsSummary } from './product-contents.js';
 
@@ -359,33 +360,35 @@ export function buildProductGridEmbed(
   const subcategory = getSubcategoryDefinition(state.currentCategory, state.currentSubcategory);
   const modeMeta = CATALOG_MODE_META[state.currentMode];
   const itemLabel = state.currentMode === 'services' ? 'servicio' : 'producto';
-  const categoryIndex = state.categoryKeys.indexOf(state.currentCategory) + 1;
-  const subcategoryIndex = state.subcategoryKeys.indexOf(state.currentSubcategory) + 1;
-  const titlePrefix = options.titlePrefix ?? '🏪 Tienda Aquaris';
+  const titlePrefix = options.titlePrefix ?? 'Tienda Aquaris';
   const footerHint = options.footerHint ?? '/pedido crear o carrito para comprar';
   const pageSize = options.pageSize ?? state.pageProducts.length;
   const embed = new EmbedBuilder()
-    .setTitle(`${titlePrefix}  ·  ${modeMeta.emoji} ${modeMeta.label}  ·  ${category.emoji} ${category.label}`)
-    .setColor(options.color ?? COLORS.blurple)
+    .setTitle(`${titlePrefix} · ${modeMeta.label}`)
+    .setColor(options.color ?? SHOP_COLORS.info)
     .setTimestamp();
 
   if (state.pageProducts.length === 0) {
     return applyTaxonomyImages(embed
       .setDescription(
-        `**${subcategory.label}**\n\n${options.emptyMessage ?? '_No hay productos en esta subcategoría._'}`,
+        `**${category.label} / ${subcategory.label}**\n\n${options.emptyMessage ?? '_No hay productos en esta subcategoría._'}`,
       )
       .setFooter({
         text: [
           SHOP_FOOTER.text,
-          modeMeta.label,
-          `Cat. ${categoryIndex}/${state.categoryKeys.length}`,
-          `Sub. ${subcategoryIndex}/${state.subcategoryKeys.length}`,
+          `${modeMeta.label} · Página ${state.currentPage}/${state.totalPages}`,
           footerHint,
         ].join('  ·  '),
       }), state);
   }
 
-  embed.setDescription(`**${subcategory.label}**\n${modeMeta.description}`);
+  embed.setDescription(
+    [
+      `**${category.label} / ${subcategory.label}**`,
+      modeMeta.description,
+      `${state.totalSubcategoryProducts} ${itemLabel}${state.totalSubcategoryProducts !== 1 ? 's' : ''} en esta sección.`,
+    ].join('\n'),
+  );
 
   const fields = state.pageProducts.map((product, index) => {
     const icon = PRODUCT_TYPE_ICONS[product.productType] ?? '🛍️';
@@ -394,24 +397,15 @@ export function buildProductGridEmbed(
     return {
       name: `${prefix}${icon} ${truncateText(product.name, 80)}`.slice(0, 256),
       value: buildProductCardValue(product).slice(0, 1024),
-      inline: true,
+      inline: false,
     };
   });
-
-  const missingFields = fields.length % 3 === 0 ? 0 : 3 - (fields.length % 3);
-  for (let index = 0; index < missingFields; index += 1) {
-    fields.push({ name: '\u200b', value: '\u200b', inline: true });
-  }
 
   embed.addFields(fields);
   embed.setFooter({
     text: [
       SHOP_FOOTER.text,
-      modeMeta.label,
-      `${state.totalSubcategoryProducts} ${itemLabel}${state.totalSubcategoryProducts !== 1 ? 's' : ''}`,
-      `Pág. ${state.currentPage}/${state.totalPages}`,
-      `Cat. ${categoryIndex}/${state.categoryKeys.length}`,
-      `Sub. ${subcategoryIndex}/${state.subcategoryKeys.length}`,
+      `${modeMeta.label} · Página ${state.currentPage}/${state.totalPages}`,
       footerHint,
       pageSize > 0 ? `${state.pageProducts.length}/${pageSize} visibles` : null,
     ].filter(Boolean).join('  ·  '),
@@ -450,15 +444,15 @@ export function buildCatalogEntryView(
 } {
   const counts = countCatalogProductsByMode(products);
   const embed = new EmbedBuilder()
-    .setTitle('🏪 Tienda Aquaris')
-    .setColor(COLORS.blurple)
+    .setTitle('Tienda Aquaris')
+    .setColor(SHOP_COLORS.info)
     .setDescription(
       [
         'Elige cómo quieres navegar la tienda.',
         '',
-        `📦 **Productos**: ${counts.products} disponible${counts.products === 1 ? '' : 's'}`,
-        `🔧 **Servicios**: ${counts.services} disponible${counts.services === 1 ? '' : 's'}`,
-        '📝 **Solicitud libre**: envía al staff algo que no esté listado en el catálogo.',
+        `**Productos**: ${counts.products} disponible${counts.products === 1 ? '' : 's'}`,
+        `**Servicios**: ${counts.services} disponible${counts.services === 1 ? '' : 's'}`,
+        '**Solicitud libre**: envía al staff algo que no esté listado en el catálogo.',
       ].join('\n'),
     )
     .setFooter({
@@ -600,9 +594,9 @@ export function buildCatalogView(
   return {
     components,
     embed: buildProductGridEmbed(state, {
-      color: COLORS.blurple,
+      color: SHOP_COLORS.info,
       pageSize: CATALOG_PAGE_SIZE,
-      titlePrefix: '🏪 Tienda Aquaris',
+      titlePrefix: 'Tienda Aquaris',
     }),
     state,
   };

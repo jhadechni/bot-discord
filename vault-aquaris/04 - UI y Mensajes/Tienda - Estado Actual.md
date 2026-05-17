@@ -2,7 +2,7 @@
 
 ## Estado
 
-Migracion visual principal completada en primera capa.
+Migracion visual principal completada y pulido de vistas densas aplicado.
 
 El modulo de tienda ya usa un adaptador propio:
 
@@ -32,6 +32,8 @@ Tambien se alineo el footer compartido de tienda:
 - Errores principales del carrito.
 - DMs principales de pedido aceptado, entregado, rechazado y cancelado.
 - Confirmaciones staff de aceptar, rechazar, cancelar y descuentos.
+- CRUD interno de materiales y productos.
+- Pulido visual de catalogo, carrito y pedidos.
 
 ## Criterio visual
 
@@ -45,6 +47,9 @@ Decisiones aplicadas:
 - Confirmaciones de cliente y staff en embeds.
 - Stock y pedidos activos usan estructura de fields para facilitar lectura.
 - DMs al cliente son cortos y orientados al estado.
+- Catalogo ya no usa grilla de tres columnas; prioriza lectura vertical.
+- Footers de catalogo se acortaron para evitar ruido visual.
+- Carrito y pedidos redujeron iconos en titulos/campos para verse mas limpios.
 
 ## Builders actuales
 
@@ -64,10 +69,12 @@ Decisiones aplicadas:
 - `src/commands/shop/stock.command.ts`
 - `src/commands/shop/tienda.command.ts`
 - `src/events/interactionCreate.event.ts`
+- `src/shop/catalog.ts`
+- `src/shop/cart.ts`
+- `src/shop/order-utils.ts`
 
 ## Pendientes
 
-- Revisar mensajes administrativos residuales de `tienda.command.ts` para material/producto CRUD.
-- Evaluar si `catalog.ts` y `cart.ts` deben depender directamente de `shop-ui.ts` o seguir usando `SHOP_FOOTER`.
 - Revisar si el canal temporal de pedido necesita un mensaje de bienvenida mas especifico.
 - Revisar si se requiere log interno separado para ventas, cancelaciones o descuentos manuales.
+- Revisar manualmente capturas reales de catalogo/carrito en Discord con productos largos.

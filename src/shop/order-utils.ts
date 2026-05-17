@@ -10,7 +10,7 @@ import { calculateOrderPricing } from './discounts.js';
 import { buildProductContentsLines, buildProductContentsSummary } from './product-contents.js';
 import { hasProductInventoryDefinition, normalizeStackSize } from './quantities.js';
 import { buildShopGuildWhere } from './scope.js';
-import { ORDER_COLORS, ORDER_LABELS, formatPrice, SHOP_FOOTER } from '../utils/ui.js';
+import { COLORS, ORDER_COLORS, ORDER_LABELS, formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -684,7 +684,7 @@ export function buildOrderEmbed(
   order: OrderFull,
   stockAssessment?: OrderStockAssessment | null,
 ): EmbedBuilder {
-  const color = ORDER_COLORS[order.status] ?? 0x99aab5;
+  const color = ORDER_COLORS[order.status] ?? COLORS.neutral;
   const label = ORDER_LABELS[order.status] ?? order.status;
 
   const itemLines = order.items.map(item => {
@@ -720,43 +720,43 @@ export function buildOrderEmbed(
     .map(discount => `• ${discount.reason ?? 'Descuento'}: -${formatPrice(discount.discountAmount)}`);
 
   const embed = new EmbedBuilder()
-    .setTitle(`🛒 Pedido ${order.orderCode}`)
+    .setTitle(`Pedido ${order.orderCode}`)
     .setColor(color)
     .addFields(
-      { name: '👤 Cliente',   value: `<@${order.customer.discordUserId}>`, inline: true },
-      { name: '📋 Estado',    value: label,                                 inline: true },
+      { name: 'Cliente',   value: `<@${order.customer.discordUserId}>`, inline: true },
+      { name: 'Estado',    value: label,                                 inline: true },
       { name: '\u200B',       value: '\u200B',                              inline: true },
-      { name: '🛍️ Productos', value: itemLines.join('\n') || '—' },
-      { name: '🧮 Subtotal',  value: `**${formatPrice(order.subtotalAmount)}**`, inline: true },
-      { name: '🏷️ Descuentos', value: `**-${formatPrice(order.totalDiscountAmount)}**`, inline: true },
-      { name: '💰 Total',     value: `**${formatPrice(order.totalAmount)}**`, inline: true },
+      { name: 'Productos', value: itemLines.join('\n') || 'Sin productos' },
+      { name: 'Subtotal',  value: `**${formatPrice(order.subtotalAmount)}**`, inline: true },
+      { name: 'Descuentos', value: `**-${formatPrice(order.totalDiscountAmount)}**`, inline: true },
+      { name: 'Total',     value: `**${formatPrice(order.totalAmount)}**`, inline: true },
     )
     .setFooter(SHOP_FOOTER)
     .setTimestamp(order.createdAt);
 
   if (orderDiscountLines.length > 0) {
-    embed.addFields({ name: '🏷️ Descuentos del pedido', value: orderDiscountLines.join('\n') });
+    embed.addFields({ name: 'Descuentos del pedido', value: orderDiscountLines.join('\n') });
   }
 
   if ((order.status === 'pending' || order.status === 'accepted') && stockAssessment) {
     embed.addFields({
-      name: stockAssessment.isFullyAvailable ? '📦 Stock actual' : '⏳ Preparación',
+      name: stockAssessment.isFullyAvailable ? 'Stock actual' : 'Preparación',
       value: buildStockStatusValue(stockAssessment),
     });
   }
 
   if (order.rejectionReason) {
-    embed.addFields({ name: '❌ Motivo de rechazo', value: order.rejectionReason });
+    embed.addFields({ name: 'Motivo de rechazo', value: order.rejectionReason });
   }
   if (order.cancelReason) {
-    embed.addFields({ name: '🚫 Motivo de cancelación', value: order.cancelReason });
+    embed.addFields({ name: 'Motivo de cancelación', value: order.cancelReason });
   }
 
   return embed;
 }
 
 export function buildCustomerOrderEmbed(order: OrderFull): EmbedBuilder {
-  const color = ORDER_COLORS[order.status] ?? 0x99aab5;
+  const color = ORDER_COLORS[order.status] ?? COLORS.neutral;
   const label = ORDER_LABELS[order.status] ?? order.status;
   const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
   const productLines = order.items.map(item => {
@@ -767,30 +767,30 @@ export function buildCustomerOrderEmbed(order: OrderFull): EmbedBuilder {
   });
 
   const embed = new EmbedBuilder()
-    .setTitle(`🧾 Estado de tu pedido ${order.orderCode}`)
+    .setTitle(`Estado de tu pedido ${order.orderCode}`)
     .setColor(color)
     .setDescription(getCustomerOrderDescription(order))
     .addFields(
-      { name: '📋 Estado', value: label, inline: true },
-      { name: '🧮 Artículos', value: `**${totalItems}**`, inline: true },
-      { name: '💰 Total', value: `**${formatPrice(order.totalAmount)}**`, inline: true },
-      { name: '📨 Siguiente paso', value: getCustomerNextStep(order) },
+      { name: 'Estado', value: label, inline: true },
+      { name: 'Artículos', value: `**${totalItems}**`, inline: true },
+      { name: 'Total', value: `**${formatPrice(order.totalAmount)}**`, inline: true },
+      { name: 'Siguiente paso', value: getCustomerNextStep(order) },
     )
     .setFooter({ text: `${SHOP_FOOTER.text}  ·  Guarda tu código de pedido` })
     .setTimestamp(order.createdAt);
 
   if (productLines.length > 0) {
     embed.addFields({
-      name: '🛍️ Productos',
+      name: 'Productos',
       value: productLines.join('\n').slice(0, 1024),
     });
   }
 
   if (order.rejectionReason) {
-    embed.addFields({ name: 'ℹ️ Motivo informado', value: order.rejectionReason });
+    embed.addFields({ name: 'Motivo informado', value: order.rejectionReason });
   }
   if (order.cancelReason) {
-    embed.addFields({ name: 'ℹ️ Motivo informado', value: order.cancelReason });
+    embed.addFields({ name: 'Motivo informado', value: order.cancelReason });
   }
 
   return embed;

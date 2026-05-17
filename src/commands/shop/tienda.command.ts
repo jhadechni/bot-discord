@@ -30,6 +30,7 @@ import {
 } from '../../shop/taxonomy.js';
 import {
   SHOP_COLORS,
+  buildShopErrorEmbed,
   buildShopNoticeEmbed,
   buildShopStatsEmbed,
 } from '../../utils/shop-ui.js';
@@ -485,7 +486,7 @@ export const catalogoCommand: Command = {
     const config = await getOrCreateGuildConfig(guildId);
     if (!hasStaffPermission(interaction, config.staffRoleId ?? null)) {
       await interaction.reply({
-        content: '❌ Solo el staff puede usar este comando.',
+        embeds: [buildShopErrorEmbed('Permiso insuficiente', 'Solo el staff puede usar este comando.')],
         ephemeral: true,
       });
       return;
@@ -503,7 +504,9 @@ export const catalogoCommand: Command = {
         where: { guildId_name: { guildId, name: nombre } },
       });
       if (existing) {
-        await interaction.editReply(`❌ Ya existe un material llamado **${nombre}**.`);
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Material duplicado', `Ya existe un material llamado **${nombre}**.`)],
+        });
         return;
       }
 
@@ -517,10 +520,17 @@ export const catalogoCommand: Command = {
         },
       });
 
-      await interaction.editReply(
-        `✅ Material **${nombre}** registrado (unidad: \`${unidad}\`, stack max: \`${stackMax}\`, stock inicial: 0).\n` +
-        `Usa \`/stock sumar\` para agregar stock.`,
-      );
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Material registrado',
+            description:
+              `**${nombre}** fue registrado con unidad \`${unidad}\`, stack max \`${stackMax}\` y stock inicial 0.\n` +
+              'Usa `/stock sumar` para agregar stock.',
+            color: SHOP_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -539,42 +549,77 @@ export const catalogoCommand: Command = {
         },
       });
       if (!material) {
-        await interaction.editReply(`❌ No existe un material llamado **${nombre}**.`);
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Material no encontrado', `No existe un material llamado **${nombre}**.`)],
+        });
         return;
       }
       if (material.components.length > 0) {
-        await interaction.editReply(
-          `❌ **${nombre}** es componente de ${material.components.length} producto(s). Elimínalos primero.`,
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Material en uso',
+              `**${nombre}** es componente de ${material.components.length} producto(s). Elimínalos primero.`,
+            ),
+          ],
+        });
         return;
       }
       if (material.directProducts.length > 0) {
-        await interaction.editReply(
-          `❌ **${nombre}** está configurado como material base de una oferta en la tienda. Elimínala o cambia su presentación primero.`,
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Material en uso',
+              `**${nombre}** está configurado como material base de una oferta en la tienda. Elimínala o cambia su presentación primero.`,
+            ),
+          ],
+        });
         return;
       }
       if ((material.inventory?.currentStock ?? 0) > 0) {
-        await interaction.editReply(
-          `❌ **${nombre}** tiene ${material.inventory?.currentStock} en stock. Retíralo antes de eliminar.`,
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Material con stock',
+              `**${nombre}** tiene ${material.inventory?.currentStock} en stock. Retíralo antes de eliminar.`,
+            ),
+          ],
+        });
         return;
       }
       if ((material.inventory?.reservedStock ?? 0) > 0) {
-        await interaction.editReply(
-          `❌ **${nombre}** tiene stock reservado. Libera los pedidos activos antes de eliminarlo.`,
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Material con reserva',
+              `**${nombre}** tiene stock reservado. Libera los pedidos activos antes de eliminarlo.`,
+            ),
+          ],
+        });
         return;
       }
       if (material.movements.length > 0 || material.withdrawals.length > 0) {
-        await interaction.editReply(
-          `❌ **${nombre}** ya tiene historial de inventario. No se puede eliminar sin perder trazabilidad.`,
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Material con historial',
+              `**${nombre}** ya tiene historial de inventario. No se puede eliminar sin perder trazabilidad.`,
+            ),
+          ],
+        });
         return;
       }
 
       await prisma.shopMaterial.delete({ where: { id: material.id } });
-      await interaction.editReply(`✅ Material **${nombre}** eliminado.`);
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Material eliminado',
+            description: `**${nombre}** fue eliminado.`,
+            color: SHOP_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -585,7 +630,9 @@ export const catalogoCommand: Command = {
       const stackMax = interaction.options.getInteger('stack_max');
 
       if (!unidad && !stackMax) {
-        await interaction.editReply('❌ Debes indicar al menos `unidad` o `stack_max`.');
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Configuración incompleta', 'Debes indicar al menos `unidad` o `stack_max`.')],
+        });
         return;
       }
 
@@ -594,7 +641,9 @@ export const catalogoCommand: Command = {
       });
 
       if (!material) {
-        await interaction.editReply(`❌ No existe un material llamado **${nombre}**.`);
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Material no encontrado', `No existe un material llamado **${nombre}**.`)],
+        });
         return;
       }
 
@@ -606,9 +655,15 @@ export const catalogoCommand: Command = {
         },
       });
 
-      await interaction.editReply(
-        `✅ **${nombre}** actualizado.\nUnidad: \`${unidad ?? material.baseUnit}\` · Stack max: \`${stackMax ?? material.stackSize}\``,
-      );
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Material actualizado',
+            description: `**${nombre}** actualizado.\nUnidad: \`${unidad ?? material.baseUnit}\` · Stack max: \`${stackMax ?? material.stackSize}\``,
+            color: SHOP_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -631,7 +686,14 @@ export const catalogoCommand: Command = {
       try {
         taxonomy = assertShopTaxonomy(categoriaRaw, subcategoriaRaw);
       } catch (err) {
-        await interaction.editReply(`❌ ${err instanceof Error ? err.message : 'Clasificación inválida.'}`);
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Clasificación inválida',
+              err instanceof Error ? err.message : 'Clasificación inválida.',
+            ),
+          ],
+        });
         return;
       }
       const categoryLabel = getCategoryDefinition(taxonomy.category).label;
@@ -641,12 +703,21 @@ export const catalogoCommand: Command = {
         where: { guildId_name: { guildId, name: nombre } },
       });
       if (existing) {
-        await interaction.editReply(`❌ Ya existe un producto llamado **${nombre}**.`);
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Producto duplicado', `Ya existe un producto llamado **${nombre}**.`)],
+        });
         return;
       }
 
       if (tipo === 'service' && materialBaseName) {
-        await interaction.editReply('❌ Un servicio no debe tener material base ni presentación de inventario.');
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Configuración inválida',
+              'Un servicio no debe tener material base ni presentación de inventario.',
+            ),
+          ],
+        });
         return;
       }
 
@@ -660,7 +731,14 @@ export const catalogoCommand: Command = {
           presentationType,
         });
       } catch (err) {
-        await interaction.editReply(`❌ ${err instanceof Error ? err.message : 'Presentación inválida.'}`);
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Presentación inválida',
+              err instanceof Error ? err.message : 'Presentación inválida.',
+            ),
+          ],
+        });
         return;
       }
 
@@ -693,17 +771,24 @@ export const catalogoCommand: Command = {
         },
       });
 
-      await interaction.editReply(
-        `✅ Producto **${nombre}** creado a **${precio} $**.\n` +
-        `Clasificación: **${categoryLabel} / ${subcategoryLabel}**.\n` +
-        (
-          tipo === 'service'
-            ? 'Quedó activo porque es un servicio sin inventario base.'
-            : presentationConfig
-              ? `Quedó activo como oferta de **${presentationConfig.presentationLabel}** de **${presentationConfig.material.name}**.`
-              : 'Quedó inactivo hasta que definas sus materiales y lo actives.'
-        ),
-      );
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Producto creado',
+            description:
+              `**${nombre}** fue creado a **${precio} $**.\n` +
+              `Clasificación: **${categoryLabel} / ${subcategoryLabel}**.\n` +
+              (
+                tipo === 'service'
+                  ? 'Quedó activo porque es un servicio sin inventario base.'
+                  : presentationConfig
+                    ? `Quedó activo como oferta de **${presentationConfig.presentationLabel}** de **${presentationConfig.material.name}**.`
+                    : 'Quedó inactivo hasta que definas sus materiales y lo actives.'
+              ),
+            color: SHOP_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -722,12 +807,21 @@ export const catalogoCommand: Command = {
       });
 
       if (!product) {
-        await interaction.editReply(`❌ Producto **${nombreProducto}** no encontrado.`);
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Producto no encontrado', `Producto **${nombreProducto}** no encontrado.`)],
+        });
         return;
       }
 
       if (product.productType === 'service') {
-        await interaction.editReply('❌ Un servicio no debe configurarse como oferta de material.');
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Configuración inválida',
+              'Un servicio no debe configurarse como oferta de material.',
+            ),
+          ],
+        });
         return;
       }
 
@@ -741,9 +835,14 @@ export const catalogoCommand: Command = {
         },
       });
       if (activeOrders > 0) {
-        await interaction.editReply(
-          `❌ **${nombreProducto}** tiene pedidos activos. No cambies su presentación hasta que se resuelvan.`,
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Producto con pedidos activos',
+              `**${nombreProducto}** tiene pedidos activos. No cambies su presentación hasta que se resuelvan.`,
+            ),
+          ],
+        });
         return;
       }
 
@@ -757,12 +856,21 @@ export const catalogoCommand: Command = {
           presentationType,
         });
       } catch (err) {
-        await interaction.editReply(`❌ ${err instanceof Error ? err.message : 'Presentación inválida.'}`);
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Presentación inválida',
+              err instanceof Error ? err.message : 'Presentación inválida.',
+            ),
+          ],
+        });
         return;
       }
 
       if (!presentationConfig) {
-        await interaction.editReply('❌ No se pudo resolver la presentación solicitada.');
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Presentación inválida', 'No se pudo resolver la presentación solicitada.')],
+        });
         return;
       }
 
@@ -803,10 +911,17 @@ export const catalogoCommand: Command = {
         });
       });
 
-      await interaction.editReply(
-        `✅ **${nombreProducto}** ahora vende **${presentationConfig.presentationLabel}** de **${presentationConfig.material.name}**.\n` +
-        `Consumo base: ${presentationConfig.presentationQuantity} ${presentationConfig.material.baseUnit}.`,
-      );
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Presentación actualizada',
+            description:
+              `**${nombreProducto}** ahora vende **${presentationConfig.presentationLabel}** de **${presentationConfig.material.name}**.\n` +
+              `Consumo base: ${presentationConfig.presentationQuantity} ${presentationConfig.material.baseUnit}.`,
+            color: SHOP_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -822,7 +937,14 @@ export const catalogoCommand: Command = {
       try {
         taxonomy = assertShopTaxonomy(categoriaRaw, subcategoriaRaw);
       } catch (err) {
-        await interaction.editReply(`❌ ${err instanceof Error ? err.message : 'Clasificación inválida.'}`);
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Clasificación inválida',
+              err instanceof Error ? err.message : 'Clasificación inválida.',
+            ),
+          ],
+        });
         return;
       }
       const categoryLabel = getCategoryDefinition(taxonomy.category).label;
@@ -832,7 +954,9 @@ export const catalogoCommand: Command = {
         where: { guildId_name: { guildId, name: nombreProducto } },
       });
       if (!product) {
-        await interaction.editReply(`❌ Producto **${nombreProducto}** no encontrado.`);
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Producto no encontrado', `Producto **${nombreProducto}** no encontrado.`)],
+        });
         return;
       }
 
@@ -844,9 +968,15 @@ export const catalogoCommand: Command = {
         },
       });
 
-      await interaction.editReply(
-        `✅ **${nombreProducto}** ahora pertenece a **${categoryLabel} / ${subcategoryLabel}**.`,
-      );
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Producto reclasificado',
+            description: `**${nombreProducto}** ahora pertenece a **${categoryLabel} / ${subcategoryLabel}**.`,
+            color: SHOP_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -861,18 +991,27 @@ export const catalogoCommand: Command = {
         prisma.shopMaterial.findUnique({ where: { guildId_name: { guildId, name: nombreMaterial } } }),
       ]);
       if (!product) {
-        await interaction.editReply(`❌ Producto **${nombreProducto}** no encontrado.`);
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Producto no encontrado', `Producto **${nombreProducto}** no encontrado.`)],
+        });
         return;
       }
       if (!material) {
-        await interaction.editReply(`❌ Material **${nombreMaterial}** no encontrado.`);
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Material no encontrado', `Material **${nombreMaterial}** no encontrado.`)],
+        });
         return;
       }
 
       if (product.baseMaterialId === material.id) {
-        await interaction.editReply(
-          `❌ **${nombreProducto}** ya usa **${nombreMaterial}** como material base estandarizado. Usa \`/tienda producto-presentacion\` para cambiar esa cantidad.`,
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Material base ya configurado',
+              `**${nombreProducto}** ya usa **${nombreMaterial}** como material base estandarizado. Usa \`/tienda producto-presentacion\` para cambiar esa cantidad.`,
+            ),
+          ],
+        });
         return;
       }
 
@@ -886,9 +1025,14 @@ export const catalogoCommand: Command = {
         },
       });
       if (activeOrders > 0) {
-        await interaction.editReply(
-          `❌ **${nombreProducto}** tiene pedidos activos. No cambies su receta hasta que se resuelvan.`,
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Producto con pedidos activos',
+              `**${nombreProducto}** tiene pedidos activos. No cambies su receta hasta que se resuelvan.`,
+            ),
+          ],
+        });
         return;
       }
 
@@ -898,9 +1042,15 @@ export const catalogoCommand: Command = {
         create: { productId: product.id, materialId: material.id, quantityRequired: cantidad },
       });
 
-      await interaction.editReply(
-        `✅ **${nombreProducto}** requiere **${cantidad} x ${nombreMaterial}**.`,
-      );
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Componente actualizado',
+            description: `**${nombreProducto}** requiere **${cantidad} x ${nombreMaterial}**.`,
+            color: SHOP_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -914,7 +1064,9 @@ export const catalogoCommand: Command = {
         include: { prices: { where: { validTo: null } } },
       });
       if (!product) {
-        await interaction.editReply(`❌ Producto **${nombreProducto}** no encontrado.`);
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Producto no encontrado', `Producto **${nombreProducto}** no encontrado.`)],
+        });
         return;
       }
 
@@ -930,9 +1082,15 @@ export const catalogoCommand: Command = {
         });
       });
 
-      await interaction.editReply(
-        `✅ Precio de **${nombreProducto}** actualizado a **${nuevoPrecio} $**.`,
-      );
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Precio actualizado',
+            description: `Precio de **${nombreProducto}** actualizado a **${nuevoPrecio} $**.`,
+            color: SHOP_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 
@@ -946,26 +1104,45 @@ export const catalogoCommand: Command = {
         include: { components: { take: 1 } },
       });
       if (!product) {
-        await interaction.editReply(`❌ Producto **${nombreProducto}** no encontrado.`);
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Producto no encontrado', `Producto **${nombreProducto}** no encontrado.`)],
+        });
         return;
       }
       if (product.isActive === activar) {
-        await interaction.editReply(
-          `ℹ️ **${nombreProducto}** ya está ${activar ? 'activo' : 'desactivado'}.`,
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopNoticeEmbed({
+              title: 'Sin cambios',
+              description: `**${nombreProducto}** ya está ${activar ? 'activo' : 'desactivado'}.`,
+              color: SHOP_COLORS.neutral,
+            }),
+          ],
+        });
         return;
       }
       if (activar && !hasProductInventoryDefinition(product)) {
-        await interaction.editReply(
-          `❌ **${nombreProducto}** no se puede activar porque no tiene una definición de inventario configurada.`,
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Producto no activable',
+              `**${nombreProducto}** no se puede activar porque no tiene una definición de inventario configurada.`,
+            ),
+          ],
+        });
         return;
       }
 
       await prisma.shopProduct.update({ where: { id: product.id }, data: { isActive: activar } });
-      await interaction.editReply(
-        `${activar ? '✅' : '⛔'} **${nombreProducto}** ${activar ? 'activado' : 'desactivado'}.`,
-      );
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: activar ? 'Producto activado' : 'Producto desactivado',
+            description: `**${nombreProducto}** fue ${activar ? 'activado' : 'desactivado'}.`,
+            color: activar ? SHOP_COLORS.success : SHOP_COLORS.warning,
+          }),
+        ],
+      });
       return;
     }
 
@@ -978,13 +1155,20 @@ export const catalogoCommand: Command = {
         include: { orderItems: { take: 1 } },
       });
       if (!product) {
-        await interaction.editReply(`❌ Producto **${nombreProducto}** no encontrado.`);
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed('Producto no encontrado', `Producto **${nombreProducto}** no encontrado.`)],
+        });
         return;
       }
       if (product.orderItems.length > 0) {
-        await interaction.editReply(
-          `❌ **${nombreProducto}** tiene pedidos asociados. Usa \`/tienda producto-desactivar\` en su lugar.`,
-        );
+        await interaction.editReply({
+          embeds: [
+            buildShopErrorEmbed(
+              'Producto con historial',
+              `**${nombreProducto}** tiene pedidos asociados. Usa \`/tienda producto-desactivar\` en su lugar.`,
+            ),
+          ],
+        });
         return;
       }
 
@@ -993,7 +1177,15 @@ export const catalogoCommand: Command = {
         prisma.shopProductComponent.deleteMany({ where: { productId: product.id } }),
         prisma.shopProduct.delete({ where: { id: product.id } }),
       ]);
-      await interaction.editReply(`✅ Producto **${nombreProducto}** eliminado.`);
+      await interaction.editReply({
+        embeds: [
+          buildShopNoticeEmbed({
+            title: 'Producto eliminado',
+            description: `**${nombreProducto}** fue eliminado.`,
+            color: SHOP_COLORS.success,
+          }),
+        ],
+      });
       return;
     }
 

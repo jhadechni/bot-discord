@@ -210,6 +210,59 @@ Decision: quedan como utilidades internas de staff con identidad de sistema, no 
 
 La verificacion `npm run build` paso correctamente.
 
+## Revision residual visual
+
+Se hizo una busqueda general de mensajes planos y embeds directos.
+
+Se migraron los residuos principales de `src/commands/shop/tienda.command.ts`:
+
+- CRUD de materiales.
+- CRUD de productos.
+- Presentaciones.
+- Clasificacion.
+- Componentes.
+- Precios.
+- Activacion/desactivacion.
+
+Resultado: no quedan coincidencias relevantes de respuestas planas con el patron revisado.
+
+Usos directos de `new EmbedBuilder` que quedan se consideran aceptados por ahora porque son builders internos o actualizaciones de embeds existentes.
+
+La verificacion `npm run build` paso correctamente.
+
+## Pulido visual de tienda
+
+Se ajustaron las vistas densas de tienda para priorizar legibilidad:
+
+- Catalogo sin grilla de tres columnas.
+- Footer de catalogo mas corto.
+- Entrada de tienda mas limpia.
+- Carrito con titulo y resumen mas sobrios.
+- Pedidos de staff y cliente con campos sin iconografia excesiva.
+
+Archivos ajustados:
+
+- `src/shop/catalog.ts`
+- `src/shop/cart.ts`
+- `src/shop/order-utils.ts`
+
+La verificacion `npm run build` paso correctamente.
+
+## Consistencia global de mensajes
+
+Se reviso la capa global `src/utils/message-ui.ts` despues de migrar los bloques principales.
+
+Cambios cerrados:
+
+- Footer nuevo `Aquaris Logs • Comunidad` para logs de bienvenida/salidas.
+- Tipos globales `AquarisModule`, `AquarisMessageContext` y `AquarisMessageIntent`.
+- Colores finales centralizados a traves de `AQUARIS_COLORS` y `src/utils/ui.ts`.
+- Limpieza de fallbacks hexadecimales residuales fuera de la paleta compartida.
+
+La verificacion `npm run build` paso correctamente.
+
+`git diff --check` paso correctamente.
+
 ## Skills de Obsidian
 
 Se busco una skill de Obsidian con `npx skills find obsidian`.

@@ -3,6 +3,7 @@ import { COLORS } from './ui.js';
 
 export const AQUARIS_FOOTERS = {
   logsModeration: { text: 'Aquaris Logs • Moderación' },
+  logsCommunity: { text: 'Aquaris Logs • Comunidad' },
   moderation: { text: 'Aquaris • Moderación' },
   system: { text: 'Aquaris • Sistema' },
   shop: { text: 'Aquaris • Tienda' },
@@ -35,6 +36,19 @@ export const AQUARIS_COLORS = {
 
 export type AquarisFooterKey = keyof typeof AQUARIS_FOOTERS;
 export type AquarisColor = (typeof AQUARIS_COLORS)[keyof typeof AQUARIS_COLORS];
+export type AquarisModule =
+  | 'moderation'
+  | 'automod'
+  | 'recruitment'
+  | 'reminders'
+  | 'suggestions'
+  | 'levels'
+  | 'community'
+  | 'shop'
+  | 'system'
+  | 'fun';
+export type AquarisMessageContext = 'public' | 'dm' | 'ephemeral' | 'log';
+export type AquarisMessageIntent = 'info' | 'success' | 'warning' | 'error' | 'audit';
 
 export type AquarisEmbedOptions = {
   title: string;

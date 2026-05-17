@@ -22,6 +22,7 @@ Este vault documenta el contexto funcional, tecnico y visual del bot Aquaris.
 - [[04 - UI y Mensajes/Bienvenida Salidas y Boost - Estado Actual]]
 - [[04 - UI y Mensajes/Tienda - Estado Actual]]
 - [[04 - UI y Mensajes/Fun y Utilidades Especiales - Estado Actual]]
+- [[04 - UI y Mensajes/Revision Residual Visual]]
 - [[05 - Base de Datos/Modelo de Datos]]
 - [[06 - Operacion/Comandos y Scripts]]
 - [[07 - Cambios/Cambios Recientes]]

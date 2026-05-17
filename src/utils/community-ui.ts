@@ -37,7 +37,7 @@ export function buildJoinLogEmbed(options: MemberLogOptions) {
   return buildAquarisEmbed({
     title: 'Nuevo miembro',
     color: COMMUNITY_COLORS.log,
-    footer: 'logsModeration',
+    footer: 'logsCommunity',
     fields: [
       { name: 'Usuario', value: `<@${options.userId}> (${options.userTag})`, inline: true },
       { name: 'ID', value: options.userId, inline: true },
@@ -50,7 +50,7 @@ export function buildLeaveLogEmbed(options: MemberLogOptions) {
   return buildAquarisEmbed({
     title: 'Miembro salió del servidor',
     color: COMMUNITY_COLORS.leave,
-    footer: 'logsModeration',
+    footer: 'logsCommunity',
     fields: [
       { name: 'Usuario', value: options.userTag, inline: true },
       { name: 'ID', value: options.userId, inline: true },

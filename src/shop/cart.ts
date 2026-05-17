@@ -11,7 +11,8 @@ import {
   type MessageActionRowComponentBuilder,
 } from 'discord.js';
 import type { Decimal } from '@prisma/client/runtime/client';
-import { COLORS, formatPrice, SHOP_FOOTER } from '../utils/ui.js';
+import { formatPrice, SHOP_FOOTER } from '../utils/ui.js';
+import { SHOP_COLORS } from '../utils/shop-ui.js';
 import type { CatalogMode, CatalogViewState } from './catalog.js';
 import {
   PRODUCT_TYPE_ICONS,
@@ -92,10 +93,10 @@ export function buildCartEmbed(session: CartSession): EmbedBuilder {
 
   if (items.length === 0) {
     return new EmbedBuilder()
-      .setTitle('🛒 Tu carrito')
-      .setDescription('**El carrito está vacío.**\n\nCambia a **Explorar** para agregar productos.')
-      .setColor(COLORS.neutral)
-      .setFooter(SHOP_FOOTER);
+      .setTitle('Carrito')
+      .setDescription('El carrito está vacío. Cambia a **Explorar** para agregar productos.')
+      .setColor(SHOP_COLORS.neutral)
+      .setFooter({ text: `${SHOP_FOOTER.text}  ·  Explora productos para empezar` });
   }
 
   const lines = items.map((item, index) => {
@@ -115,11 +116,11 @@ export function buildCartEmbed(session: CartSession): EmbedBuilder {
   const count = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return new EmbedBuilder()
-    .setTitle(`🛒 Tu carrito  ·  ${items.length} producto${items.length !== 1 ? 's' : ''}`)
+    .setTitle(`Carrito · ${items.length} producto${items.length !== 1 ? 's' : ''}`)
     .setDescription(lines.join('\n\n'))
-    .setColor(COLORS.warning)
+    .setColor(SHOP_COLORS.warning)
     .addFields({
-      name: '💰 Resumen',
+      name: 'Resumen',
       value: `**${formatPrice(total)}**  ·  ${count} unidad${count !== 1 ? 'es' : ''}`,
     })
     .setFooter({ text: `${SHOP_FOOTER.text}  ·  Revisa el pedido antes de confirmarlo` });
@@ -127,11 +128,11 @@ export function buildCartEmbed(session: CartSession): EmbedBuilder {
 
 function buildBrowseEmbed(state: CatalogViewState): EmbedBuilder {
   return buildProductGridEmbed(state, {
-    color: COLORS.blurple,
+    color: SHOP_COLORS.info,
     footerHint: 'Usa los botones numerados para agregar',
     numberItems: true,
     pageSize: CART_PAGE_SIZE,
-    titlePrefix: '🛍️ Explorar productos',
+    titlePrefix: 'Explorar productos',
   });
 }
 

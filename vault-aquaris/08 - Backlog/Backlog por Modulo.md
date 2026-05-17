@@ -2,11 +2,12 @@
 
 ## UI global
 
-- Extender `message-ui.ts` segun necesidades reales de los siguientes modulos.
-- Mantener `moderation-ui.ts` como adaptador especifico sobre la utilidad global.
-- Definir footers finales para Tienda, Reclutamiento, Sistema, Niveles, Sugerencias y Recordatorios.
-- Definir tipos comunes para modulo, contexto, estado e intencion de mensaje.
+- Mantener `message-ui.ts` como base comun de footers, colores y builders.
+- Mantener los archivos `*-ui.ts` como adaptadores especificos por modulo.
 - Evitar diseñar embeds aislados por comando; migrar por modulo completo.
+- Revisar si en el futuro hace falta tipar estados especificos por modulo.
+
+Estado: footers principales, colores y tipos base de modulo/contexto/intencion definidos.
 
 ## Orden de migracion
 
@@ -28,20 +29,18 @@
 
 ## Tienda
 
-- Revisar mensajes administrativos residuales de `tienda.command.ts` para material/producto CRUD.
-- Evaluar si `catalog.ts` y `cart.ts` deben depender directamente de `shop-ui.ts` o seguir usando `SHOP_FOOTER`.
 - Revisar si el canal temporal de pedido necesita un mensaje de bienvenida mas especifico.
 - Revisar si se requiere log interno separado para ventas, cancelaciones o descuentos manuales.
+- Revisar manualmente capturas reales de catalogo/carrito en Discord con productos largos.
 
-Estado: migracion visual principal completada en primera capa con `src/utils/shop-ui.ts`.
+Estado: migracion visual principal completada con `src/utils/shop-ui.ts`, incluyendo CRUD interno de materiales/productos.
 
 ## Bienvenida, salidas y boost
 
-- Decidir si los logs de entradas/salidas deben usar footer propio `Aquaris Logs • Comunidad`.
 - Revisar si bienvenida debe mencionar reglas o canal guia cuando exista configuracion para eso.
 - Evaluar si boost debe tener log interno separado si el servidor lo necesita.
 
-Estado: migracion principal completada con `src/utils/community-ui.ts`.
+Estado: migracion principal completada con `src/utils/community-ui.ts`. Los logs usan `Aquaris Logs • Comunidad`.
 
 ## Reclutamiento
 
@@ -98,6 +97,7 @@ Estado: migracion principal completada con `src/utils/fun-ui.ts`.
 
 ## Revision residual
 
-- Buscar mensajes planos restantes en comandos y eventos.
-- Revisar embeds directos que aun no usan adaptador especifico.
-- Separar lo que sea deuda aceptada por modulo de lo que deba migrarse antes de cerrar la fase visual.
+- Revisar manualmente en Discord los embeds de catalogo y carrito.
+- Evaluar si los builders de `catalog.ts`, `cart.ts` y `order-utils.ts` deben moverse a `shop-ui.ts`.
+
+Estado: revision residual principal completada.
