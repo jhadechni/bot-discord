@@ -22,7 +22,8 @@ import { SHOP_COLORS } from '../utils/shop-ui.js';
 import { resolvePresentationLabel } from './quantities.js';
 import { buildProductContentsSummary } from './product-contents.js';
 
-const CATALOG_PAGE_SIZE = 6;
+const CATALOG_PAGE_SIZE = 9;
+const PRODUCT_SELECT_THRESHOLD = 25;
 
 export type CatalogMode = 'products' | 'services';
 
@@ -57,8 +58,8 @@ export const PRODUCT_TYPE_LABELS: Record<string, string> = {
 export const PRODUCT_TYPE_ICONS: Record<string, string> = {
   single:  '📦',
   bulk:    '🗃️',
-  kit:     '🎒',
-  service: '🔧',
+  kit:     '🧰',
+  service: '⚙️',
 };
 
 type CatalogProductRecord = Prisma.ShopProductGetPayload<{
@@ -79,6 +80,7 @@ type ProductCategoryAssignment = {
 };
 
 export type CatalogViewState = {
+  allSubcategoryProducts: CatalogProduct[];
   categoryKeys: string[];
   currentCategory: string;
   currentMode: CatalogMode;
@@ -141,16 +143,13 @@ export async function queryCatalogProducts(guildId: string) {
   );
 }
 
-function labelize(value: string): string {
-  return value
-    .split('_')
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-}
-
 function truncateText(value: string, maxLength: number): string {
   if (value.length <= maxLength) return value;
   return `${value.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
+function getProductEmoji(product: CatalogProduct): string {
+  return getCategoryDefinition(product.category).emoji;
 }
 
 function buildProductCardValue(product: CatalogProduct): string {
@@ -165,23 +164,20 @@ function buildProductCardValue(product: CatalogProduct): string {
       presentationType: product.presentationType as Parameters<typeof resolvePresentationLabel>[0]['presentationType'],
       stackSize: product.baseMaterial?.stackSize ?? 64,
     })}`;
-  const description = product.description
-    ? truncateText(product.description, 120)
-    : '_Sin descripción_';
+  const description = product.description ? truncateText(product.description, 120) : null;
   const contentsSummary = buildProductContentsSummary(product);
-  const contentsStr = contentsSummary
-    ? `🎁 ${truncateText(contentsSummary, 120)}`
-    : null;
+  const contentsStr = contentsSummary ? `🎁 ${truncateText(contentsSummary, 120)}` : null;
 
-  return [priceStr, presentationStr, contentsStr, description].filter(Boolean).join('\n');
+  return [presentationStr, priceStr, contentsStr, description].filter(Boolean).join('\n');
 }
 
 function applyTaxonomyImages(
   embed: EmbedBuilder,
-  state: CatalogViewState,
+  categoryKey: string,
+  subcategoryKey: string,
 ): EmbedBuilder {
-  const category = getCategoryDefinition(state.currentCategory);
-  const subcategory = getSubcategoryDefinition(state.currentCategory, state.currentSubcategory);
+  const category = getCategoryDefinition(categoryKey);
+  const subcategory = getSubcategoryDefinition(categoryKey, subcategoryKey);
   const thumbnailImage = subcategory.imageUrl ?? category.imageUrl;
 
   if (thumbnailImage) {
@@ -340,6 +336,7 @@ export function resolveCatalogViewState(
   const currentPage = Math.min(Math.max(requestedPage, 1), pages.length);
 
   return {
+    allSubcategoryProducts: subcategoryProducts,
     categoryKeys,
     currentCategory,
     currentMode: mode,
@@ -379,7 +376,7 @@ export function buildProductGridEmbed(
           `${modeMeta.label} · Página ${state.currentPage}/${state.totalPages}`,
           footerHint,
         ].join('  ·  '),
-      }), state);
+      }), state.currentCategory, state.currentSubcategory);
   }
 
   embed.setDescription(
@@ -391,13 +388,22 @@ export function buildProductGridEmbed(
   );
 
   const fields = state.pageProducts.map((product, index) => {
-    const icon = PRODUCT_TYPE_ICONS[product.productType] ?? '🛍️';
+    const icon = getProductEmoji(product);
     const prefix = options.numberItems ? `${index + 1}. ` : '';
+    const price = product.prices[0];
+    const priceStr = price ? `💰 **${formatPrice(price.price, price.currency)}**` : '💰 _Sin precio_';
+    const presentationStr = product.productType !== 'service'
+      ? `📐 ${product.presentationLabel ?? resolvePresentationLabel({
+          presentationQuantity: product.presentationQuantity,
+          presentationType: product.presentationType as Parameters<typeof resolvePresentationLabel>[0]['presentationType'],
+          stackSize: product.baseMaterial?.stackSize ?? 64,
+        })}`
+      : null;
 
     return {
-      name: `${prefix}${icon} ${truncateText(product.name, 80)}`.slice(0, 256),
-      value: buildProductCardValue(product).slice(0, 1024),
-      inline: false,
+      name: `${prefix}${icon} ${truncateText(product.name, 25)}`.slice(0, 256),
+      value: [presentationStr, priceStr].filter(Boolean).join('\n'),
+      inline: true,
     };
   });
 
@@ -411,7 +417,52 @@ export function buildProductGridEmbed(
     ].filter(Boolean).join('  ·  '),
   });
 
-  return applyTaxonomyImages(embed, state);
+  return applyTaxonomyImages(embed, state.currentCategory, state.currentSubcategory);
+}
+
+export function buildProductDetailEmbed(
+  product: CatalogProduct,
+  categoryKey: string,
+  subcategoryKey: string,
+): EmbedBuilder {
+  const price = product.prices[0];
+  const priceStr = price
+    ? `💰 **${formatPrice(price.price, price.currency)}**`
+    : '💰 _Sin precio_';
+  const icon = getProductEmoji(product);
+  const typeLabel = PRODUCT_TYPE_LABELS[product.productType] ?? product.productType;
+
+  const lines: string[] = [];
+
+  if (product.productType !== 'service') {
+    const presentationLabel = product.presentationLabel ?? resolvePresentationLabel({
+      presentationQuantity: product.presentationQuantity,
+      presentationType: product.presentationType as Parameters<typeof resolvePresentationLabel>[0]['presentationType'],
+      stackSize: product.baseMaterial?.stackSize ?? 64,
+    });
+    lines.push(`📐 **Presentación:** ${presentationLabel}`);
+  }
+
+  lines.push(priceStr);
+  lines.push(`🏷️ **Tipo:** ${typeLabel}`);
+
+  if (product.description) {
+    lines.push('', product.description);
+  }
+
+  const contentsSummary = buildProductContentsSummary(product);
+  if (contentsSummary) {
+    lines.push('', `🎁 **Contenido:** ${contentsSummary}`);
+  }
+
+  const embed = new EmbedBuilder()
+    .setTitle(`${icon} ${product.name}`)
+    .setDescription(lines.join('\n'))
+    .setColor(SHOP_COLORS.info)
+    .setFooter({ text: `${SHOP_FOOTER.text}  ·  /pedido crear o carrito para comprar` })
+    .setTimestamp();
+
+  return applyTaxonomyImages(embed, categoryKey, subcategoryKey);
 }
 
 function buildCatalogModeRow(
@@ -426,9 +477,13 @@ function buildCatalogModeRow(
       .setDisabled(counts.products === 0),
     new ButtonBuilder()
       .setCustomId('tienda:catalog:mode:services')
-      .setLabel(`🔧 Servicios (${counts.services})`)
+      .setLabel(`⚙️ Servicios (${counts.services})`)
       .setStyle(currentMode === 'services' ? ButtonStyle.Primary : ButtonStyle.Secondary)
       .setDisabled(counts.services === 0),
+    new ButtonBuilder()
+      .setCustomId('tienda:catalog:search')
+      .setLabel('🔍 Buscar')
+      .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('tienda:catalog:request')
       .setLabel('📝 Solicitud libre')
@@ -452,6 +507,7 @@ export function buildCatalogEntryView(
         '',
         `**Productos**: ${counts.products} disponible${counts.products === 1 ? '' : 's'}`,
         `**Servicios**: ${counts.services} disponible${counts.services === 1 ? '' : 's'}`,
+        '**Buscar**: encuentra un ítem escribiendo su nombre.',
         '**Solicitud libre**: envía al staff algo que no esté listado en el catálogo.',
       ].join('\n'),
     )
@@ -537,6 +593,32 @@ function buildPaginationRow(
   );
 }
 
+function buildProductSelectRow(
+  products: CatalogProduct[],
+  mode: CatalogMode,
+  category: string,
+  subcategory: string,
+  selectedProductId?: string | null,
+): ActionRowBuilder<StringSelectMenuBuilder> {
+  const select = new StringSelectMenuBuilder()
+    .setCustomId(`tienda:catalog:product:${mode}:${category}:${subcategory}`)
+    .setPlaceholder('🔍 Busca o selecciona un producto…')
+    .addOptions(
+      products.slice(0, PRODUCT_SELECT_THRESHOLD).map(product => {
+        const price = product.prices[0];
+        const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
+        const icon = getProductEmoji(product);
+        return new StringSelectMenuOptionBuilder()
+          .setLabel(`${icon} ${truncateText(product.name, 95)}`)
+          .setValue(product.id)
+          .setDescription(`💰 ${priceStr}`)
+          .setDefault(product.id === selectedProductId);
+      }),
+    );
+
+  return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
+}
+
 function buildOpenCartRow(state: CatalogViewState): ActionRowBuilder<ButtonBuilder> {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
@@ -554,6 +636,7 @@ export function buildCatalogView(
   categoryKey?: string | null,
   subcategoryKey?: string | null,
   requestedPage = 1,
+  selectedProductId?: string | null,
 ): {
   components: Array<ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>>;
   embed: EmbedBuilder;
@@ -579,7 +662,19 @@ export function buildCatalogView(
     ));
   }
 
-  if (state.totalPages > 1) {
+  const useProductSelect = state.allSubcategoryProducts.length > 0
+    && state.allSubcategoryProducts.length <= PRODUCT_SELECT_THRESHOLD;
+
+  if (useProductSelect) {
+    const resolvedId = selectedProductId ?? state.allSubcategoryProducts[0]?.id ?? null;
+    components.push(buildProductSelectRow(
+      state.allSubcategoryProducts,
+      state.currentMode,
+      state.currentCategory,
+      state.currentSubcategory,
+      resolvedId,
+    ));
+  } else if (state.totalPages > 1) {
     components.push(buildPaginationRow(
       state.currentMode,
       state.currentCategory,
@@ -591,13 +686,136 @@ export function buildCatalogView(
 
   components.push(buildOpenCartRow(state));
 
-  return {
-    components,
-    embed: buildProductGridEmbed(state, {
+  let embed: EmbedBuilder;
+  if (useProductSelect && state.allSubcategoryProducts.length > 0) {
+    const product = (selectedProductId
+      ? state.allSubcategoryProducts.find(p => p.id === selectedProductId)
+      : null) ?? state.allSubcategoryProducts[0];
+    if (!product) {
+      embed = buildProductGridEmbed(state, { color: SHOP_COLORS.info, pageSize: CATALOG_PAGE_SIZE, titlePrefix: 'Tienda Aquaris' });
+    } else {
+      embed = buildProductDetailEmbed(product, state.currentCategory, state.currentSubcategory);
+    }
+  } else {
+    embed = buildProductGridEmbed(state, {
       color: SHOP_COLORS.info,
       pageSize: CATALOG_PAGE_SIZE,
       titlePrefix: 'Tienda Aquaris',
-    }),
-    state,
-  };
+    });
+  }
+
+  return { components, embed, state };
+}
+
+// ─── Search ──────────────────────────────────────────────────────────────────
+
+export function searchCatalogProducts(
+  products: CatalogProduct[],
+  query: string,
+): CatalogProduct[] {
+  const q = query.toLowerCase().trim();
+  if (!q) return [];
+  return products.filter(p =>
+    p.name.toLowerCase().includes(q) ||
+    (p.description?.toLowerCase().includes(q) ?? false),
+  );
+}
+
+function buildSearchProductSelectRow(
+  products: CatalogProduct[],
+  selectedProductId?: string | null,
+): ActionRowBuilder<StringSelectMenuBuilder> {
+  const select = new StringSelectMenuBuilder()
+    .setCustomId('tienda:catalog:search_product')
+    .setPlaceholder('Selecciona un resultado…')
+    .addOptions(
+      products.slice(0, PRODUCT_SELECT_THRESHOLD).map(product => {
+        const price = product.prices[0];
+        const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
+        const icon = getProductEmoji(product);
+        return new StringSelectMenuOptionBuilder()
+          .setLabel(`${icon} ${truncateText(product.name, 95)}`)
+          .setValue(product.id)
+          .setDescription(`💰 ${priceStr}`)
+          .setDefault(product.id === selectedProductId);
+      }),
+    );
+  return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
+}
+
+export function buildSearchView(
+  allProducts: CatalogProduct[],
+  results: CatalogProduct[],
+  query: string,
+  selectedProductId?: string | null,
+): {
+  components: Array<ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>>;
+  embed: EmbedBuilder;
+} {
+  const components: Array<ActionRowBuilder<ButtonBuilder> | ActionRowBuilder<StringSelectMenuBuilder>> = [];
+
+  // Row 1: back button
+  components.push(
+    new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId('tienda:catalog:search_back')
+        .setLabel('← Volver al catálogo')
+        .setStyle(ButtonStyle.Secondary),
+    ),
+  );
+
+  if (results.length === 0) {
+    return {
+      components,
+      embed: new EmbedBuilder()
+        .setTitle('🔍 Sin resultados')
+        .setDescription(`No se encontraron productos para **"${truncateText(query, 100)}"**.\nIntenta con otro término.`)
+        .setColor(SHOP_COLORS.warning)
+        .setFooter({ text: SHOP_FOOTER.text })
+        .setTimestamp(),
+    };
+  }
+
+  const shown = results.slice(0, PRODUCT_SELECT_THRESHOLD);
+  const resolvedId = selectedProductId ?? shown[0]?.id ?? null;
+  const selectedProduct = (resolvedId ? shown.find(p => p.id === resolvedId) : null) ?? shown[0];
+
+  if (!selectedProduct) {
+    return { components, embed: new EmbedBuilder().setTitle('🔍 Sin resultados').setColor(SHOP_COLORS.warning) };
+  }
+
+  // Row 2: product select
+  components.push(buildSearchProductSelectRow(shown, resolvedId));
+
+  // Row 3: cart
+  const counts = countCatalogProductsByMode(allProducts);
+  if (counts.products > 0 || counts.services > 0) {
+    components.push(
+      new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setCustomId('tienda:catalog:open_cart:products:general:otros:1')
+          .setLabel('🛒 Abrir carrito')
+          .setStyle(ButtonStyle.Success),
+      ),
+    );
+  }
+
+  const extraNote = results.length > PRODUCT_SELECT_THRESHOLD
+    ? `\n_Se muestran los primeros ${PRODUCT_SELECT_THRESHOLD} de ${results.length} resultados._`
+    : '';
+
+  const price = selectedProduct.prices[0];
+  const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
+  const descLines = [`💰 **${priceStr}**`];
+  if (selectedProduct.description) descLines.push('', selectedProduct.description);
+  const description = descLines.join('\n') + extraNote;
+
+  const embed = buildProductDetailEmbed(
+    selectedProduct,
+    selectedProduct.category,
+    selectedProduct.subcategory,
+  ).setTitle(`🔍 "${truncateText(query, 50)}" — ${selectedProduct.name}`)
+   .setDescription(description);
+
+  return { components, embed };
 }

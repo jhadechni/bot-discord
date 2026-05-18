@@ -31,23 +31,12 @@ export const kickCommand: Command = {
     if (!guildId) return;
 
     const target = interaction.options.getMember('usuario');
-    if (!target || !('kickable' in target)) {
+    if (!target || !('kickable' in target) || !target.kickable) {
       await interaction.editReply({
         embeds: [
           buildModerationErrorEmbed(
-            'No se pudo aplicar la expulsión',
-            'No encontré a ese usuario dentro del servidor.',
-          ),
-        ],
-      });
-      return;
-    }
-    if (!target.kickable) {
-      await interaction.editReply({
-        embeds: [
-          buildModerationErrorEmbed(
-            'No se pudo aplicar la expulsión',
-            'No tengo permisos para expulsar a este usuario o su rol está por encima del mío.',
+            '⚠️ No se pudo aplicar la expulsión',
+            'No puedo expulsar a ese usuario por jerarquía, permisos o protección interna.',
           ),
         ],
       });
@@ -56,32 +45,25 @@ export const kickCommand: Command = {
 
     const reason = normalizeModerationReason(interaction.options.getString('motivo'));
 
-    let dmDelivered = true;
     try {
       await target.user.send({
         embeds: [
           buildModerationUserDmEmbed({
-            title: 'Has sido expulsado/a',
+            title: '🚪 Has sido expulsado',
+            actionLabel: 'un kick',
+            description: 'Has sido retirado del servidor.',
             color: MODERATION_COLORS.kick,
             guildName: interaction.guild?.name ?? 'este servidor',
             reason,
           }),
         ],
       });
-    } catch {
-      dmDelivered = false;
-    }
+    } catch { /* DM cerrados */ }
 
     await target.kick(reason);
 
     const log = await prisma.moderationLog.create({
-      data: {
-        guildId,
-        targetId: target.id,
-        moderatorId: interaction.user.id,
-        type: 'KICK',
-        reason,
-      },
+      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'KICK', reason, active: true },
     });
 
     const config = await getOrCreateGuildConfig(guildId);
@@ -90,10 +72,10 @@ export const kickCommand: Command = {
       await logsChannel.send({
         embeds: [
           buildModerationLogEmbed({
-            title: 'Usuario expulsado',
+            title: '🚪 Usuario expulsado',
             color: MODERATION_COLORS.kick,
             targetId: target.id,
-            targetTag: target.user.tag,
+            targetTag: target.user.globalName ?? target.user.username,
             moderatorId: interaction.user.id,
             reason,
             logId: log.id,
@@ -106,11 +88,10 @@ export const kickCommand: Command = {
     await interaction.editReply({
       embeds: [
         buildModerationStaffEmbed({
-          title: 'Expulsión aplicada',
-          color: MODERATION_COLORS.success,
-          targetMention: `<@${target.id}>`,
-          reason,
-          dmDelivered,
+          title: '🚪 Expulsión aplicada',
+          color: MODERATION_COLORS.kick,
+          description: `<@${target.id}> fue expulsado correctamente.`,
+          fields: [{ name: 'Motivo', value: reason, inline: false }],
         }),
       ],
     });

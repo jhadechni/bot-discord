@@ -21,7 +21,7 @@ export const topCommand: Command = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply();
 
     const guildId = interaction.guildId;
     if (!guildId) return;
@@ -47,7 +47,7 @@ export const topCommand: Command = {
     const lines = await Promise.all(
       top.map(async (entry, i) => {
         const user = await interaction.client.users.fetch(entry.userId).catch(() => null);
-        const name = user ? user.tag : `<@${entry.userId}>`;
+        const name = user ? (user.globalName ?? user.username) : `<@${entry.userId}>`;
         const prefix = medals[i] ?? `**${i + 1}.**`;
 
         const value =

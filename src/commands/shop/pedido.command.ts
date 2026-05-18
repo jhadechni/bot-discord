@@ -169,7 +169,7 @@ export const pedidoCommand: Command = {
           await staffCh.send({
             embeds:     [buildOrderEmbed(orderFull, stockAssessment)],
             components: [buildPendingButtons(orderCode)],
-          });
+          }).catch(() => null);
         }
       }
 

@@ -31,7 +31,7 @@ type LevelTopOptions = {
 
 export function buildLevelProfileEmbed(options: LevelProfileOptions) {
   return buildAquarisEmbed({
-    title: `Perfil de ${options.displayName}`,
+    title: `🏅 Perfil de ${options.displayName}`,
     color: LEVEL_COLORS.profile,
     footer: 'levels',
     fields: [
@@ -54,7 +54,7 @@ export function buildLevelTopEmbed(options: LevelTopOptions) {
   return buildAquarisEmbed({
     title: options.title,
     description: options.lines.join('\n'),
-    color: LEVEL_COLORS.ranking,
+    color: LEVEL_COLORS.profile,
     footer: 'levels',
     fields: [{ name: 'Servidor', value: options.guildName, inline: true }],
   });
@@ -71,7 +71,7 @@ export function buildLevelEmptyEmbed() {
 
 export function buildLevelUpEmbed(userId: string, level: number) {
   return buildAquarisEmbed({
-    title: 'Subida de nivel',
+    title: '🎉 Subida de nivel',
     description: `<@${userId}> alcanzó el **nivel ${level}**.`,
     color: LEVEL_COLORS.success,
     footer: 'levels',

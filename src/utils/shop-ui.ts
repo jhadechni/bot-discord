@@ -81,7 +81,7 @@ export function buildOrderReceivedEmbed(options: OrderReceivedOptions) {
   const fields: APIEmbedField[] = [
     { name: 'Producto', value: options.productLabel, inline: true },
     { name: 'Total', value: `**${formatPrice(options.totalAmount)}**`, inline: true },
-    { name: 'Estado', value: 'En revision del staff', inline: true },
+    { name: 'Estado', value: 'En revisión del staff', inline: true },
   ];
 
   if (options.discountAmount && Number(options.discountAmount.toString()) > 0) {
@@ -177,7 +177,7 @@ export function buildLowStockEmbed(inventories: InventoryRecord[]) {
       const available = inv.currentStock - inv.reservedStock;
       return {
         name: inv.material.name,
-        value: `Disponible: **${available}** / Minimo: ${inv.minStockAlert}`,
+        value: `Disponible: **${available}** / Mínimo: ${inv.minStockAlert}`,
         inline: true,
       };
     }),
@@ -218,7 +218,7 @@ export function buildShopStatsEmbed(options: ShopStatsOptions) {
   });
 
   return buildAquarisEmbed({
-    title: 'Estadisticas de tienda',
+    title: 'Estadísticas de tienda',
     description: `Periodo: **${options.periodLabel}**`,
     color: SHOP_COLORS.stock,
     footer: 'shop',

@@ -84,7 +84,7 @@ const guildMemberUpdateEvent: BotEvent<'guildMemberUpdate'> = {
               embeds: [
                 buildBoostPublicEmbed({
                   userId: newMember.id,
-                  userTag: newMember.user.tag,
+                  userTag: newMember.user.globalName ?? newMember.user.username,
                   guildName: newMember.guild.name,
                   avatarUrl: newMember.user.displayAvatarURL(),
                 }),

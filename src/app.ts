@@ -9,6 +9,7 @@ import { suggestCommand } from "./commands/suggest/suggest.command.js";
 import { configCommand } from "./commands/config/config.command.js";
 import { modCommand } from "./commands/moderation/mod.command.js";
 import { applyCommand } from "./commands/apply/apply.command.js";
+import { solicitudesCommand } from "./commands/apply/solicitudes.command.js";
 import { helpCommand } from "./commands/help/help.command.js";
 import { perfilCommand } from "./commands/levels/perfil.command.js";
 import { topCommand } from "./commands/levels/top.command.js";
@@ -25,8 +26,6 @@ import interactionCreateEvent from "./events/interactionCreate.event.js";
 import guildMemberAddEvent from "./events/guildMemberAdd.event.js";
 import guildMemberRemoveEvent from "./events/guildMemberRemove.event.js";
 import guildMemberUpdateEvent from "./events/guildMemberUpdate.event.js";
-import messageReactionAddEvent from "./events/messageReactionAdd.event.js";
-import messageReactionRemoveEvent from "./events/messageReactionRemove.event.js";
 import messageCreateEvent from "./events/messageCreate.event.js";
 import voiceStateUpdateEvent from "./events/voiceStateUpdate.event.js";
 
@@ -37,6 +36,7 @@ for (const cmd of [
   configCommand,
   modCommand,
   applyCommand,
+  solicitudesCommand,
   helpCommand,
   perfilCommand,
   topCommand,
@@ -70,8 +70,6 @@ for (const event of [
   guildMemberAddEvent,
   guildMemberRemoveEvent,
   guildMemberUpdateEvent,
-  messageReactionAddEvent,
-  messageReactionRemoveEvent,
   messageCreateEvent,
   voiceStateUpdateEvent,
 ]) {

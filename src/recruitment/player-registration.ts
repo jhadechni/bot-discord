@@ -94,7 +94,7 @@ function cleanExpiredSessions() {
 }
 
 function getDiscordDefault(member: GuildMember | null, userId: string) {
-  if (member?.user.tag) return member.user.tag;
+  if (member?.user.globalName) return member.user.globalName;
   if (member?.user.username) return `@${member.user.username}`;
   return `<@${userId}>`;
 }
@@ -543,6 +543,7 @@ export async function saveClanPlayerRegistration(sessionId: string) {
       ok: true as const,
       player: createdPlayer,
       channelId: session.channelId,
+      applicantUserId: session.applicantUserId,
     };
   } catch (error) {
     if (error instanceof Error && error.message === 'RECRUITMENT_TICKET_NOT_ACCEPTED') {

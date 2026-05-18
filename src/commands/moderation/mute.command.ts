@@ -15,7 +15,7 @@ import {
 } from '../../utils/moderation-ui.js';
 
 const MAX_TIMEOUT_MINUTES = 40_320;
-const MAX_TIMEOUT_MS = MAX_TIMEOUT_MINUTES * 60 * 1000; // 28 días (máximo de Discord)
+const MAX_TIMEOUT_MS = MAX_TIMEOUT_MINUTES * 60 * 1000;
 
 export const muteCommand: Command = {
   data: new SlashCommandBuilder()
@@ -40,8 +40,8 @@ export const muteCommand: Command = {
       await interaction.editReply({
         embeds: [
           buildModerationErrorEmbed(
-            'No se pudo aplicar el mute',
-            'No tengo permisos para silenciar a este usuario o su rol está por encima del mío.',
+            '⚠️ No se pudo aplicar el silencio',
+            'No puedo silenciar a ese usuario por jerarquía, permisos o protección interna.',
           ),
         ],
       });
@@ -53,15 +53,16 @@ export const muteCommand: Command = {
     await target.timeout(MAX_TIMEOUT_MS, reason);
 
     const log = await prisma.moderationLog.create({
-      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'MUTE', reason },
+      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'MUTE', reason, duration: MAX_TIMEOUT_MINUTES, active: true },
     });
 
-    let dmDelivered = true;
     try {
       await target.user.send({
         embeds: [
           buildModerationUserDmEmbed({
-            title: 'Has sido silenciado/a',
+            title: '🔇 Has sido silenciado temporalmente',
+            actionLabel: 'un mute',
+            description: 'Has recibido una sanción de silencio.',
             color: MODERATION_COLORS.mute,
             guildName: interaction.guild.name,
             duration: durationLabel,
@@ -69,9 +70,7 @@ export const muteCommand: Command = {
           }),
         ],
       });
-    } catch {
-      dmDelivered = false;
-    }
+    } catch { /* DM cerrados */ }
 
     const config = await getOrCreateGuildConfig(guildId);
     const logsChannel = getLogChannel(interaction.guild, config, 'mod');
@@ -79,12 +78,11 @@ export const muteCommand: Command = {
       await logsChannel.send({
         embeds: [
           buildModerationLogEmbed({
-            title: 'Usuario silenciado',
+            title: '🔇 Usuario silenciado',
             color: MODERATION_COLORS.mute,
             targetId: target.id,
-            targetTag: target.user.tag,
+            targetTag: target.user.globalName ?? target.user.username,
             moderatorId: interaction.user.id,
-            duration: durationLabel,
             reason,
             logId: log.id,
             createdAt: log.createdAt,
@@ -98,12 +96,11 @@ export const muteCommand: Command = {
       await publicCh.send({
         embeds: [
           buildModerationPublicEmbed({
-            title: 'Usuario silenciado',
+            title: '🔇 Usuario silenciado',
             color: MODERATION_COLORS.mute,
             targetMention: `<@${target.id}>`,
-            duration: durationLabel,
             reason,
-            description: `<@${target.id}> ha sido silenciado/a temporalmente.`,
+            description: `<@${target.id}> ha sido silenciado.`,
           }),
         ],
       });
@@ -112,12 +109,10 @@ export const muteCommand: Command = {
     await interaction.editReply({
       embeds: [
         buildModerationStaffEmbed({
-          title: 'Mute aplicado',
-          color: MODERATION_COLORS.success,
-          targetMention: `<@${target.id}>`,
-          duration: durationLabel,
-          reason,
-          dmDelivered,
+          title: '🔇 Silencio aplicado',
+          color: MODERATION_COLORS.mute,
+          description: `<@${target.id}> fue silenciado correctamente.`,
+          fields: [{ name: 'Motivo', value: reason, inline: false }],
         }),
       ],
     });
@@ -150,8 +145,8 @@ export const tempmuteCommand: Command = {
       await interaction.editReply({
         embeds: [
           buildModerationErrorEmbed(
-            'No se pudo aplicar el mute temporal',
-            'No tengo permisos para silenciar a este usuario o su rol está por encima del mío.',
+            '⚠️ No se pudo aplicar el silencio temporal',
+            'No puedo silenciar temporalmente a ese usuario por jerarquía, permisos o protección interna.',
           ),
         ],
       });
@@ -164,15 +159,16 @@ export const tempmuteCommand: Command = {
     await target.timeout(duration * 60 * 1000, reason);
 
     const log = await prisma.moderationLog.create({
-      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'TEMPMUTE', reason, duration },
+      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'TEMPMUTE', reason, duration, active: true },
     });
 
-    let dmDelivered = true;
     try {
       await target.user.send({
         embeds: [
           buildModerationUserDmEmbed({
-            title: 'Has recibido un mute temporal',
+            title: '🔇 Has sido silenciado temporalmente',
+            actionLabel: 'un mute temporal',
+            description: 'Has recibido una sanción de silencio.',
             color: MODERATION_COLORS.mute,
             guildName: interaction.guild.name,
             duration: durationLabel,
@@ -180,9 +176,7 @@ export const tempmuteCommand: Command = {
           }),
         ],
       });
-    } catch {
-      dmDelivered = false;
-    }
+    } catch { /* DM cerrados */ }
 
     const config = await getOrCreateGuildConfig(guildId);
     const logsChannel = getLogChannel(interaction.guild, config, 'mod');
@@ -190,10 +184,10 @@ export const tempmuteCommand: Command = {
       await logsChannel.send({
         embeds: [
           buildModerationLogEmbed({
-            title: 'Mute temporal aplicado',
+            title: '🔇 Usuario silenciado temporalmente',
             color: MODERATION_COLORS.mute,
             targetId: target.id,
-            targetTag: target.user.tag,
+            targetTag: target.user.globalName ?? target.user.username,
             moderatorId: interaction.user.id,
             duration: durationLabel,
             reason,
@@ -209,12 +203,12 @@ export const tempmuteCommand: Command = {
       await publicCh.send({
         embeds: [
           buildModerationPublicEmbed({
-            title: 'Usuario silenciado temporalmente',
+            title: '🔇 Usuario silenciado',
             color: MODERATION_COLORS.mute,
             targetMention: `<@${target.id}>`,
             duration: durationLabel,
             reason,
-            description: `<@${target.id}> ha sido silenciado/a temporalmente por **${durationLabel}**.`,
+            description: `<@${target.id}> ha sido silenciado durante **${durationLabel}**.`,
           }),
         ],
       });
@@ -223,12 +217,10 @@ export const tempmuteCommand: Command = {
     await interaction.editReply({
       embeds: [
         buildModerationStaffEmbed({
-          title: 'Mute temporal aplicado',
-          color: MODERATION_COLORS.success,
-          targetMention: `<@${target.id}>`,
-          duration: durationLabel,
-          reason,
-          dmDelivered,
+          title: '🔇 Silencio temporal aplicado',
+          color: MODERATION_COLORS.mute,
+          description: `<@${target.id}> fue silenciado durante **${durationLabel}**.`,
+          fields: [{ name: 'Motivo', value: reason, inline: false }],
         }),
       ],
     });
@@ -258,8 +250,8 @@ export const unmuteCommand: Command = {
       await interaction.editReply({
         embeds: [
           buildModerationErrorEmbed(
-            'No se pudo quitar el mute',
-            'No tengo permisos para moderar a este usuario o su rol está por encima del mío.',
+            '⚠️ No se pudo retirar el silencio',
+            'Ese usuario no tiene un silencio activo o no puedo modificar su estado.',
           ),
         ],
       });
@@ -270,8 +262,22 @@ export const unmuteCommand: Command = {
     await target.timeout(null, reason);
 
     const log = await prisma.moderationLog.create({
-      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'UNMUTE', reason },
+      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'UNMUTE', reason, active: true },
     });
+
+    try {
+      await target.user.send({
+        embeds: [
+          buildModerationUserDmEmbed({
+            title: '🔊 Has sido desilenciado',
+            description: 'La sanción de silencio ha sido retirada.',
+            color: MODERATION_COLORS.success,
+            guildName: interaction.guild.name,
+            reason,
+          }),
+        ],
+      });
+    } catch { /* DM cerrados */ }
 
     const config = await getOrCreateGuildConfig(guildId);
     const logsChannel = getLogChannel(interaction.guild, config, 'mod');
@@ -279,10 +285,10 @@ export const unmuteCommand: Command = {
       await logsChannel.send({
         embeds: [
           buildModerationLogEmbed({
-            title: 'Mute eliminado',
+            title: '🔊 Usuario desilenciado',
             color: MODERATION_COLORS.success,
             targetId: target.id,
-            targetTag: target.user.tag,
+            targetTag: target.user.globalName ?? target.user.username,
             moderatorId: interaction.user.id,
             reason,
             logId: log.id,
@@ -295,10 +301,9 @@ export const unmuteCommand: Command = {
     await interaction.editReply({
       embeds: [
         buildModerationStaffEmbed({
-          title: 'Mute eliminado',
+          title: '✅ Silencio retirado',
           color: MODERATION_COLORS.success,
-          targetMention: `<@${target.id}>`,
-          reason,
+          description: `<@${target.id}> fue desilenciado correctamente.`,
         }),
       ],
     });

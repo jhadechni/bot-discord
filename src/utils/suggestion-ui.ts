@@ -1,30 +1,20 @@
-import { EmbedBuilder, type Message } from 'discord.js';
-import { prisma } from '../database/prisma.js';
+import { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } from 'discord.js';
 import {
   AQUARIS_COLORS,
-  buildAquarisEmbed,
   buildAquarisErrorEmbed,
   buildAquarisNoticeEmbed,
   type AquarisColor,
   type AquarisEmbedOptions,
 } from './message-ui.js';
 
-const BAR_LENGTH = 14;
-
 export const SUGGESTION_COLORS = {
   info: AQUARIS_COLORS.suggestions,
   success: AQUARIS_COLORS.success,
   warning: AQUARIS_COLORS.warning,
   danger: AQUARIS_COLORS.danger,
-  review: AQUARIS_COLORS.warning,
 } as const;
 
 type SuggestionColor = AquarisColor;
-
-function buildBar(pct: number): string {
-  const filled = Math.round((pct / 100) * BAR_LENGTH);
-  return '█'.repeat(filled) + '░'.repeat(BAR_LENGTH - filled);
-}
 
 export function buildSuggestionNoticeEmbed(options: {
   title: string;
@@ -48,53 +38,70 @@ export function buildSuggestionErrorEmbed(title: string, description: string): E
   return buildAquarisErrorEmbed(title, description);
 }
 
-export function buildSuggestionPublicEmbed(
-  content: string,
-  userId: string,
-  upCount = 0,
-  downCount = 0,
-): EmbedBuilder {
-  const total = upCount + downCount;
-  const upPct = total > 0 ? Math.round((upCount / total) * 100) : 0;
-  const downPct = total > 0 ? 100 - upPct : 0;
+type SuggestionPublicEmbedOptions = {
+  content: string;
+  userId: string;
+  displayName: string;
+  avatarUrl?: string | null;
+  suggestionId: string;
+  upCount?: number;
+  downCount?: number;
+};
 
-  return buildAquarisEmbed({
-    title: 'Sugerencia',
-    description: content,
-    color: SUGGESTION_COLORS.info,
-    footer: 'suggestions',
-    fields: [
-      { name: 'Enviada por', value: `<@${userId}>`, inline: true },
-      {
-        name: 'Votación',
-        value: total === 0
-          ? '*Sin votos todavía*'
-          : [
-              `👍 **${upPct}%** \`${buildBar(upPct)}\` ${upCount}`,
-              `👎 **${downPct}%** \`${buildBar(downPct)}\` ${downCount}`,
-            ].join('\n'),
-      },
-    ],
-  });
+export function buildSuggestionPublicEmbed(options: SuggestionPublicEmbedOptions): EmbedBuilder {
+  const { userId, content, displayName, avatarUrl, suggestionId, upCount = 0, downCount = 0 } = options;
+  const shortId = suggestionId.slice(-6).toUpperCase();
+
+  const letter = [
+    `<@${userId}> ha compartido una sugerencia para la comunidad.`,
+    '',
+    ...content.trim().split('\n').map(line => `> ${line}`),
+  ].join('\n');
+
+  const embed = new EmbedBuilder()
+    .setColor(SUGGESTION_COLORS.info)
+    .setTitle(`NUEVA SUGERENCIA RECIBIDA | ${displayName}`)
+    .setDescription(letter)
+    .addFields(
+      { name: '👍 Votos a favor', value: `${upCount}` },
+      { name: '👎 Votos en contra', value: `${downCount}` },
+    )
+    .setFooter({
+      text: `Recuerda que aunque una sugerencia alcance muchos votos, no siempre se podrán implementar. · ID: ${shortId}`,
+    })
+    .setTimestamp();
+
+  if (avatarUrl) {
+    embed.setThumbnail(avatarUrl);
+  }
+
+  return embed;
 }
 
-export async function updateSuggestionVotes(message: Message): Promise<void> {
-  const suggestion = await prisma.suggestion.findFirst({
-    where: { messageId: message.id },
-  });
-  if (!suggestion) return;
+export function buildSuggestionVoteButtons(
+  suggestionId: string,
+  upCount: number,
+  downCount: number,
+): ActionRowBuilder<ButtonBuilder> {
+  const total = upCount + downCount;
+  const upPct = total > 0 ? Math.round((upCount / total) * 100) : null;
+  const downPct = upPct !== null ? 100 - upPct : null;
 
-  const upRaw = message.reactions.cache.get('👍');
-  const downRaw = message.reactions.cache.get('👎');
-  const upCount = upRaw ? Math.max(0, upRaw.count - 1) : 0;
-  const downCount = downRaw ? Math.max(0, downRaw.count - 1) : 0;
+  const upLabel = upPct !== null ? `👍  ${upPct}%` : '👍';
+  const downLabel = downPct !== null ? `👎  ${downPct}%` : '👎';
 
-  const embed = buildSuggestionPublicEmbed(
-    suggestion.content,
-    suggestion.userId,
-    upCount,
-    downCount,
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`suggest:up:${suggestionId}`)
+      .setLabel(upLabel)
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(`suggest:down:${suggestionId}`)
+      .setLabel(downLabel)
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId(`suggest:debate:${suggestionId}`)
+      .setLabel('💬 Debatir')
+      .setStyle(ButtonStyle.Secondary),
   );
-
-  await message.edit({ embeds: [embed], components: [] });
 }

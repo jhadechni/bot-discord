@@ -1,6 +1,8 @@
 import type { BotEvent } from '../types/event.js';
 import { logger } from '../core/logger.js';
 import { startReminderScheduler } from '../utils/reminder-scheduler.js';
+import { startRecruitmentScheduler } from '../utils/recruitment-scheduler.js';
+import { startTempbanScheduler } from '../utils/tempban-scheduler.js';
 import { reloadTaxonomyFromDatabase } from '../shop/taxonomy.js';
 import { syncAutoModRule } from '../utils/automod-sync.js';
 
@@ -11,6 +13,10 @@ const readyEvent: BotEvent<'ready'> = {
     logger.info(`Bot conectado como ${client.user.tag} en ${client.guilds.cache.size} servidor(es)`);
     startReminderScheduler();
     logger.info('Reminder scheduler iniciado');
+    startRecruitmentScheduler();
+    logger.info('Recruitment scheduler iniciado');
+    startTempbanScheduler();
+    logger.info('Tempban scheduler iniciado');
 
     try {
       const categories = await reloadTaxonomyFromDatabase();

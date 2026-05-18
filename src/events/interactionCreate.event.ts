@@ -10,6 +10,7 @@ import {
   StringSelectMenuOptionBuilder,
   TextInputBuilder,
   TextInputStyle,
+  ThreadAutoArchiveDuration,
   type Guild,
   type Message,
 } from 'discord.js';
@@ -23,8 +24,11 @@ import {
   buildSuggestionErrorEmbed,
   buildSuggestionNoticeEmbed,
   buildSuggestionPublicEmbed,
+  buildSuggestionVoteButtons,
 } from '../utils/suggestion-ui.js';
 import { getFilteredWords, findBannedWord } from '../utils/filter.js';
+import { renderLogsPage } from '../commands/moderation/logs.command.js';
+import { renderWarningsPage } from '../commands/moderation/warnings.command.js';
 import { parseTime, formatTime } from '../utils/time.js';
 import { logger } from '../core/logger.js';
 import { upsertShopUser } from '../database/shop-user.js';
@@ -47,7 +51,10 @@ import {
 import {
   buildCatalogEntryView,
   buildCatalogView,
+  buildProductDetailEmbed,
+  buildSearchView,
   queryCatalogProducts,
+  searchCatalogProducts,
 } from '../shop/catalog.js';
 import type { CatalogMode } from '../shop/catalog.js';
 import {
@@ -55,6 +62,7 @@ import {
   setCart,
   deleteCart,
   buildCartView,
+  buildCartSearchView,
   buildQtyModal,
   queryCartProducts,
 } from '../shop/cart.js';
@@ -76,9 +84,12 @@ import {
 } from '../recruitment/player-registration.js';
 import {
   RECRUITMENT_COLORS,
+  buildRecruitmentAcceptedApplicationEmbed,
   buildRecruitmentApplicationEmbed,
   buildRecruitmentErrorEmbed,
+  buildRecruitmentLogEmbed,
   buildRecruitmentNoticeEmbed,
+  buildRecruitmentRejectedApplicationEmbed,
   buildRecruitmentTicketWelcomeEmbed,
   buildRecruitmentUserMessageEmbed,
   normalizeRecruitmentReason,
@@ -767,6 +778,121 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       return;
     }
 
+    // --- Botones de paginación de historial de moderación ---
+    if (interaction.isButton() && interaction.customId.startsWith('mod:logs:')) {
+      await interaction.deferUpdate();
+      const [, , targetId, pageStr] = interaction.customId.split(':');
+      const page = parseInt(pageStr ?? '', 10);
+      if (!interaction.guildId || !targetId || isNaN(page)) return;
+      const result = await renderLogsPage(interaction.guildId, targetId, page);
+      await interaction.editReply(result);
+      return;
+    }
+
+    if (interaction.isButton() && interaction.customId.startsWith('mod:warnings:')) {
+      await interaction.deferUpdate();
+      const [, , targetId, pageStr] = interaction.customId.split(':');
+      const page = parseInt(pageStr ?? '', 10);
+      if (!interaction.guildId || !targetId || isNaN(page)) return;
+      const result = await renderWarningsPage(interaction.guildId, targetId, page);
+      await interaction.editReply(result);
+      return;
+    }
+
+    // --- Botones de votación de sugerencias ---
+    if (interaction.isButton() && (interaction.customId.startsWith('suggest:up:') || interaction.customId.startsWith('suggest:down:'))) {
+      await interaction.deferUpdate();
+
+      const parts = interaction.customId.split(':');
+      const direction = parts[1] as 'up' | 'down';
+      const suggestionId = parts[2];
+      if (!suggestionId) return;
+
+      const vote = direction === 'up' ? 'UP' : 'DOWN';
+
+      const existing = await prisma.suggestionVote.findUnique({
+        where: { suggestionId_userId: { suggestionId, userId: interaction.user.id } },
+      });
+
+      if (!existing) {
+        await prisma.suggestionVote.create({
+          data: { suggestionId, userId: interaction.user.id, vote },
+        });
+      } else if (existing.vote === vote) {
+        // Mismo botón: retirar voto
+        await prisma.suggestionVote.delete({
+          where: { id: existing.id },
+        });
+      } else {
+        // Botón contrario: cambiar voto
+        await prisma.suggestionVote.update({
+          where: { id: existing.id },
+          data: { vote },
+        });
+      }
+
+      const [[upCount, downCount], suggestion] = await Promise.all([
+        Promise.all([
+          prisma.suggestionVote.count({ where: { suggestionId, vote: 'UP' } }),
+          prisma.suggestionVote.count({ where: { suggestionId, vote: 'DOWN' } }),
+        ]),
+        prisma.suggestion.findUnique({ where: { id: suggestionId } }),
+      ]);
+
+      if (!suggestion) return;
+
+      const suggestionAuthor = await interaction.client.users.fetch(suggestion.userId).catch(() => null);
+      const displayName = suggestionAuthor?.globalName ?? suggestionAuthor?.username ?? 'Usuario';
+
+      await interaction.editReply({
+        embeds: [buildSuggestionPublicEmbed({
+          content: suggestion.content,
+          userId: suggestion.userId,
+          displayName,
+          avatarUrl: suggestionAuthor?.displayAvatarURL() ?? null,
+          suggestionId,
+          upCount,
+          downCount,
+        })],
+        components: [buildSuggestionVoteButtons(suggestionId, upCount, downCount)],
+      });
+      return;
+    }
+
+    // --- Botón debate de sugerencia ---
+    if (interaction.isButton() && interaction.customId.startsWith('suggest:debate:')) {
+      await interaction.deferUpdate();
+
+      const suggestionId = interaction.customId.replace('suggest:debate:', '');
+      const suggestion = await prisma.suggestion.findUnique({ where: { id: suggestionId } });
+      if (!suggestion) return;
+
+      const msg = interaction.message;
+      if (msg.thread) return;
+
+      const threadName = `💬 ${suggestion.content.slice(0, 80)}${suggestion.content.length > 80 ? '...' : ''}`;
+      const thread = await msg.startThread({
+        name: threadName,
+        autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
+        reason: 'Debate de sugerencia',
+      }).catch(() => null);
+
+      if (!thread) return;
+
+      await thread.send({
+        embeds: [
+          buildSuggestionNoticeEmbed({
+            title: '💬 Hilo de debate abierto',
+            description:
+              `<@${suggestion.userId}> lanzó esta sugerencia a la comunidad.\n\n` +
+              '¡Comparte tu opinión aquí! Recuerda mantener un tono respetuoso.',
+            color: SUGGESTION_COLORS.info,
+          }),
+        ],
+      });
+      return;
+    }
+
     // --- Modal: sugerencia ---
     if (interaction.isModalSubmit() && interaction.customId === 'suggest_modal') {
       await interaction.deferReply({ ephemeral: true });
@@ -785,7 +911,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         await interaction.editReply({
           embeds: [
             buildSuggestionNoticeEmbed({
-              title: 'Espera antes de sugerir',
+              title: '⏳ Espera antes de sugerir',
               description: `Puedes enviar otra sugerencia en **${mins} minuto${mins === 1 ? '' : 's'}**.`,
               color: SUGGESTION_COLORS.warning,
             }),
@@ -840,10 +966,21 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         data: { guildId, userId: interaction.user.id, content },
       });
 
-      const embed = buildSuggestionPublicEmbed(content, interaction.user.id);
-      const msg = await channel.send({ embeds: [embed] });
-      await msg.react('👍');
-      await msg.react('👎');
+      const displayName = interaction.member && 'displayName' in interaction.member
+        ? (interaction.member as { displayName: string }).displayName
+        : (interaction.user.globalName ?? interaction.user.username);
+
+      const embed = buildSuggestionPublicEmbed({
+        content,
+        userId: interaction.user.id,
+        displayName,
+        avatarUrl: interaction.user.displayAvatarURL(),
+        suggestionId: suggestion.id,
+        upCount: 0,
+        downCount: 0,
+      });
+      const buttons = buildSuggestionVoteButtons(suggestion.id, 0, 0);
+      const msg = await channel.send({ embeds: [embed], components: [buttons] });
 
       await prisma.suggestion.update({
         where: { id: suggestion.id },
@@ -854,12 +991,27 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       await interaction.editReply({
         embeds: [
           buildSuggestionNoticeEmbed({
-            title: 'Sugerencia enviada',
+            title: '✅ Sugerencia enviada',
             description: 'Tu sugerencia fue publicada para votación.',
             color: SUGGESTION_COLORS.success,
           }),
         ],
       });
+      return;
+    }
+
+    // --- Modal búsqueda en tienda ---
+    if (interaction.isModalSubmit() && interaction.customId === 'tienda:catalog:search_modal') {
+      await interaction.deferUpdate();
+
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const query = interaction.fields.getTextInputValue('search_query').trim();
+      const allProducts = await queryCatalogProducts(guildId);
+      const results = searchCatalogProducts(allProducts, query);
+      const { embed, components } = buildSearchView(allProducts, results, query);
+      await interaction.editReply({ embeds: [embed], components });
       return;
     }
 
@@ -986,6 +1138,25 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const guildId = interaction.guildId;
       if (!guildId || !interaction.guild) return;
+
+      // Solicitud activa — comprobación de seguridad
+      const activeTicketCheck = await prisma.recruitmentTicket.findFirst({
+        where: { guildId, userId: interaction.user.id, status: { in: ['OPEN', 'ACCEPTED'] } },
+        select: { status: true },
+      });
+      if (activeTicketCheck) {
+        const statusMsg = activeTicketCheck.status === 'OPEN' ? 'pendiente de revisión' : 'en proceso de entrevista';
+        await interaction.editReply({
+          embeds: [
+            buildRecruitmentNoticeEmbed({
+              title: 'Ya tienes una solicitud activa',
+              description: `Tienes una solicitud ${statusMsg}. Espera a que sea procesada antes de enviar una nueva.`,
+              color: RECRUITMENT_COLORS.warning,
+            }),
+          ],
+        });
+        return;
+      }
 
       // Cooldown 48h (DB) — comprobación de seguridad si el check del select fue omitido
       const lastApplyTicket = await prisma.recruitmentTicket.findFirst({
@@ -1116,7 +1287,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
             await ticketChannel.send({
               embeds: [
                 buildRecruitmentNoticeEmbed({
-                  title: 'Material adicional para Builder',
+                  title: '🏗️ Material adicional para Builder',
                   description: `<@${interaction.user.id}> sube aquí capturas de tus construcciones o proyectos. El staff las revisará junto con tu solicitud.`,
                   color: RECRUITMENT_COLORS.info,
                 }),
@@ -1135,9 +1306,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
             await recruitLogCh.send({
               embeds: [
                 buildRecruitmentNoticeEmbed({
-                  title: 'Material adicional para Builder',
+                  title: '🏗️ Material adicional para Builder',
                   description: `<@${interaction.user.id}> aplica como **Builder**. Puede aportar capturas de construcciones o proyectos.`,
                   color: RECRUITMENT_COLORS.info,
+                  footer: 'logsRecruitment',
                 }),
               ],
             });
@@ -1148,7 +1320,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       await interaction.editReply({
         embeds: [
           buildRecruitmentNoticeEmbed({
-            title: 'Solicitud enviada',
+            title: '✅ Solicitud enviada',
             description: 'El staff revisará tu aplicación y te responderá en tu canal privado.',
             color: RECRUITMENT_COLORS.success,
           }),
@@ -1337,7 +1509,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         await interaction.reply({
           embeds: [
             buildRecruitmentNoticeEmbed({
-              title: 'Jugador registrado',
+              title: '✅ Jugador registrado',
               description: `**${result.player.minecraftNick}** fue registrado en el roster. Cerrando canal de entrevista...`,
               color: RECRUITMENT_COLORS.success,
             }),
@@ -1364,6 +1536,21 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           });
         }
 
+        // Log de registro al canal de reclutamiento
+        const registerCfg = await getOrCreateGuildConfig(guild.id);
+        const registerLogCh = getLogChannel(guild, registerCfg, 'recruit');
+        if (registerLogCh) {
+          await registerLogCh.send({
+            embeds: [buildRecruitmentLogEmbed({
+              type: 'registered',
+              applicantId: result.applicantUserId,
+              minecraftNick: result.player.minecraftNick,
+              discordUsername: result.player.discord,
+              staffId: interaction.user.id,
+            })],
+          }).catch(() => undefined);
+        }
+
         return;
       }
     }
@@ -1375,6 +1562,26 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const guildId = interaction.guildId;
       if (!guildId) return;
+
+      // Solicitud activa (OPEN o ACCEPTED)
+      const activeTicket = await prisma.recruitmentTicket.findFirst({
+        where: { guildId, userId: interaction.user.id, status: { in: ['OPEN', 'ACCEPTED'] } },
+        select: { status: true },
+      });
+      if (activeTicket) {
+        const statusMsg = activeTicket.status === 'OPEN' ? 'pendiente de revisión' : 'en proceso de entrevista';
+        await interaction.reply({
+          ephemeral: true,
+          embeds: [
+            buildRecruitmentNoticeEmbed({
+              title: 'Ya tienes una solicitud activa',
+              description: `Tienes una solicitud ${statusMsg}. Espera a que sea procesada antes de enviar una nueva.`,
+              color: RECRUITMENT_COLORS.warning,
+            }),
+          ],
+        });
+        return;
+      }
 
       // Cooldown 48h (DB)
       const lastApplyCheck = await prisma.recruitmentTicket.findFirst({
@@ -1523,7 +1730,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
         await prisma.recruitmentTicket.update({
           where: { id: ticketId },
-          data: { status: 'ACCEPTED' },
+          data: { status: 'ACCEPTED', staleAlertedAt: null },
         });
 
         // Quitar rol aspirante
@@ -1535,7 +1742,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           await applicant.user.send({
             embeds: [
               buildRecruitmentUserMessageEmbed({
-                title: 'Solicitud aceptada',
+                title: '✅ Solicitud aceptada',
                 description: 'El staff se pondrá en contacto contigo para coordinar la entrevista.',
                 guildName: guild.name,
                 color: RECRUITMENT_COLORS.success,
@@ -1544,12 +1751,25 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           });
         } catch { /* DMs desactivados o sin permisos */ }
 
-        const acceptedEmbed = EmbedBuilder.from(interaction.message.embeds[0] ?? new EmbedBuilder())
-          .setColor(RECRUITMENT_COLORS.success)
-          .setTitle('Solicitud aceptada')
-          .setFooter({ text: `Aquaris • Reclutamiento · Aceptado por ${interaction.user.tag}` });
+        const acceptedEmbed = buildRecruitmentAcceptedApplicationEmbed(
+          interaction.message.embeds[0] ?? new EmbedBuilder(),
+          interaction.user.id,
+        );
 
         await interaction.editReply({ embeds: [acceptedEmbed], components: [] });
+
+        // Log de aceptación al canal de reclutamiento
+        const acceptLogCh = getLogChannel(guild, cfg, 'recruit');
+        if (acceptLogCh) {
+          await acceptLogCh.send({
+            embeds: [buildRecruitmentLogEmbed({
+              type: 'accepted',
+              applicantId: ticket.userId,
+              staffId: interaction.user.id,
+              ticketId: ticket.id,
+            })],
+          }).catch(() => undefined);
+        }
 
         // Mantener canal abierto para la entrevista
         const ticketChannel = interaction.channel;
@@ -1561,7 +1781,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
             await ticketChannel.send({
               embeds: [
                 buildRecruitmentNoticeEmbed({
-                  title: 'Solicitud aceptada',
+                  title: '✅ Solicitud aceptada — entrevista en curso',
                   description:
                     `Solicitud aceptada por <@${interaction.user.id}>.\n\n` +
                     `<@${ticket.userId}> el staff se pondrá en contacto contigo aquí para coordinar la entrevista. ` +
@@ -1999,12 +2219,14 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
     }
 
     if (interaction.isStringSelectMenu() && interaction.customId.startsWith('clanplayer:')) {
+      await interaction.deferUpdate();
+
       const guild = interaction.guild;
       if (!guild) return;
 
       const actor = await guild.members.fetch(interaction.user.id).catch(() => null);
       if (!actor || !(await canManageClanPlayers(actor))) {
-        await interaction.reply({
+        await interaction.followUp({
           embeds: [
             buildRecruitmentErrorEmbed(
               'Permiso insuficiente',
@@ -2028,7 +2250,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const session = applySessionSelectValue(sessionId, mapping.field, interaction.values[0] ?? '');
 
       if (!session) {
-        await interaction.reply({
+        await interaction.followUp({
           embeds: [
             buildRecruitmentErrorEmbed(
               'Sesión expirada',
@@ -2040,7 +2262,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         return;
       }
 
-      await interaction.update(buildClanPlayerReviewReply(session));
+      await interaction.editReply(buildClanPlayerReviewReply(session));
       return;
     }
 
@@ -2165,6 +2387,45 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       return;
     }
 
+    // --- Select de producto en catálogo (≤25 items) ---
+    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('tienda:catalog:product:')) {
+      await interaction.deferUpdate();
+
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const parts = interaction.customId.split(':');
+      const mode = isCatalogMode(parts[3]) ? parts[3] : undefined;
+      const categoryKey = parts[4];
+      const subcategoryKey = parts[5];
+      const selectedProductId = interaction.values[0];
+
+      if (!mode) return;
+
+      const products = await queryCatalogProducts(guildId);
+      const { embed, components } = buildCatalogView(products, mode, categoryKey, subcategoryKey, 1, selectedProductId);
+      await interaction.editReply({ embeds: [embed], components });
+      return;
+    }
+
+    // --- Select de producto en resultados de búsqueda ---
+    if (interaction.isStringSelectMenu() && interaction.customId === 'tienda:catalog:search_product') {
+      await interaction.deferUpdate();
+
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const selectedProductId = interaction.values[0];
+      const allProducts = await queryCatalogProducts(guildId);
+      const product = allProducts.find(p => p.id === selectedProductId);
+      if (!product) return;
+
+      const embed = buildProductDetailEmbed(product, product.category, product.subcategory)
+        .setTitle(`🔍 ${product.name}`);
+      await interaction.editReply({ embeds: [embed] });
+      return;
+    }
+
     // --- Select menus de categoría/subcategoría del catálogo ---
     if (interaction.isStringSelectMenu() && interaction.customId.startsWith('tienda:catalog:')) {
       const parts   = interaction.customId.split(':');
@@ -2207,6 +2468,33 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const parts = interaction.customId.split(':');
       const guildId = interaction.guildId;
       if (!guildId) return;
+
+      if (parts[2] === 'search') {
+        const modal = new ModalBuilder()
+          .setCustomId('tienda:catalog:search_modal')
+          .setTitle('Buscar en la tienda');
+
+        const input = new TextInputBuilder()
+          .setCustomId('search_query')
+          .setLabel('¿Qué estás buscando?')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+          .setMinLength(2)
+          .setMaxLength(100)
+          .setPlaceholder('Ej: diamante, elytra, kit de minería…');
+
+        modal.addComponents(new ActionRowBuilder<TextInputBuilder>().addComponents(input));
+        await interaction.showModal(modal);
+        return;
+      }
+
+      if (parts[2] === 'search_back') {
+        await interaction.deferUpdate();
+        const products = await queryCatalogProducts(guildId);
+        const { embed, components } = buildCatalogEntryView(products);
+        await interaction.editReply({ embeds: [embed], components });
+        return;
+      }
 
       if (parts[2] === 'request') {
         const modal = new ModalBuilder()
@@ -2434,8 +2722,8 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       return;
     }
 
-    // ── Carrito interactivo: seleccionar producto visible para agregar ───────
-    if (interaction.isButton() && interaction.customId.startsWith('pedido:cart:add:')) {
+    // ── Carrito interactivo: seleccionar producto del select menu para agregar ─
+    if (interaction.isStringSelectMenu() && interaction.customId === 'pedido:cart:add:select') {
       const guildId = interaction.guildId;
       if (!guildId) return;
 
@@ -2448,15 +2736,13 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         return;
       }
 
+      const productId = interaction.values[0];
       const products = await queryCartProducts(guildId);
-      const view = buildCartView(cart, products);
-      const parts = interaction.customId.split(':');
-      const productIndex = Number.parseInt(parts[3] ?? '-1', 10);
-      const product = view.state.pageProducts[productIndex];
+      const product = products.find(p => p.id === productId);
 
       if (!product) {
         await interaction.reply({
-          embeds: [buildShopErrorEmbed('Producto no disponible', 'Ese producto ya no está disponible en esta página.')],
+          embeds: [buildShopErrorEmbed('Producto no disponible', 'Ese producto ya no está disponible.')],
           ephemeral: true,
         });
         return;
@@ -2464,6 +2750,86 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       setCart({ ...cart, pendingProductId: product.id });
       await interaction.showModal(buildQtyModal(product.name));
+      return;
+    }
+
+    // ── Carrito interactivo: abrir búsqueda ───────────────────────────────────
+    if (interaction.isButton() && interaction.customId === 'pedido:cart:search') {
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const cart = getCart(guildId, interaction.user.id);
+      if (!cart) {
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Carrito expirado', 'Usa `/pedido carrito` de nuevo.')],
+          ephemeral: true,
+        });
+        return;
+      }
+
+      const modal = new ModalBuilder()
+        .setCustomId('pedido:cart:search_modal')
+        .setTitle('Buscar producto')
+        .addComponents(
+          new ActionRowBuilder<TextInputBuilder>().addComponents(
+            new TextInputBuilder()
+              .setCustomId('query')
+              .setLabel('Nombre del producto')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
+              .setMaxLength(100)
+              .setPlaceholder('Ej: espada, kit, madera…'),
+          ),
+        );
+
+      await interaction.showModal(modal);
+      return;
+    }
+
+    // ── Carrito interactivo: resultado de búsqueda ────────────────────────────
+    if (interaction.isModalSubmit() && interaction.customId === 'pedido:cart:search_modal') {
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const cart = getCart(guildId, interaction.user.id);
+      if (!cart) {
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Carrito expirado', 'Usa `/pedido carrito` de nuevo.')],
+          ephemeral: true,
+        });
+        return;
+      }
+
+      await interaction.deferUpdate();
+      const query = interaction.fields.getTextInputValue('query').trim();
+      const allProducts = await queryCartProducts(guildId);
+      const results = searchCatalogProducts(allProducts, query);
+
+      setCart({ ...cart, viewMode: 'search', searchQuery: query });
+      const view = buildCartSearchView(cart, results, query);
+      await interaction.editReply({ embeds: view.embeds, components: view.components });
+      return;
+    }
+
+    // ── Carrito interactivo: volver al catálogo desde búsqueda ───────────────
+    if (interaction.isButton() && interaction.customId === 'pedido:cart:search_back') {
+      const guildId = interaction.guildId;
+      if (!guildId) return;
+
+      const cart = getCart(guildId, interaction.user.id);
+      if (!cart) {
+        await interaction.reply({
+          embeds: [buildShopErrorEmbed('Carrito expirado', 'Usa `/pedido carrito` de nuevo.')],
+          ephemeral: true,
+        });
+        return;
+      }
+
+      await interaction.deferUpdate();
+      setCart({ ...cart, viewMode: 'browse', searchQuery: null });
+      const products = await queryCartProducts(guildId);
+      const view = buildCartView({ ...cart, viewMode: 'browse' }, products);
+      await interaction.editReply({ embeds: view.embeds, components: view.components });
       return;
     }
 
@@ -2602,10 +2968,11 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       } else {
         cart.items.push({
           contentsSummary,
-          productId:   product.id,
-          productName: product.name,
-          productType: product.productType,
-          quantity:    qty,
+          productId:       product.id,
+          productName:     product.name,
+          productType:     product.productType,
+          productCategory: product.category,
+          quantity:        qty,
           unitPrice,
           lineTotal,
           notes,
@@ -2735,8 +3102,8 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       });
 
       // Quitar rol aspirante + notificar
+      const rejectCfg = await getOrCreateGuildConfig(guild.id);
       try {
-        const rejectCfg = await getOrCreateGuildConfig(guild.id);
         const applicant = await guild.members.fetch(ticket.userId);
         if (rejectCfg.aspirantRoleId && applicant.roles.cache.has(rejectCfg.aspirantRoleId)) {
           await applicant.roles.remove(rejectCfg.aspirantRoleId);
@@ -2744,7 +3111,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         await applicant.user.send({
           embeds: [
             buildRecruitmentUserMessageEmbed({
-              title: 'Solicitud rechazada',
+              title: '❌ Solicitud rechazada',
               description: 'Puedes intentarlo de nuevo en el futuro.',
               guildName: guild.name,
               reason,
@@ -2760,11 +3127,11 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         const originalChannel = guild.channels.cache.get(channelId);
         if (originalChannel?.isTextBased()) {
           const originalMsg = await originalChannel.messages.fetch(messageId);
-          const rejectedEmbed = EmbedBuilder.from(originalMsg.embeds[0] ?? new EmbedBuilder())
-            .setColor(RECRUITMENT_COLORS.danger)
-            .setTitle('Solicitud rechazada')
-            .addFields({ name: 'Motivo del rechazo', value: reason })
-            .setFooter({ text: `Aquaris • Reclutamiento · Rechazado por ${interaction.user.tag}` });
+          const rejectedEmbed = buildRecruitmentRejectedApplicationEmbed(
+            originalMsg.embeds[0] ?? new EmbedBuilder(),
+            interaction.user.id,
+            reason,
+          );
           await originalMsg.edit({ embeds: [rejectedEmbed], components: [] });
         }
       } catch (err) {
@@ -2790,6 +3157,20 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           }),
         ],
       });
+
+      // Log de rechazo al canal de reclutamiento
+      const rejectLogCh = getLogChannel(guild, rejectCfg, 'recruit');
+      if (rejectLogCh) {
+        await rejectLogCh.send({
+          embeds: [buildRecruitmentLogEmbed({
+            type: 'rejected',
+            applicantId: ticket.userId,
+            staffId: interaction.user.id,
+            ticketId: ticket.id,
+            reason,
+          })],
+        }).catch(() => undefined);
+      }
     }
 
     // --- Modal: rechazo de pedido ---

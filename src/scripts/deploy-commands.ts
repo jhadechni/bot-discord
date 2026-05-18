@@ -8,6 +8,7 @@ import { suggestCommand } from "../commands/suggest/suggest.command.js";
 import { configCommand } from "../commands/config/config.command.js";
 import { modCommand } from "../commands/moderation/mod.command.js";
 import { applyCommand } from "../commands/apply/apply.command.js";
+import { solicitudesCommand } from "../commands/apply/solicitudes.command.js";
 import { helpCommand } from "../commands/help/help.command.js";
 import { perfilCommand } from "../commands/levels/perfil.command.js";
 import { topCommand } from "../commands/levels/top.command.js";
@@ -24,6 +25,7 @@ const commands = [
   configCommand,
   modCommand,
   applyCommand,
+  solicitudesCommand,
   helpCommand,
   perfilCommand,
   topCommand,

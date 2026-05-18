@@ -40,76 +40,69 @@ export const banCommand: Command = {
 
     const target = interaction.options.getUser('usuario', true);
     const reason = normalizeModerationReason(interaction.options.getString('motivo'));
-    const deleteMessageSeconds = (interaction.options.getInteger('borrar_mensajes') ?? 0) * 86400;
+    const deleteDays = interaction.options.getInteger('borrar_mensajes') ?? 0;
+    const deleteMessageSeconds = deleteDays * 86400;
 
     const member = interaction.guild?.members.cache.get(target.id);
     if (member && !member.bannable) {
       await interaction.editReply({
         embeds: [
           buildModerationErrorEmbed(
-            'No se pudo aplicar el ban',
-            'No tengo permisos para banear a este usuario o su rol está por encima del mío.',
+            '⚠️ No se pudo aplicar el ban',
+            'No puedo banear a ese usuario por jerarquía, permisos o protección interna.',
           ),
         ],
       });
       return;
     }
 
-    let dmDelivered = true;
     try {
       await target.send({
         embeds: [
           buildModerationUserDmEmbed({
-            title: 'Has sido baneado/a',
+            title: '⛔ Has sido baneado',
+            actionLabel: 'un ban',
+            description: 'Has sido retirado permanentemente del servidor.',
             color: MODERATION_COLORS.danger,
             guildName: interaction.guild?.name ?? 'este servidor',
             reason,
           }),
         ],
       });
-    } catch {
-      dmDelivered = false;
-    }
+    } catch { /* DM cerrados */ }
 
     await interaction.guild?.members.ban(target, { reason, deleteMessageSeconds });
 
     const log = await prisma.moderationLog.create({
-      data: {
-        guildId,
-        targetId: target.id,
-        moderatorId: interaction.user.id,
-        type: 'BAN',
-        reason,
-      },
+      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'BAN', reason, active: true },
     });
 
     const config = await getOrCreateGuildConfig(guildId);
     const logsChannel = getLogChannel(interaction.guild!, config, 'mod');
     if (logsChannel) {
-      await logsChannel.send({
-        embeds: [
-          buildModerationLogEmbed({
-            title: 'Usuario baneado',
-            color: MODERATION_COLORS.danger,
-            targetId: target.id,
-            targetTag: target.tag,
-            moderatorId: interaction.user.id,
-            reason,
-            logId: log.id,
-            createdAt: log.createdAt,
-          }),
-        ],
+      const logEmbed = buildModerationLogEmbed({
+        title: '⛔ Usuario baneado',
+        color: MODERATION_COLORS.danger,
+        targetId: target.id,
+        targetTag: target.tag,
+        moderatorId: interaction.user.id,
+        reason,
+        logId: log.id,
+        createdAt: log.createdAt,
       });
+      if (deleteDays > 0) {
+        logEmbed.addFields({ name: 'Mensajes eliminados', value: `${deleteDays} día${deleteDays === 1 ? '' : 's'}`, inline: true });
+      }
+      await logsChannel.send({ embeds: [logEmbed] });
     }
 
     await interaction.editReply({
       embeds: [
         buildModerationStaffEmbed({
-          title: 'Ban aplicado',
-          color: MODERATION_COLORS.success,
-          targetMention: `<@${target.id}>`,
-          reason,
-          dmDelivered,
+          title: '⛔ Ban aplicado',
+          color: MODERATION_COLORS.danger,
+          description: `<@${target.id}> fue baneado correctamente.`,
+          fields: [{ name: 'Motivo', value: reason, inline: false }],
         }),
       ],
     });

@@ -40,8 +40,8 @@ export const timeoutCommand: Command = {
       await interaction.editReply({
         embeds: [
           buildModerationErrorEmbed(
-            'No se pudo aplicar el timeout',
-            'No tengo permisos para moderar a este usuario o su rol está por encima del mío.',
+            '⚠️ No se pudo aplicar el timeout',
+            'No puedo aplicar timeout a ese usuario por jerarquía, permisos o protección interna.',
           ),
         ],
       });
@@ -55,15 +55,16 @@ export const timeoutCommand: Command = {
     await target.timeout(duration * 60 * 1000, reason);
 
     const log = await prisma.moderationLog.create({
-      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'TIMEOUT', reason, duration },
+      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'TIMEOUT', reason, duration, active: true },
     });
 
-    let dmDelivered = true;
     try {
       await target.user.send({
         embeds: [
           buildModerationUserDmEmbed({
-            title: 'Has recibido un timeout',
+            title: '⏳ Has recibido un timeout',
+            actionLabel: 'un timeout',
+            description: 'Tu acceso a mensajes y llamadas queda restringido temporalmente.',
             color: MODERATION_COLORS.timeout,
             guildName: interaction.guild.name,
             duration: durationLabel,
@@ -71,9 +72,7 @@ export const timeoutCommand: Command = {
           }),
         ],
       });
-    } catch {
-      dmDelivered = false;
-    }
+    } catch { /* DM cerrados */ }
 
     const config = await getOrCreateGuildConfig(guildId);
     const logsChannel = getLogChannel(interaction.guild, config, 'mod');
@@ -81,10 +80,10 @@ export const timeoutCommand: Command = {
       await logsChannel.send({
         embeds: [
           buildModerationLogEmbed({
-            title: 'Timeout aplicado',
+            title: '⏳ Timeout aplicado',
             color: MODERATION_COLORS.timeout,
             targetId: target.id,
-            targetTag: target.user.tag,
+            targetTag: target.user.globalName ?? target.user.username,
             moderatorId: interaction.user.id,
             duration: durationLabel,
             reason,
@@ -100,12 +99,12 @@ export const timeoutCommand: Command = {
       await publicCh.send({
         embeds: [
           buildModerationPublicEmbed({
-            title: 'Timeout aplicado',
+            title: '⏳ Usuario restringido temporalmente',
             color: MODERATION_COLORS.timeout,
             targetMention: `<@${target.id}>`,
             duration: durationLabel,
             reason,
-            description: `<@${target.id}> recibió un timeout de **${durationLabel}**.`,
+            description: `<@${target.id}> ha recibido un timeout durante **${durationLabel}**.`,
           }),
         ],
       });
@@ -114,12 +113,10 @@ export const timeoutCommand: Command = {
     await interaction.editReply({
       embeds: [
         buildModerationStaffEmbed({
-          title: 'Timeout aplicado',
-          color: MODERATION_COLORS.success,
-          targetMention: `<@${target.id}>`,
-          duration: durationLabel,
-          reason,
-          dmDelivered,
+          title: '⏳ Timeout aplicado',
+          color: MODERATION_COLORS.timeout,
+          description: `<@${target.id}> recibió un timeout durante **${durationLabel}**.`,
+          fields: [{ name: 'Motivo', value: reason, inline: false }],
         }),
       ],
     });
@@ -149,8 +146,8 @@ export const untimeoutCommand: Command = {
       await interaction.editReply({
         embeds: [
           buildModerationErrorEmbed(
-            'No se pudo quitar el timeout',
-            'No tengo permisos para moderar a este usuario o su rol está por encima del mío.',
+            '⚠️ No se pudo retirar el timeout',
+            'Ese usuario no tiene un timeout activo o no puedo modificar su estado.',
           ),
         ],
       });
@@ -161,8 +158,22 @@ export const untimeoutCommand: Command = {
     await target.timeout(null, reason);
 
     const log = await prisma.moderationLog.create({
-      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'UNTIMEOUT', reason },
+      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'UNTIMEOUT', reason, active: true },
     });
+
+    try {
+      await target.user.send({
+        embeds: [
+          buildModerationUserDmEmbed({
+            title: '✅ Tu timeout ha sido retirado',
+            description: 'La restricción temporal fue retirada.',
+            color: MODERATION_COLORS.success,
+            guildName: interaction.guild.name,
+            reason,
+          }),
+        ],
+      });
+    } catch { /* DM cerrados */ }
 
     const config = await getOrCreateGuildConfig(guildId);
     const logsChannel = getLogChannel(interaction.guild, config, 'mod');
@@ -170,10 +181,10 @@ export const untimeoutCommand: Command = {
       await logsChannel.send({
         embeds: [
           buildModerationLogEmbed({
-            title: 'Timeout eliminado',
+            title: '✅ Timeout retirado',
             color: MODERATION_COLORS.success,
             targetId: target.id,
-            targetTag: target.user.tag,
+            targetTag: target.user.globalName ?? target.user.username,
             moderatorId: interaction.user.id,
             reason,
             logId: log.id,
@@ -183,13 +194,27 @@ export const untimeoutCommand: Command = {
       });
     }
 
+    const publicCh = interaction.guild.channels.cache.get(interaction.channelId);
+    if (publicCh?.isTextBased() && !publicCh.isDMBased()) {
+      await publicCh.send({
+        embeds: [
+          buildModerationPublicEmbed({
+            title: '✅ Timeout retirado',
+            color: MODERATION_COLORS.success,
+            targetMention: `<@${target.id}>`,
+            reason,
+            description: `El timeout de <@${target.id}> ha sido retirado.`,
+          }),
+        ],
+      });
+    }
+
     await interaction.editReply({
       embeds: [
         buildModerationStaffEmbed({
-          title: 'Timeout eliminado',
+          title: '✅ Timeout retirado',
           color: MODERATION_COLORS.success,
-          targetMention: `<@${target.id}>`,
-          reason,
+          description: `El timeout de <@${target.id}> fue retirado correctamente.`,
         }),
       ],
     });

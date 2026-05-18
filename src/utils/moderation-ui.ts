@@ -4,7 +4,6 @@ import {
   AQUARIS_COLORS,
   AQUARIS_FOOTERS,
   buildAquarisEmbed,
-  buildAquarisErrorEmbed,
   buildAquarisNoticeEmbed,
   normalizeMessageReason,
   type AquarisEmbedOptions,
@@ -49,10 +48,12 @@ type UserFacingModerationEmbedOptions = {
   title: string;
   color: EmbedColor;
   reason: string;
+  actionLabel?: string;
   guildName?: string;
   targetMention?: string;
   duration?: string;
   description?: string;
+  warnProgress?: { current: number; limit: number };
 };
 
 type StaffModerationEmbedOptions = {
@@ -79,24 +80,21 @@ export function normalizeModerationReason(reason: string | null): string {
 }
 
 export function buildModerationLogEmbed(options: ModerationLogEmbedOptions): EmbedBuilder {
-  const userValue = options.targetTag
-    ? `${options.targetTag}\n<@${options.targetId}>\nID: \`${options.targetId}\``
-    : `<@${options.targetId}>\nID: \`${options.targetId}\``;
+  const userValue = `<@${options.targetId}>`
 
   const fields = [
     { name: 'Usuario', value: userValue, inline: true },
-    { name: 'Moderador', value: `<@${options.moderatorId}>\nID: \`${options.moderatorId}\``, inline: true },
-    { name: 'Fecha', value: formatDate(options.createdAt ?? new Date()), inline: true },
+    { name: 'Moderador', value: `<@${options.moderatorId}>`, inline: true },
   ];
-
-  if (options.duration) {
-    fields.push({ name: 'Duración', value: options.duration, inline: true });
-  }
 
   fields.push(
     { name: 'Motivo', value: options.reason, inline: false },
-    { name: 'ID interno', value: `\`${options.logId}\``, inline: true },
   );
+
+  if (options.duration) {
+    fields.push({ name: 'Duración', value: options.duration, inline: false });
+  }
+  
 
   return buildAquarisEmbed({
     title: options.title,
@@ -108,10 +106,14 @@ export function buildModerationLogEmbed(options: ModerationLogEmbedOptions): Emb
 }
 
 export function buildModerationUserDmEmbed(options: UserFacingModerationEmbedOptions): EmbedBuilder {
+  const label = options.actionLabel ?? 'una acción de moderación';
+  const firstLine = options.description ?? `Se ha registrado **${label}** en tu historial.`;
   const details = [
+    firstLine,
     options.guildName ? `Servidor: **${options.guildName}**` : null,
+    options.warnProgress ? `Advertencias: **${options.warnProgress.current} / ${options.warnProgress.limit}**` : null,
     options.duration ? `Duración: **${options.duration}**` : null,
-    `Motivo: ${options.reason}`,
+    `**Motivo**: ${options.reason}`,
   ].filter((line): line is string => line !== null);
 
   return buildAquarisEmbed({
@@ -147,7 +149,7 @@ export function buildModerationPublicEmbed(options: UserFacingModerationEmbedOpt
 export function buildModerationStaffEmbed(options: StaffModerationEmbedOptions): EmbedBuilder {
   const embed = buildAquarisEmbed({
     title: options.title,
-    description: options.description ?? (options.targetMention ? `Usuario: ${options.targetMention}` : null),
+    description: options.description ?? (options.targetMention ? `Se registró una advertencia para: ${options.targetMention}` : null),
     color: options.color ?? MODERATION_COLORS.success,
     footer: 'moderation',
   });
@@ -159,14 +161,6 @@ export function buildModerationStaffEmbed(options: StaffModerationEmbedOptions):
   if (options.reason) {
     fields.push({ name: 'Motivo', value: options.reason, inline: false });
   }
-  if (options.dmDelivered !== undefined) {
-    fields.push({
-      name: 'MD',
-      value: options.dmDelivered ? 'Entregado' : 'No entregado',
-      inline: true,
-    });
-  }
-
   if (fields.length > 0) {
     embed.addFields(fields);
   }
@@ -193,5 +187,10 @@ export function buildModerationNoticeEmbed(options: ModerationNoticeEmbedOptions
 }
 
 export function buildModerationErrorEmbed(title: string, description: string): EmbedBuilder {
-  return buildAquarisErrorEmbed(title, description);
+  return buildAquarisEmbed({
+    title,
+    description,
+    color: MODERATION_COLORS.danger,
+    footer: 'moderation',
+  });
 }

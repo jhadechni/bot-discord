@@ -1,6 +1,8 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
+import { getOrCreateGuildConfig } from '../../database/guild-config.js';
+import { getLogChannel } from '../../utils/log-channel.js';
 import { invalidateFilterCache } from '../../utils/filter.js';
 import { syncAutoModRule } from '../../utils/automod-sync.js';
 import {
@@ -86,10 +88,29 @@ export const filterCommand: Command = {
         });
         invalidateFilterCache(guildId);
         void syncAutoModRule(interaction.client, guildId);
+
+        const config = await getOrCreateGuildConfig(guildId);
+        const logsChannel = getLogChannel(interaction.guild!, config, 'mod');
+        if (logsChannel) {
+          await logsChannel.send({
+            embeds: [
+              buildModerationNoticeEmbed({
+                title: '🚫 Palabra añadida al filtro',
+                color: MODERATION_COLORS.system,
+                footer: 'logs',
+                fields: [
+                  { name: 'Moderador', value: `<@${interaction.user.id}>\nID: \`${interaction.user.id}\``, inline: true },
+                  { name: 'Palabra añadida', value: `\`${word}\``, inline: true },
+                ],
+              }),
+            ],
+          });
+        }
+
         await interaction.editReply({
           embeds: [
             buildModerationNoticeEmbed({
-              title: 'Palabra añadida al filtro',
+              title: '✅ Palabra añadida al filtro',
               description: `\`${word}\` ahora será filtrada.`,
               color: MODERATION_COLORS.success,
             }),
@@ -128,10 +149,29 @@ export const filterCommand: Command = {
       } else {
         invalidateFilterCache(guildId);
         void syncAutoModRule(interaction.client, guildId);
+
+        const config = await getOrCreateGuildConfig(guildId);
+        const logsChannel = getLogChannel(interaction.guild!, config, 'mod');
+        if (logsChannel) {
+          await logsChannel.send({
+            embeds: [
+              buildModerationNoticeEmbed({
+                title: '🚫 Palabra eliminada del filtro',
+                color: MODERATION_COLORS.system,
+                footer: 'logs',
+                fields: [
+                  { name: 'Moderador', value: `<@${interaction.user.id}>\nID: \`${interaction.user.id}\``, inline: true },
+                  { name: 'Palabra eliminada', value: `\`${word}\``, inline: true },
+                ],
+              }),
+            ],
+          });
+        }
+
         await interaction.editReply({
           embeds: [
             buildModerationNoticeEmbed({
-              title: 'Palabra eliminada del filtro',
+              title: '✅ Palabra eliminada del filtro',
               description: `\`${word}\` dejó de estar filtrada.`,
               color: MODERATION_COLORS.success,
             }),
@@ -151,9 +191,9 @@ export const filterCommand: Command = {
       await interaction.editReply({
         embeds: [
           buildModerationNoticeEmbed({
-            title: 'Filtro vacío',
+            title: '🚫 Palabras filtradas',
             description: 'No hay palabras registradas en el filtro.',
-            color: MODERATION_COLORS.info,
+            color: MODERATION_COLORS.system,
           }),
         ],
       });
@@ -166,12 +206,11 @@ export const filterCommand: Command = {
     await interaction.editReply({
       embeds: [
         buildModerationNoticeEmbed({
-          title: 'Palabras filtradas',
+          title: '🚫 Palabras filtradas',
           description:
-            `Total registradas: **${words.length}**.\n` +
-            `Mostrando **${preview.shown}** para mantener el embed dentro de los límites de Discord.` +
-            (remaining > 0 ? ` Quedan **${remaining}** fuera de esta vista.` : ''),
-          color: MODERATION_COLORS.danger,
+            `Total registradas: **${words.length}**.` +
+            (remaining > 0 ? ` Mostrando **${preview.shown}** — quedan **${remaining}** fuera de esta vista.` : ''),
+          color: MODERATION_COLORS.system,
           fields: preview.fields,
         }),
       ],

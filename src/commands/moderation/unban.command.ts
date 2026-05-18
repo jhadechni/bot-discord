@@ -8,6 +8,7 @@ import {
   buildModerationErrorEmbed,
   buildModerationLogEmbed,
   buildModerationStaffEmbed,
+  buildModerationUserDmEmbed,
   normalizeModerationReason,
 } from '../../utils/moderation-ui.js';
 
@@ -38,8 +39,8 @@ export const unbanCommand: Command = {
       await interaction.editReply({
         embeds: [
           buildModerationErrorEmbed(
-            'No se pudo desbanear',
-            'Verifica que el ID sea correcto y que el usuario esté baneado.',
+            '⚠️ No se pudo retirar el ban',
+            'No se encontró un ban activo o no tengo permisos para retirarlo.',
           ),
         ],
       });
@@ -47,7 +48,7 @@ export const unbanCommand: Command = {
     }
 
     const log = await prisma.moderationLog.create({
-      data: { guildId, targetId: userId, moderatorId: interaction.user.id, type: 'UNBAN', reason },
+      data: { guildId, targetId: userId, moderatorId: interaction.user.id, type: 'UNBAN', reason, active: true },
     });
 
     const config = await getOrCreateGuildConfig(guildId);
@@ -56,7 +57,7 @@ export const unbanCommand: Command = {
       await logsChannel.send({
         embeds: [
           buildModerationLogEmbed({
-            title: 'Usuario desbaneado',
+            title: '✅ Usuario desbaneado',
             color: MODERATION_COLORS.success,
             targetId: userId,
             moderatorId: interaction.user.id,
@@ -68,13 +69,27 @@ export const unbanCommand: Command = {
       });
     }
 
+    try {
+      const unbannedUser = await interaction.client.users.fetch(userId);
+      await unbannedUser.send({
+        embeds: [
+          buildModerationUserDmEmbed({
+            title: '✅ Tu ban ha sido retirado',
+            description: 'La restricción de acceso al servidor fue retirada.',
+            color: MODERATION_COLORS.success,
+            guildName: interaction.guild.name,
+            reason,
+          }),
+        ],
+      });
+    } catch { /* Usuario no encontrado o DM cerrados */ }
+
     await interaction.editReply({
       embeds: [
         buildModerationStaffEmbed({
-          title: 'Usuario desbaneado',
+          title: '✅ Ban retirado',
           color: MODERATION_COLORS.success,
-          description: `Usuario ID: \`${userId}\``,
-          reason,
+          description: `El ban del usuario \`${userId}\` fue retirado correctamente.`,
         }),
       ],
     });

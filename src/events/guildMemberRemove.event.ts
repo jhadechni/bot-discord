@@ -15,7 +15,7 @@ const guildMemberRemoveEvent: BotEvent<'guildMemberRemove'> = {
       embeds: [
         buildLeaveLogEmbed({
           userId: member.id,
-          userTag: member.user.tag,
+          userTag: member.user.globalName ?? member.user.username,
           memberCount: member.guild.memberCount,
           avatarUrl: member.user.displayAvatarURL(),
         }),

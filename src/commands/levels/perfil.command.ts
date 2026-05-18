@@ -13,7 +13,7 @@ export const perfilCommand: Command = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply();
 
     const guildId = interaction.guildId;
     if (!guildId) return;
@@ -38,7 +38,7 @@ export const perfilCommand: Command = {
 
     const avatarUrl = target.displayAvatarURL();
     const embed = buildLevelProfileEmbed({
-      userTag: target.tag,
+      userTag: target.globalName ?? target.username,
       displayName,
       avatarUrl,
       level,

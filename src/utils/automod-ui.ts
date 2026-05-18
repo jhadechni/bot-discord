@@ -3,7 +3,7 @@ import { AQUARIS_COLORS, buildAquarisEmbed, buildAquarisUserFacingEmbed } from '
 const CONTENT_PREVIEW_LIMIT = 900;
 
 export const AUTOMOD_COLORS = {
-  filter: AQUARIS_COLORS.danger,
+  filter: AQUARIS_COLORS.warning,
   spam: AQUARIS_COLORS.timeout,
   system: AQUARIS_COLORS.system,
 } as const;
@@ -46,7 +46,7 @@ function previewContent(content: string): string {
 
 export function buildAutomodFilterDmEmbed(guildName: string) {
   return buildAquarisUserFacingEmbed({
-    title: 'Mensaje eliminado',
+    title: '🚫 Mensaje eliminado',
     description: 'Tu mensaje fue eliminado por contener una palabra no permitida.',
     guildName,
     color: AUTOMOD_COLORS.filter,
@@ -77,15 +77,15 @@ export function buildAutomodSpamDmEmbed(guildName: string, spamType: string, dur
 
 export function buildAutomodFilterLogEmbed(options: FilterLogOptions) {
   return buildAquarisEmbed({
-    title: 'Mensaje filtrado',
+    title: '🚫 Mensaje filtrado automáticamente',
     color: AUTOMOD_COLORS.filter,
     footer: 'logsModeration',
     fields: [
-      { name: 'Usuario', value: `<@${options.userId}> (${options.userTag})`, inline: true },
+      { name: 'Usuario', value: `<@${options.userId}>\nID: \`${options.userId}\``, inline: true },
       { name: 'Canal', value: `<#${options.channelId}>`, inline: true },
-      { name: 'Palabra detectada', value: `\`${options.matched}\``, inline: true },
-      { name: 'Contenido', value: previewContent(options.content) },
-      { name: 'ID Log', value: options.logId, inline: true },
+      { name: 'Palabra detectada', value: `||${options.matched}||`, inline: true },
+      { name: 'Contenido eliminado', value: previewContent(options.content) },
+      { name: 'Registro', value: `\`${options.logId}\``, inline: true },
     ],
   });
 }

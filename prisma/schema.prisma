@@ -34,25 +34,38 @@ model GuildConfig {
 }
 
 model Suggestion {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   guildId   String
   userId    String
   messageId String?
   content   String
-  status    String   @default("PENDING")
-  createdAt DateTime @default(now())
+  status    String           @default("PENDING")
+  createdAt DateTime         @default(now())
+  votes     SuggestionVote[]
+}
+
+model SuggestionVote {
+  id           String     @id @default(cuid())
+  suggestionId String
+  userId       String
+  vote         String     // 'UP' | 'DOWN'
+  createdAt    DateTime   @default(now())
+  suggestion   Suggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+
+  @@unique([suggestionId, userId])
 }
 
 model RecruitmentTicket {
-  id            String   @id @default(cuid())
-  guildId       String
-  userId        String
-  channelId     String?
-  minecraftRole String?
-  answers       Json?
-  status        String   @default("OPEN")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String    @id @default(cuid())
+  guildId         String
+  userId          String
+  channelId       String?
+  minecraftRole   String?
+  answers         Json?
+  status          String    @default("OPEN")
+  staleAlertedAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model ModerationLog {
@@ -63,6 +76,7 @@ model ModerationLog {
   type        String
   reason      String?
   duration    Int?
+  active      Boolean  @default(true)
   createdAt   DateTime @default(now())
 }
 

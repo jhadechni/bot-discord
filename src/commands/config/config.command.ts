@@ -331,6 +331,7 @@ export const configCommand: Command = {
       await interaction.editReply({
         embeds: [buildSystemNoticeEmbed('Rol quitado del autonickname', `Rol: <@&${rol.id}>`)],
       });
+      return;
     }
   },
 };

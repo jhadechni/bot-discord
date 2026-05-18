@@ -8,7 +8,6 @@ import {
   MODERATION_COLORS,
   buildModerationErrorEmbed,
   buildModerationLogEmbed,
-  buildModerationNoticeEmbed,
   buildModerationStaffEmbed,
   buildModerationUserDmEmbed,
   normalizeModerationReason,
@@ -45,20 +44,21 @@ export const tempbanCommand: Command = {
       await interaction.editReply({
         embeds: [
           buildModerationErrorEmbed(
-            'No se pudo aplicar el ban temporal',
-            'No tengo permisos para banear a este usuario o su rol está por encima del mío.',
+            '⚠️ No se pudo aplicar el ban temporal',
+            'No puedo banear temporalmente a ese usuario por jerarquía, permisos o protección interna.',
           ),
         ],
       });
       return;
     }
 
-    let dmDelivered = true;
     try {
       await target.send({
         embeds: [
           buildModerationUserDmEmbed({
-            title: 'Has recibido un ban temporal',
+            title: '⛔ Has sido baneado temporalmente',
+            actionLabel: 'un ban temporal',
+            description: 'Has sido retirado temporalmente del servidor.',
             color: MODERATION_COLORS.danger,
             guildName: interaction.guild.name,
             duration: durationLabel,
@@ -66,14 +66,12 @@ export const tempbanCommand: Command = {
           }),
         ],
       });
-    } catch {
-      dmDelivered = false;
-    }
+    } catch { /* DM cerrados */ }
 
     await interaction.guild.members.ban(target, { reason });
 
     const log = await prisma.moderationLog.create({
-      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'TEMPBAN', reason, duration },
+      data: { guildId, targetId: target.id, moderatorId: interaction.user.id, type: 'TEMPBAN', reason, duration, active: true },
     });
 
     const config = await getOrCreateGuildConfig(guildId);
@@ -82,10 +80,10 @@ export const tempbanCommand: Command = {
       await logsChannel.send({
         embeds: [
           buildModerationLogEmbed({
-            title: 'Ban temporal aplicado',
+            title: '⛔ Usuario baneado temporalmente',
             color: MODERATION_COLORS.danger,
             targetId: target.id,
-            targetTag: target.tag,
+            targetTag: target.globalName ?? target.username,
             moderatorId: interaction.user.id,
             duration: durationLabel,
             reason,
@@ -96,39 +94,13 @@ export const tempbanCommand: Command = {
       });
     }
 
-    // Desbanear automáticamente al expirar
-    const guild = interaction.guild;
-    setTimeout(async () => {
-      try {
-        await guild.members.unban(target.id, 'Tempban expirado');
-        const expiryLogsChannel = getLogChannel(guild, config, 'mod');
-        if (expiryLogsChannel) {
-          await expiryLogsChannel.send({
-            embeds: [
-              buildModerationNoticeEmbed({
-                title: 'Ban temporal expirado',
-                color: MODERATION_COLORS.success,
-                footer: 'logs',
-                fields: [
-                  { name: 'Usuario', value: `${target.tag}\nID: \`${target.id}\``, inline: true },
-                  { name: 'Duración original', value: durationLabel, inline: true },
-                ],
-              }),
-            ],
-          });
-        }
-      } catch { /* Usuario ya desbaneado o error */ }
-    }, duration * 60 * 1000);
-
     await interaction.editReply({
       embeds: [
         buildModerationStaffEmbed({
-          title: 'Ban temporal aplicado',
-          color: MODERATION_COLORS.success,
-          targetMention: `<@${target.id}>`,
-          duration: durationLabel,
-          reason,
-          dmDelivered,
+          title: '⛔ Ban temporal aplicado',
+          color: MODERATION_COLORS.danger,
+          description: `<@${target.id}> fue baneado durante **${durationLabel}**.`,
+          fields: [{ name: 'Motivo', value: reason, inline: false }],
         }),
       ],
     });

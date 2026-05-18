@@ -52,10 +52,11 @@ export const reasonCommand: Command = {
     await interaction.editReply({
       embeds: [
         buildModerationNoticeEmbed({
-          title: 'Motivo actualizado',
+          title: '✅ Motivo actualizado',
+          description: 'El motivo de la acción fue actualizado correctamente.',
           color: MODERATION_COLORS.success,
           fields: [
-            { name: 'ID interno', value: `\`${id}\``, inline: true },
+            { name: 'Registro', value: `\`${id}\``, inline: true },
             { name: 'Tipo', value: entry.type, inline: true },
             { name: 'Usuario', value: `<@${entry.targetId}>`, inline: true },
             { name: 'Motivo anterior', value: entry.reason ?? 'Sin motivo' },

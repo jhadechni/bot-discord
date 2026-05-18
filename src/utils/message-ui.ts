@@ -4,6 +4,7 @@ import { COLORS } from './ui.js';
 export const AQUARIS_FOOTERS = {
   logsModeration: { text: 'Aquaris Logs • Moderación' },
   logsCommunity: { text: 'Aquaris Logs • Comunidad' },
+  logsRecruitment: { text: 'Aquaris Logs • Reclutamiento' },
   moderation: { text: 'Aquaris • Moderación' },
   system: { text: 'Aquaris • Sistema' },
   shop: { text: 'Aquaris • Tienda' },

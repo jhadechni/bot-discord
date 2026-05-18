@@ -1,5 +1,7 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import type { Command } from '../../types/command.js';
+import { getOrCreateGuildConfig } from '../../database/guild-config.js';
+import { getLogChannel } from '../../utils/log-channel.js';
 import {
   MODERATION_COLORS,
   buildModerationErrorEmbed,
@@ -58,30 +60,42 @@ export const clearCommand: Command = {
     if (toDelete.length === 0) {
       await interaction.editReply({
         embeds: [
-          buildModerationNoticeEmbed({
-            title: 'Sin mensajes recientes',
-            description: 'No encontré mensajes recientes que Discord permita eliminar en lote.',
-            color: MODERATION_COLORS.warning,
-          }),
+          buildModerationErrorEmbed(
+            '⚠️ No hay mensajes recientes',
+            'No se encontraron mensajes recientes que puedan eliminarse.',
+          ),
         ],
       });
       return;
     }
 
     const deleted = await channel.bulkDelete(toDelete, true);
+
+    const config = await getOrCreateGuildConfig(interaction.guildId!);
+    const logsChannel = getLogChannel(interaction.guild!, config, 'mod');
+    if (logsChannel) {
+      await logsChannel.send({
+        embeds: [
+          buildModerationNoticeEmbed({
+            title: '🗑️ Limpieza de mensajes',
+            color: MODERATION_COLORS.system,
+            footer: 'logs',
+            fields: [
+              { name: 'Moderador', value: `<@${interaction.user.id}>\nID: \`${interaction.user.id}\``, inline: true },
+              { name: 'Canal', value: `<#${channel.id}>`, inline: true },
+              { name: 'Mensajes eliminados', value: `${deleted.size}`, inline: true },
+            ],
+          }),
+        ],
+      });
+    }
+
     await interaction.editReply({
       embeds: [
         buildModerationNoticeEmbed({
-          title: 'Chat limpiado',
-          color: MODERATION_COLORS.success,
-          fields: [
-            { name: 'Mensajes eliminados', value: `${deleted.size}`, inline: true },
-            {
-              name: 'Filtro',
-              value: filterUser ? `<@${filterUser.id}>` : 'Todos los usuarios',
-              inline: true,
-            },
-          ],
+          title: '🗑️ Limpieza completada',
+          description: `Se eliminaron **${deleted.size}** mensaje${deleted.size === 1 ? '' : 's'} en <#${channel.id}>.`,
+          color: MODERATION_COLORS.system,
         }),
       ],
     });

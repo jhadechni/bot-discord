@@ -24,7 +24,7 @@ const guildMemberAddEvent: BotEvent<'guildMemberAdd'> = {
       if (channel?.isTextBased()) {
         const embed = buildWelcomePublicEmbed({
           userId: member.id,
-          userTag: member.user.tag,
+          userTag: member.user.globalName ?? member.user.username,
           guildName: member.guild.name,
           memberCount: member.guild.memberCount,
           avatarUrl: member.user.displayAvatarURL(),
@@ -40,7 +40,7 @@ const guildMemberAddEvent: BotEvent<'guildMemberAdd'> = {
         embeds: [
           buildJoinLogEmbed({
             userId: member.id,
-            userTag: member.user.tag,
+            userTag: member.user.globalName ?? member.user.username,
             memberCount: member.guild.memberCount,
             avatarUrl: member.user.displayAvatarURL(),
           }),

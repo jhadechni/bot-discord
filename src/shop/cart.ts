@@ -15,26 +15,26 @@ import { formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 import { SHOP_COLORS } from '../utils/shop-ui.js';
 import type { CatalogMode, CatalogViewState } from './catalog.js';
 import {
-  PRODUCT_TYPE_ICONS,
   buildCategorySelectRow,
   buildProductGridEmbed,
   queryCatalogProducts,
   resolveCatalogViewState,
 } from './catalog.js';
-import { getSubcategoryDefinition } from './taxonomy.js';
+import { getCategoryDefinition, getSubcategoryDefinition } from './taxonomy.js';
 
 export interface CartItem {
   contentsSummary?: string | null;
   productId: string;
   productName: string;
   productType: string;
+  productCategory: string;
   quantity: number;
   unitPrice: Decimal;
   lineTotal: Decimal;
   notes: string | null;
 }
 
-export type CartViewMode = 'browse' | 'cart';
+export type CartViewMode = 'browse' | 'cart' | 'search';
 
 export interface CartSession {
   guildId: string;
@@ -48,10 +48,11 @@ export interface CartSession {
   items: CartItem[];
   pendingProductId: string | null;
   viewMode: CartViewMode;
+  searchQuery?: string | null;
 }
 
 const CART_TTL_MS = 30 * 60 * 1000;
-const CART_PAGE_SIZE = 3;
+const CART_PAGE_SIZE = 9;
 
 const sessions = new Map<string, { session: CartSession; timer: ReturnType<typeof setTimeout> }>();
 
@@ -93,22 +94,18 @@ export function buildCartEmbed(session: CartSession): EmbedBuilder {
 
   if (items.length === 0) {
     return new EmbedBuilder()
-      .setTitle('Carrito')
-      .setDescription('El carrito está vacío. Cambia a **Explorar** para agregar productos.')
+      .setTitle('🛒 Carrito')
+      .setDescription('El carrito está vacío. Usa el selector o **Buscar** para agregar productos.')
       .setColor(SHOP_COLORS.neutral)
       .setFooter({ text: `${SHOP_FOOTER.text}  ·  Explora productos para empezar` });
   }
 
   const lines = items.map((item, index) => {
-    const emoji = PRODUCT_TYPE_ICONS[item.productType] ?? '🛍️';
+    const emoji = getCategoryDefinition(item.productCategory).emoji;
     const line = `**${index + 1}.** ${emoji} **${item.productName}** × ${item.quantity}  —  ${formatPrice(item.unitPrice)} c/u  →  **${formatPrice(item.lineTotal)}**`;
     const extraLines = [];
-    if (item.contentsSummary) {
-      extraLines.push(`> 🎁 ${item.contentsSummary}`);
-    }
-    if (item.notes) {
-      extraLines.push(`> 📝 ${item.notes}`);
-    }
+    if (item.contentsSummary) extraLines.push(`> 🎁 ${item.contentsSummary}`);
+    if (item.notes) extraLines.push(`> 📝 ${item.notes}`);
     return extraLines.length > 0 ? `${line}\n${extraLines.join('\n')}` : line;
   });
 
@@ -116,62 +113,74 @@ export function buildCartEmbed(session: CartSession): EmbedBuilder {
   const count = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return new EmbedBuilder()
-    .setTitle(`Carrito · ${items.length} producto${items.length !== 1 ? 's' : ''}`)
+    .setTitle(`🛒 Carrito · ${items.length} producto${items.length !== 1 ? 's' : ''}`)
     .setDescription(lines.join('\n\n'))
     .setColor(SHOP_COLORS.warning)
-    .addFields({
-      name: 'Resumen',
-      value: `**${formatPrice(total)}**  ·  ${count} unidad${count !== 1 ? 'es' : ''}`,
-    })
+    .addFields({ name: 'Total', value: `**${formatPrice(total)}**  ·  ${count} unidad${count !== 1 ? 'es' : ''}` })
     .setFooter({ text: `${SHOP_FOOTER.text}  ·  Revisa el pedido antes de confirmarlo` });
 }
 
 function buildBrowseEmbed(state: CatalogViewState): EmbedBuilder {
   return buildProductGridEmbed(state, {
     color: SHOP_COLORS.info,
-    footerHint: 'Usa los botones numerados para agregar',
-    numberItems: true,
+    footerHint: 'Selecciona un producto del menú para añadir al carrito',
+    numberItems: false,
     pageSize: CART_PAGE_SIZE,
-    titlePrefix: 'Explorar productos',
+    titlePrefix: '🛍️ Explorar productos',
   });
 }
 
-function buildBrowseActionRow(state: CatalogViewState): ActionRowBuilder<ButtonBuilder> {
-  const buttons: ButtonBuilder[] = [
+function buildCartProductSelectRow(
+  products: CartProductOption[],
+): ActionRowBuilder<StringSelectMenuBuilder> {
+  return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId('pedido:cart:add:select')
+      .setPlaceholder('🔍 Selecciona un producto para añadir…')
+      .addOptions(
+        products.slice(0, 25).map(p => {
+          const price = p.prices[0];
+          const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
+          const icon = getCategoryDefinition(p.category).emoji;
+          return new StringSelectMenuOptionBuilder()
+            .setLabel(`${icon} ${p.name}`.slice(0, 100))
+            .setValue(p.id)
+            .setDescription(`💰 ${priceStr}`);
+        }),
+      ),
+  );
+}
+
+function buildBrowsePaginationRow(state: CatalogViewState): ActionRowBuilder<ButtonBuilder> {
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId('pedido:cart:page:prev')
-      .setLabel('Anterior')
+      .setLabel('◀ Anterior')
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(state.currentPage <= 1),
-  ];
-
-  for (const [index, product] of state.pageProducts.entries()) {
-    buttons.push(
-      new ButtonBuilder()
-        .setCustomId(`pedido:cart:add:${index}`)
-        .setLabel(String(index + 1))
-        .setStyle(ButtonStyle.Primary)
-        .setDisabled(!product.prices[0]),
-    );
-  }
-
-  buttons.push(
+    new ButtonBuilder()
+      .setCustomId('pedido:cart:page:label')
+      .setLabel(`Pág. ${state.currentPage}/${state.totalPages}`)
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(true),
     new ButtonBuilder()
       .setCustomId('pedido:cart:page:next')
-      .setLabel('Siguiente')
+      .setLabel('Siguiente ▶')
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(state.currentPage >= state.totalPages),
   );
-
-  return new ActionRowBuilder<ButtonBuilder>().addComponents(buttons);
 }
 
-function buildBrowseModeRow(session: CartSession): ActionRowBuilder<ButtonBuilder> {
+function buildCartActionsRow(session: CartSession): ActionRowBuilder<ButtonBuilder> {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId('pedido:cart:search')
+      .setLabel('🔍 Buscar')
+      .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('pedido:cart:view:cart')
       .setLabel(`🛒 Ver carrito (${session.items.length})`)
-      .setStyle(ButtonStyle.Success),
+      .setStyle(session.items.length > 0 ? ButtonStyle.Success : ButtonStyle.Secondary),
   );
 }
 
@@ -196,43 +205,39 @@ function buildCartSubcategorySelectRow(
 }
 
 function buildCartModeRow(session: CartSession): ActionRowBuilder<ButtonBuilder> {
-  const confirmButton = new ButtonBuilder()
-    .setCustomId('pedido:cart:confirm')
-    .setLabel('✅ Confirmar pedido')
-    .setStyle(ButtonStyle.Success)
-    .setDisabled(session.items.length === 0);
-
-  const clearButton = new ButtonBuilder()
-    .setCustomId('pedido:cart:clear')
-    .setLabel('🗑️ Vaciar')
-    .setStyle(ButtonStyle.Danger)
-    .setDisabled(session.items.length === 0);
-
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId('pedido:cart:view:browse')
       .setLabel('← Explorar')
       .setStyle(ButtonStyle.Secondary),
-    confirmButton,
-    clearButton,
+    new ButtonBuilder()
+      .setCustomId('pedido:cart:confirm')
+      .setLabel('✅ Confirmar pedido')
+      .setStyle(ButtonStyle.Success)
+      .setDisabled(session.items.length === 0),
+    new ButtonBuilder()
+      .setCustomId('pedido:cart:clear')
+      .setLabel('🗑️ Vaciar')
+      .setStyle(ButtonStyle.Danger)
+      .setDisabled(session.items.length === 0),
   );
 }
 
 function buildRemoveSelectRow(session: CartSession): ActionRowBuilder<StringSelectMenuBuilder> | null {
   if (session.items.length === 0) return null;
 
-  const removeOptions = session.items.map((item, index) =>
-    new StringSelectMenuOptionBuilder()
-      .setLabel(`${item.productName} × ${item.quantity}`.slice(0, 100))
-      .setValue(String(index))
-      .setDescription(formatPrice(item.lineTotal).slice(0, 100))
-      .setEmoji('🗑️'),
-  );
-
   const removeSelect = new StringSelectMenuBuilder()
     .setCustomId('pedido:cart:remove')
-    .setPlaceholder('🗑️ Quitar producto del carrito...')
-    .addOptions(removeOptions);
+    .setPlaceholder('🗑️ Quitar producto del carrito…')
+    .addOptions(
+      session.items.map((item, index) =>
+        new StringSelectMenuOptionBuilder()
+          .setLabel(`${item.productName} × ${item.quantity}`.slice(0, 100))
+          .setValue(String(index))
+          .setDescription(formatPrice(item.lineTotal).slice(0, 100))
+          .setEmoji('🗑️'),
+      ),
+    );
 
   return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(removeSelect);
 }
@@ -251,9 +256,14 @@ function buildBrowseComponents(
     rows.push(buildCartSubcategorySelectRow(state.subcategoryKeys, state.currentCategory, state.currentSubcategory));
   }
 
-  rows.push(buildBrowseActionRow(state));
-  rows.push(buildBrowseModeRow(session));
+  const useProductSelect = state.allSubcategoryProducts.length > 0 && state.allSubcategoryProducts.length <= 25;
+  if (useProductSelect) {
+    rows.push(buildCartProductSelectRow(state.allSubcategoryProducts));
+  } else if (state.totalPages > 1) {
+    rows.push(buildBrowsePaginationRow(state));
+  }
 
+  rows.push(buildCartActionsRow(session));
   return rows;
 }
 
@@ -262,13 +272,45 @@ function buildCartComponents(
 ): Array<ActionRowBuilder<MessageActionRowComponentBuilder>> {
   const rows: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
   const removeRow = buildRemoveSelectRow(session);
-
-  if (removeRow) {
-    rows.push(removeRow);
-  }
-
+  if (removeRow) rows.push(removeRow);
   rows.push(buildCartModeRow(session));
   return rows;
+}
+
+export function buildCartSearchView(
+  session: CartSession,
+  results: CartProductOption[],
+  query: string,
+): {
+  components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>>;
+  embeds: EmbedBuilder[];
+} {
+  const components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
+
+  components.push(
+    new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId('pedido:cart:search_back')
+        .setLabel('← Volver al catálogo')
+        .setStyle(ButtonStyle.Secondary),
+    ),
+  );
+
+  const searchEmbed = new EmbedBuilder()
+    .setColor(results.length > 0 ? SHOP_COLORS.info : SHOP_COLORS.neutral)
+    .setTitle(results.length > 0 ? `🔍 "${query.slice(0, 50)}" — ${results.length} resultado${results.length !== 1 ? 's' : ''}` : '🔍 Sin resultados')
+    .setDescription(results.length > 0
+      ? 'Selecciona un producto del menú para añadirlo al carrito.'
+      : `No se encontraron productos para **"${query.slice(0, 100)}"**.\nIntenta con otro término.`)
+    .setFooter({ text: SHOP_FOOTER.text });
+
+  if (results.length > 0) {
+    components.push(buildCartProductSelectRow(results));
+  }
+
+  components.push(buildCartActionsRow(session));
+
+  return { components, embeds: [searchEmbed, buildCartEmbed(session)] };
 }
 
 export function buildCartView(
@@ -308,7 +350,7 @@ export function buildQtyModal(productName: string): ModalBuilder {
 
   return new ModalBuilder()
     .setCustomId('pedido:cart:qty_modal')
-    .setTitle(`Agregar: ${shortName}`)
+    .setTitle(`Añadir: ${shortName}`)
     .addComponents(
       new ActionRowBuilder<TextInputBuilder>().addComponents(
         new TextInputBuilder()
@@ -327,7 +369,7 @@ export function buildQtyModal(productName: string): ModalBuilder {
           .setStyle(TextInputStyle.Short)
           .setRequired(false)
           .setMaxLength(200)
-          .setPlaceholder('Ej: variante específica, preferencia de entrega...'),
+          .setPlaceholder('Ej: variante específica, preferencia de entrega…'),
       ),
     );
 }

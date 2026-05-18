@@ -61,7 +61,8 @@ export const stockCommand: Command = {
             .setName('cantidad')
             .setDescription('Cantidad a añadir')
             .setRequired(true)
-            .setMinValue(1),
+            .setMinValue(1)
+            .setMaxValue(999999),
         )
         .addStringOption(opt =>
           opt
@@ -92,7 +93,8 @@ export const stockCommand: Command = {
             .setName('cantidad')
             .setDescription('Cantidad a retirar')
             .setRequired(true)
-            .setMinValue(1),
+            .setMinValue(1)
+            .setMaxValue(999999),
         )
         .addStringOption(opt =>
           opt
@@ -123,7 +125,8 @@ export const stockCommand: Command = {
             .setName('cantidad')
             .setDescription('Nueva cantidad total')
             .setRequired(true)
-            .setMinValue(0),
+            .setMinValue(0)
+            .setMaxValue(999999),
         )
         .addStringOption(opt =>
           opt
@@ -271,32 +274,35 @@ export const stockCommand: Command = {
       const cantidadBase = convertCaptureQuantityToBase(cantidad, modo, material.stackSize);
       const motivo   = interaction.options.getString('motivo') ?? 'Ingreso manual';
 
-      await prisma.$transaction([
-        prisma.shopInventory.update({
-          where: { id: inv.id },
-          data:  { currentStock: { increment: cantidadBase } },
-        }),
-        prisma.shopInventoryMovement.create({
-          data: {
-            guildId,
-            materialId:    material.id,
-            movementType:  'stock_add',
-            quantity:      cantidadBase,
-            reason:        motivo,
-            performedById: staffUser.id,
-          },
-        }),
-      ]);
+      try {
+        await prisma.$transaction([
+          prisma.shopInventory.update({
+            where: { id: inv.id },
+            data:  { currentStock: { increment: cantidadBase } },
+          }),
+          prisma.shopInventoryMovement.create({
+            data: {
+              guildId,
+              materialId:    material.id,
+              movementType:  'stock_add',
+              quantity:      cantidadBase,
+              reason:        motivo,
+              performedById: staffUser.id,
+            },
+          }),
+        ]);
+      } catch {
+        await interaction.editReply({ embeds: [buildShopErrorEmbed('Error al registrar ingreso', 'No se pudo actualizar el stock. Intenta de nuevo.')] });
+        return;
+      }
 
-      await interaction.editReply(
-        `✅ Ingreso registrado: **+${formatCaptureInput({
-          baseQuantity: cantidadBase,
-          captureQuantity: cantidad,
-          captureUnit: modo,
-          unitLabel: material.baseUnit,
-        })}** de **${nombreMaterial}**.\n` +
-        `Stock total: ${inv.currentStock + cantidadBase}`,
-      );
+      await interaction.editReply({
+        embeds: [buildShopNoticeEmbed({
+          title: '✅ Ingreso registrado',
+          description: `**+${formatCaptureInput({ baseQuantity: cantidadBase, captureQuantity: cantidad, captureUnit: modo, unitLabel: material.baseUnit })}** de **${nombreMaterial}**.\nStock total: **${inv.currentStock + cantidadBase}**`,
+          color: SHOP_COLORS.success,
+        })],
+      });
       return;
     }
 
@@ -309,48 +315,53 @@ export const stockCommand: Command = {
       const disponible = inv.currentStock - inv.reservedStock;
 
       if (cantidadBase > disponible) {
-        await interaction.editReply(
-          `❌ Stock disponible insuficiente.\n` +
-          `Total: ${inv.currentStock}  ·  Reservado: ${inv.reservedStock}  ·  Disponible: **${disponible}**`,
-        );
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed(
+            'Stock insuficiente',
+            `No hay suficiente stock disponible.\nTotal: **${inv.currentStock}**  ·  Reservado: **${inv.reservedStock}**  ·  Disponible: **${disponible}**`,
+          )],
+        });
         return;
       }
 
-      await prisma.$transaction([
-        prisma.shopInventory.update({
-          where: { id: inv.id },
-          data:  { currentStock: { decrement: cantidadBase } },
-        }),
-        prisma.shopWithdrawal.create({
-          data: {
-            guildId,
-            materialId: material.id,
-            quantity: cantidadBase,
-            reason: motivo,
-            performedById: staffUser.id,
-          },
-        }),
-        prisma.shopInventoryMovement.create({
-          data: {
-            guildId,
-            materialId:    material.id,
-            movementType:  'withdrawal',
-            quantity:      cantidadBase,
-            reason:        motivo,
-            performedById: staffUser.id,
-          },
-        }),
-      ]);
+      try {
+        await prisma.$transaction([
+          prisma.shopInventory.update({
+            where: { id: inv.id },
+            data:  { currentStock: { decrement: cantidadBase } },
+          }),
+          prisma.shopWithdrawal.create({
+            data: {
+              guildId,
+              materialId: material.id,
+              quantity: cantidadBase,
+              reason: motivo,
+              performedById: staffUser.id,
+            },
+          }),
+          prisma.shopInventoryMovement.create({
+            data: {
+              guildId,
+              materialId:    material.id,
+              movementType:  'withdrawal',
+              quantity:      cantidadBase,
+              reason:        motivo,
+              performedById: staffUser.id,
+            },
+          }),
+        ]);
+      } catch {
+        await interaction.editReply({ embeds: [buildShopErrorEmbed('Error al registrar retiro', 'No se pudo actualizar el stock. Intenta de nuevo.')] });
+        return;
+      }
 
-      await interaction.editReply(
-        `✅ Retiro registrado: **-${formatCaptureInput({
-          baseQuantity: cantidadBase,
-          captureQuantity: cantidad,
-          captureUnit: modo,
-          unitLabel: material.baseUnit,
-        })}** de **${nombreMaterial}**.\n` +
-        `Stock total: ${inv.currentStock - cantidadBase}`,
-      );
+      await interaction.editReply({
+        embeds: [buildShopNoticeEmbed({
+          title: '✅ Retiro registrado',
+          description: `**-${formatCaptureInput({ baseQuantity: cantidadBase, captureQuantity: cantidad, captureUnit: modo, unitLabel: material.baseUnit })}** de **${nombreMaterial}**.\nStock total: **${inv.currentStock - cantidadBase}**`,
+          color: SHOP_COLORS.success,
+        })],
+      });
       return;
     }
 
@@ -362,39 +373,46 @@ export const stockCommand: Command = {
       const motivo        = interaction.options.getString('motivo') ?? 'Ajuste manual';
 
       if (nuevaCantidad < inv.reservedStock) {
-        await interaction.editReply(
-          `❌ No puedes bajar el stock por debajo del reservado (${inv.reservedStock}).`,
-        );
+        await interaction.editReply({
+          embeds: [buildShopErrorEmbed(
+            'Valor inválido',
+            `No puedes bajar el stock por debajo del reservado (**${inv.reservedStock}**).`,
+          )],
+        });
         return;
       }
 
       const delta = nuevaCantidad - inv.currentStock;
 
-      await prisma.$transaction([
-        prisma.shopInventory.update({
-          where: { id: inv.id },
-          data:  { currentStock: nuevaCantidad },
-        }),
-        prisma.shopInventoryMovement.create({
-          data: {
-            guildId,
-            materialId:    material.id,
-            movementType:  'manual_adjustment',
-            quantity:      delta,
-            reason:        motivo,
-            performedById: staffUser.id,
-          },
-        }),
-      ]);
+      try {
+        await prisma.$transaction([
+          prisma.shopInventory.update({
+            where: { id: inv.id },
+            data:  { currentStock: nuevaCantidad },
+          }),
+          prisma.shopInventoryMovement.create({
+            data: {
+              guildId,
+              materialId:    material.id,
+              movementType:  'manual_adjustment',
+              quantity:      delta,
+              reason:        motivo,
+              performedById: staffUser.id,
+            },
+          }),
+        ]);
+      } catch {
+        await interaction.editReply({ embeds: [buildShopErrorEmbed('Error al actualizar stock', 'No se pudo actualizar el stock. Intenta de nuevo.')] });
+        return;
+      }
 
-      await interaction.editReply(
-        `✅ Stock de **${nombreMaterial}** ajustado a **${formatCaptureInput({
-          baseQuantity: nuevaCantidad,
-          captureQuantity: cantidad,
-          captureUnit: modo,
-          unitLabel: material.baseUnit,
-        })}** (${delta >= 0 ? '+' : ''}${delta}).`,
-      );
+      await interaction.editReply({
+        embeds: [buildShopNoticeEmbed({
+          title: '✅ Stock actualizado',
+          description: `**${nombreMaterial}** ajustado a **${formatCaptureInput({ baseQuantity: nuevaCantidad, captureQuantity: cantidad, captureUnit: modo, unitLabel: material.baseUnit })}** (${delta >= 0 ? '+' : ''}${delta}).`,
+          color: SHOP_COLORS.success,
+        })],
+      });
       return;
     }
 
@@ -407,11 +425,15 @@ export const stockCommand: Command = {
         data:  { minStockAlert: minimo },
       });
 
-      await interaction.editReply(
-        minimo === 0
-          ? `✅ Alerta de stock desactivada para **${nombreMaterial}**.`
-          : `✅ Alerta configurada: se avisará cuando **${nombreMaterial}** baje de **${minimo}** unidades.`,
-      );
+      await interaction.editReply({
+        embeds: [buildShopNoticeEmbed({
+          title: '✅ Alerta configurada',
+          description: minimo === 0
+            ? `Alerta de stock desactivada para **${nombreMaterial}**.`
+            : `Se avisará cuando **${nombreMaterial}** baje de **${minimo}** unidades.`,
+          color: SHOP_COLORS.success,
+        })],
+      });
       return;
     }
   },
