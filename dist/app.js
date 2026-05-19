@@ -25,6 +25,7 @@ import guildMemberRemoveEvent from "./events/guildMemberRemove.event.js";
 import guildMemberUpdateEvent from "./events/guildMemberUpdate.event.js";
 import messageCreateEvent from "./events/messageCreate.event.js";
 import voiceStateUpdateEvent from "./events/voiceStateUpdate.event.js";
+import roleUpdateEvent from "./events/roleUpdate.event.js";
 // Register commands
 for (const cmd of [
     pingCommand,
@@ -66,6 +67,7 @@ for (const event of [
     guildMemberUpdateEvent,
     messageCreateEvent,
     voiceStateUpdateEvent,
+    roleUpdateEvent,
 ]) {
     registerEvent(event);
 }

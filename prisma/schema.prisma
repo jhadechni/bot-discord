@@ -135,6 +135,7 @@ model NicknameRole {
   id        String   @id @default(cuid())
   guildId   String
   roleId    String
+  emoji     String?
   createdAt DateTime @default(now())
 
   @@unique([guildId, roleId])

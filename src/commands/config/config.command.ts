@@ -129,6 +129,9 @@ export const configCommand: Command = {
         .setDescription('Agrega un rol al sistema de autonickname')
         .addRoleOption(opt =>
           opt.setName('rol').setDescription('Rol de Discord').setRequired(true),
+        )
+        .addStringOption(opt =>
+          opt.setName('emoji').setDescription('Emoji antes del nombre en el nickname (ej: 🌊 o <:nombre:id>)').setRequired(false),
         ),
     )
     .addSubcommand(sub =>
@@ -314,13 +317,15 @@ export const configCommand: Command = {
 
     if (sub === 'nick-rol-agregar') {
       const rol = interaction.options.getRole('rol', true);
+      const emoji = interaction.options.getString('emoji') ?? null;
       await prisma.nicknameRole.upsert({
         where: { guildId_roleId: { guildId, roleId: rol.id } },
-        update: {},
-        create: { guildId, roleId: rol.id },
+        update: { emoji },
+        create: { guildId, roleId: rol.id, emoji },
       });
+      const desc = emoji ? `Rol: <@&${rol.id}> — Emoji: ${emoji}` : `Rol: <@&${rol.id}>`;
       await interaction.editReply({
-        embeds: [buildSystemNoticeEmbed('Rol agregado al autonickname', `Rol: <@&${rol.id}>`)],
+        embeds: [buildSystemNoticeEmbed('Rol agregado al autonickname', desc)],
       });
       return;
     }

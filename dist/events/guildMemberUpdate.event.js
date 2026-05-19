@@ -9,11 +9,12 @@ function getBaseName(member) {
     return match?.[1] ?? current;
 }
 async function updateNickname(member) {
+    const fresh = await member.fetch();
     const [config, dynamicRoles] = await Promise.all([
-        getOrCreateGuildConfig(member.guild.id),
-        prisma.nicknameRole.findMany({ where: { guildId: member.guild.id }, select: { roleId: true } }),
+        getOrCreateGuildConfig(fresh.guild.id),
+        prisma.nicknameRole.findMany({ where: { guildId: fresh.guild.id }, select: { roleId: true, emoji: true } }),
     ]);
-    // Unión de roles fijos del config + roles dinámicos registrados
+    const emojiByRoleId = new Map(dynamicRoles.map(r => [r.roleId, r.emoji]));
     const nicknameRoleIds = new Set([
         config.liderRoleId,
         config.coLiderRoleId,
@@ -23,34 +24,34 @@ async function updateNickname(member) {
         config.visitorRoleId,
         ...dynamicRoles.map(r => r.roleId),
     ].filter(Boolean));
-    // Rol más alto en la jerarquía de Discord que tenga el miembro y esté registrado
-    const topRole = member.roles.cache
+    const topRole = fresh.roles.cache
         .filter(role => nicknameRoleIds.has(role.id))
         .sort((a, b) => b.position - a.position)
         .first();
-    const baseName = getBaseName(member);
+    const baseName = getBaseName(fresh);
     try {
         if (topRole) {
-            const newNick = `${topRole.name.toUpperCase()} | ${baseName}`;
-            if (member.displayName !== newNick) {
-                await member.setNickname(newNick);
+            const emoji = emojiByRoleId.get(topRole.id);
+            const prefix = emoji ? `${emoji} ${topRole.name.toUpperCase()}` : topRole.name.toUpperCase();
+            const newNick = `${prefix} | ${baseName}`;
+            if (fresh.displayName !== newNick) {
+                await fresh.setNickname(newNick);
             }
         }
         else {
-            // Sin rol configurado: quitar prefijo si lo tiene
-            const hasPrefix = /^.+ \| /.test(member.nickname ?? '');
+            const hasPrefix = /^.+ \| /.test(fresh.nickname ?? '');
             if (hasPrefix) {
-                await member.setNickname(baseName === member.user.username ? null : baseName);
+                await fresh.setNickname(baseName === fresh.user.username ? null : baseName);
             }
         }
     }
     catch (err) {
         const isPermError = typeof err === 'object' && err !== null && 'code' in err && err.code === 50013;
         if (isPermError) {
-            logger.warn({ memberId: member.id }, 'No se pudo actualizar nickname: el rol del bot debe estar por encima del rol del miembro en la jerarquía de roles del servidor');
+            logger.warn({ memberId: fresh.id }, 'No se pudo actualizar nickname: el rol del bot debe estar por encima del rol del miembro en la jerarquía de roles del servidor');
         }
         else {
-            logger.warn({ err, memberId: member.id }, 'No se pudo actualizar nickname');
+            logger.warn({ err, memberId: fresh.id }, 'No se pudo actualizar nickname');
         }
     }
 }
