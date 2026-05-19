@@ -30,33 +30,45 @@ type LevelTopOptions = {
 };
 
 export function buildLevelProfileEmbed(options: LevelProfileOptions) {
+  const sep = '─'.repeat(30);
+  const description = [
+    `⭐ Nivel **${options.level}**  ·  🏆 Rank **#${options.rank}**  ·  **${options.xp.toLocaleString()}** XP`,
+    '',
+    sep,
+    `**→ Nivel ${options.nextLevel}**`,
+    options.progress,
+    `${options.currentXp.toLocaleString()} / ${options.requiredXp.toLocaleString()} XP`,
+    sep,
+    '',
+    `💬 **${options.messageCount.toLocaleString()}** mensajes  ·  🎙️ **${options.voiceTime}** en voz`,
+  ].join('\n');
+
   return buildAquarisEmbed({
     title: `🏅 Perfil de ${options.displayName}`,
+    description,
     color: LEVEL_COLORS.profile,
     footer: 'levels',
-    fields: [
-      { name: 'Nivel', value: `**${options.level}**`, inline: true },
-      { name: 'Ranking', value: `**#${options.rank}**`, inline: true },
-      { name: 'XP total', value: options.xp.toLocaleString(), inline: true },
-      {
-        name: `Progreso al nivel ${options.nextLevel}`,
-        value: `${options.progress}  ${options.currentXp.toLocaleString()} / ${options.requiredXp.toLocaleString()} XP`,
-      },
-      { name: 'Mensajes', value: options.messageCount.toLocaleString(), inline: true },
-      { name: 'Tiempo en voz', value: options.voiceTime, inline: true },
-    ],
   })
     .setAuthor({ name: options.userTag, iconURL: options.avatarUrl })
     .setThumbnail(options.avatarUrl);
 }
 
 export function buildLevelTopEmbed(options: LevelTopOptions) {
+  const sep     = '─'.repeat(30);
+  const podium  = options.lines.slice(0, 3);
+  const rest    = options.lines.slice(3);
+  const parts   = [
+    `**${options.guildName}**`,
+    '',
+    ...podium,
+    ...(rest.length > 0 ? [sep, ...rest] : []),
+  ];
+
   return buildAquarisEmbed({
     title: options.title,
-    description: options.lines.join('\n'),
+    description: parts.join('\n'),
     color: LEVEL_COLORS.profile,
     footer: 'levels',
-    fields: [{ name: 'Servidor', value: options.guildName, inline: true }],
   });
 }
 

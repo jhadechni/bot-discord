@@ -16,7 +16,6 @@ import { SHOP_COLORS } from '../utils/shop-ui.js';
 import type { CatalogMode, CatalogViewState } from './catalog.js';
 import {
   buildCategorySelectRow,
-  buildProductGridEmbed,
   queryCatalogProducts,
   resolveCatalogViewState,
 } from './catalog.js';
@@ -52,7 +51,7 @@ export interface CartSession {
 }
 
 const CART_TTL_MS = 30 * 60 * 1000;
-const CART_PAGE_SIZE = 9;
+const CART_PAGE_SIZE = 10;
 
 const sessions = new Map<string, { session: CartSession; timer: ReturnType<typeof setTimeout> }>();
 
@@ -121,13 +120,17 @@ export function buildCartEmbed(session: CartSession): EmbedBuilder {
 }
 
 function buildBrowseEmbed(state: CatalogViewState): EmbedBuilder {
-  return buildProductGridEmbed(state, {
-    color: SHOP_COLORS.info,
-    footerHint: 'Selecciona un producto del menú para añadir al carrito',
-    numberItems: false,
-    pageSize: CART_PAGE_SIZE,
-    titlePrefix: '🛍️ Explorar productos',
-  });
+  const category = getCategoryDefinition(state.currentCategory);
+  const subcategory = getSubcategoryDefinition(state.currentCategory, state.currentSubcategory);
+  const count = state.totalSubcategoryProducts;
+  const itemLabel = state.currentMode === 'services' ? 'servicio' : 'producto';
+
+  return new EmbedBuilder()
+    .setTitle(`${category.emoji} ${category.label} / ${subcategory.label}`)
+    .setDescription(`${count} ${itemLabel}${count !== 1 ? 's' : ''} disponibles. Selecciona uno del menú para añadir al carrito.`)
+    .setColor(SHOP_COLORS.info)
+    .setFooter({ text: SHOP_FOOTER.text })
+    .setTimestamp();
 }
 
 function buildCartProductSelectRow(
@@ -257,9 +260,13 @@ function buildBrowseComponents(
   }
 
   const useProductSelect = state.allSubcategoryProducts.length > 0 && state.allSubcategoryProducts.length <= 25;
-  if (useProductSelect) {
-    rows.push(buildCartProductSelectRow(state.allSubcategoryProducts));
-  } else if (state.totalPages > 1) {
+  const usePagination = !useProductSelect && state.totalPages > 1;
+
+  if (state.pageProducts.length > 0) {
+    rows.push(buildCartProductSelectRow(usePagination ? state.pageProducts : state.allSubcategoryProducts));
+  }
+
+  if (usePagination) {
     rows.push(buildBrowsePaginationRow(state));
   }
 

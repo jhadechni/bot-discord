@@ -2,18 +2,18 @@ import { EmbedBuilder, type APIEmbedField } from 'discord.js';
 import { COLORS } from './ui.js';
 
 export const AQUARIS_FOOTERS = {
-  logsModeration: { text: 'Aquaris Logs • Moderación' },
-  logsCommunity: { text: 'Aquaris Logs • Comunidad' },
-  logsRecruitment: { text: 'Aquaris Logs • Reclutamiento' },
-  moderation: { text: 'Aquaris • Moderación' },
-  system: { text: 'Aquaris • Sistema' },
-  shop: { text: 'Aquaris • Tienda' },
-  recruitment: { text: 'Aquaris • Reclutamiento' },
-  reminders: { text: 'Aquaris • Recordatorios' },
-  suggestions: { text: 'Aquaris • Sugerencias' },
-  levels: { text: 'Aquaris • Niveles' },
-  community: { text: 'Aquaris • Comunidad' },
-  general: { text: 'Aquaris' },
+  logsModeration: { text: 'Aquaris Logs • Moderación  ·  💙 by jhadechni' },
+  logsCommunity: { text: 'Aquaris Logs • Comunidad  ·  💙 by jhadechni' },
+  logsRecruitment: { text: 'Aquaris Logs • Reclutamiento  ·  💙 by jhadechni' },
+  moderation: { text: 'Aquaris • Moderación  ·  💙 by jhadechni' },
+  system: { text: 'Aquaris • Sistema  ·  💙 by jhadechni' },
+  shop: { text: 'Aquaris • Tienda  ·  💙 by jhadechni' },
+  recruitment: { text: 'Aquaris • Reclutamiento  ·  💙 by jhadechni' },
+  reminders: { text: 'Aquaris • Recordatorios  ·  💙 by jhadechni' },
+  suggestions: { text: 'Aquaris • Sugerencias  ·  💙 by jhadechni' },
+  levels: { text: 'Aquaris • Niveles  ·  💙 by jhadechni' },
+  community: { text: 'Aquaris • Comunidad  ·  💙 by jhadechni' },
+  general: { text: 'Aquaris  ·  💙 by jhadechni' },
 } as const;
 
 export const AQUARIS_COLORS = {

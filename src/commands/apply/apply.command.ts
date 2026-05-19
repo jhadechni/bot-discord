@@ -15,9 +15,19 @@ export const applyCommand: Command = {
     .setDescription('Abre una solicitud de ingreso al clan Aquaris'),
 
   async execute(interaction) {
-    const select = new StringSelectMenuBuilder()
+    const platformSelect = new StringSelectMenuBuilder()
+      .setCustomId('apply_platform_select')
+      .setPlaceholder('¿En qué plataforma juegas? (Java / Bedrock)')
+      .setMinValues(1)
+      .setMaxValues(1)
+      .addOptions(
+        new StringSelectMenuOptionBuilder().setLabel('Java Edition').setDescription('PC — versión Java').setValue('Java').setEmoji('☕'),
+        new StringSelectMenuOptionBuilder().setLabel('Bedrock Edition').setDescription('Móvil, consola, Windows 10/11').setValue('Bedrock').setEmoji('📱'),
+      );
+
+    const roleSelect = new StringSelectMenuBuilder()
       .setCustomId('apply_role_select')
-      .setPlaceholder('¿En qué puedes aportar?')
+      .setPlaceholder('¿En qué destacas dentro del juego?')
       .setMinValues(1)
       .setMaxValues(5)
       .addOptions(
@@ -30,11 +40,12 @@ export const applyCommand: Command = {
 
     const embed = buildRecruitmentNoticeEmbed({
       title: 'Solicitud de ingreso',
-      description: 'Selecciona el rol en el que puedes aportar y pulsa **Continuar**.',
+      description: 'Selecciona tu **plataforma** y en qué **destacas**, luego pulsa **Continuar**.',
     });
 
+    // customId encodes state as apply_confirm_{platform}|{role} — empty = not selected yet
     const confirmBtn = new ButtonBuilder()
-      .setCustomId('apply_confirm_')
+      .setCustomId('apply_confirm_|')
       .setLabel('Continuar')
       .setStyle(ButtonStyle.Primary)
       .setDisabled(true);
@@ -42,7 +53,8 @@ export const applyCommand: Command = {
     await interaction.reply({
       embeds: [embed],
       components: [
-        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select),
+        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(platformSelect),
+        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(roleSelect),
         new ActionRowBuilder<ButtonBuilder>().addComponents(confirmBtn),
       ],
       ephemeral: true,

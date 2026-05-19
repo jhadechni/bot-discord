@@ -116,6 +116,14 @@ const suggestCooldown = new Map<string, number>(); // key: guildId-userId → la
 // Cache de selección pendiente en /remind kit (userId → templateId[])
 const kitSelectionCache = new Map<string, string[]>();
 
+// Lee el estado {platform, role} del customId del botón apply_confirm_ en el mensaje
+function parseApplyConfirmState(rawComponents: { components: { customId?: string }[] }[]) {
+  const btn = rawComponents.flatMap(r => r.components).find(c => c.customId?.startsWith('apply_confirm_'));
+  const suffix = btn?.customId?.replace('apply_confirm_', '') ?? '|';
+  const [platform = '', role = ''] = suffix.split('|');
+  return { platform, role };
+}
+
 function formatDiscountLabel(
   discountType: string,
   value: { toString(): string },
@@ -1080,55 +1088,97 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
     }
 
     // --- Select menu: selección de rol(es) en reclutamiento ---
+    const ALL_PLATFORMS = [
+      { value: 'Java',    label: 'Java Edition',    description: 'PC — versión Java',             emoji: '☕' },
+      { value: 'Bedrock', label: 'Bedrock Edition', description: 'Móvil, consola, Windows 10/11', emoji: '📱' },
+    ];
+
+    const ALL_APPLY_ROLES = [
+      { value: 'Builder', label: 'Builder',           description: 'Construcción y diseño',       emoji: '🏗️' },
+      { value: 'Técnico', label: 'Técnico / Redstone', description: 'Farms, mecánicas y redstone', emoji: '⚙️' },
+      { value: 'PvP',     label: 'PvP',               description: 'Combate y defensa del clan',  emoji: '⚔️' },
+      { value: 'Farmer',  label: 'Farmer',            description: 'Producción de recursos',      emoji: '🌾' },
+      { value: 'Otro',    label: 'Otro',              description: 'Otro rol o perfil',           emoji: '✨' },
+    ];
+
+    function buildApplyPhaseOneReply(platform: string, role: string) {
+      const isComplete = platform.length > 0 && role.length > 0;
+
+      const platformRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('apply_platform_select')
+          .setPlaceholder('¿En qué plataforma juegas? (Java / Bedrock)')
+          .setMinValues(1)
+          .setMaxValues(1)
+          .addOptions(
+            ALL_PLATFORMS.map(p =>
+              new StringSelectMenuOptionBuilder()
+                .setLabel(p.label)
+                .setDescription(p.description)
+                .setValue(p.value)
+                .setEmoji(p.emoji)
+                .setDefault(p.value === platform),
+            ),
+          ),
+      );
+
+      const selectedRoles = role.length > 0 ? role.split(',') : [];
+
+      const roleRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('apply_role_select')
+          .setPlaceholder('¿En qué destacas dentro del juego?')
+          .setMinValues(1)
+          .setMaxValues(5)
+          .addOptions(
+            ALL_APPLY_ROLES.map(r =>
+              new StringSelectMenuOptionBuilder()
+                .setLabel(r.label)
+                .setDescription(r.description)
+                .setValue(r.value)
+                .setEmoji(r.emoji)
+                .setDefault(selectedRoles.includes(r.value)),
+            ),
+          ),
+      );
+
+      const rolesDisplay = selectedRoles.length > 0 ? selectedRoles.join(', ') : '';
+      const statusLine = isComplete
+        ? `Plataforma: **${platform}** · Rol: **${rolesDisplay}**\n\nPulsa **Continuar** para abrir el formulario.`
+        : 'Selecciona tu **plataforma** y en qué **destacas**, luego pulsa **Continuar**.';
+
+      const embed = buildRecruitmentNoticeEmbed({
+        title: 'Solicitud de ingreso',
+        description: statusLine,
+      });
+
+      const confirmBtn = new ButtonBuilder()
+        .setCustomId(`apply_confirm_${platform}|${role}`)
+        .setLabel('Continuar')
+        .setStyle(ButtonStyle.Primary)
+        .setDisabled(!isComplete);
+
+      return {
+        embeds: [embed],
+        components: [platformRow, roleRow, new ActionRowBuilder<ButtonBuilder>().addComponents(confirmBtn)],
+      };
+    }
+
+    if (interaction.isStringSelectMenu() && interaction.customId === 'apply_platform_select') {
+      if (interaction.values.length === 0) return;
+      await interaction.deferUpdate();
+      const platform = interaction.values[0] ?? '';
+      const { role } = parseApplyConfirmState(interaction.message.components as { components: { customId?: string }[] }[]);
+      await interaction.editReply(buildApplyPhaseOneReply(platform, role));
+      return;
+    }
+
     if (interaction.isStringSelectMenu() && interaction.customId === 'apply_role_select') {
       if (interaction.values.length === 0) return;
       await interaction.deferUpdate();
-
-      const selected = interaction.values;
-      const rolesJoined = selected.join(',');
-
-      const ALL_ROLES = [
-        { value: 'Builder',  label: 'Builder',           description: 'Construcción y diseño',       emoji: '🏗️' },
-        { value: 'Técnico',  label: 'Técnico / Redstone', description: 'Farms, mecánicas y redstone', emoji: '⚙️' },
-        { value: 'PvP',      label: 'PvP',                description: 'Combate y defensa del clan',  emoji: '⚔️' },
-        { value: 'Farmer',   label: 'Farmer',             description: 'Producción de recursos',      emoji: '🌾' },
-        { value: 'Otro',     label: 'Otro',               description: 'Otro rol o perfil',           emoji: '✨' },
-      ];
-
-      const updatedSelect = new StringSelectMenuBuilder()
-        .setCustomId('apply_role_select')
-        .setPlaceholder('¿En qué puedes aportar?')
-        .setMinValues(1)
-        .setMaxValues(5)
-        .addOptions(
-          ALL_ROLES.map(r =>
-            new StringSelectMenuOptionBuilder()
-              .setLabel(r.label)
-              .setDescription(r.description)
-              .setValue(r.value)
-              .setEmoji(r.emoji)
-              .setDefault(selected.includes(r.value)),
-          ),
-        );
-
-      const confirmBtn = new ButtonBuilder()
-        .setCustomId(`apply_confirm_${rolesJoined}`)
-        .setLabel('Continuar')
-        .setStyle(ButtonStyle.Primary)
-        .setDisabled(false);
-
-      const updatedEmbed = buildRecruitmentNoticeEmbed({
-        title: 'Solicitud de ingreso',
-        description: `Roles: **${selected.join(', ')}**\n\nPulsa **Continuar** para abrir el formulario.`,
-      });
-
-      await interaction.editReply({
-        embeds: [updatedEmbed],
-        components: [
-          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(updatedSelect),
-          new ActionRowBuilder<ButtonBuilder>().addComponents(confirmBtn),
-        ],
-      });
+      const role = interaction.values.join(',');
+      const { platform } = parseApplyConfirmState(interaction.message.components as { components: { customId?: string }[] }[]);
+      await interaction.editReply(buildApplyPhaseOneReply(platform, role));
       return;
     }
 
@@ -1181,16 +1231,31 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         }
       }
 
-      const roles = interaction.customId.replace('apply_modal_', '').split(',');
-      const role = roles.join(', ');
-      const age = interaction.fields.getTextInputValue('apply_age');
-      const experience = interaction.fields.getTextInputValue('apply_experience');
-      const contribution = interaction.fields.getTextInputValue('apply_contribution');
-      const availability = interaction.fields.getTextInputValue('apply_availability');
+      // customId suffix = "{platform}|{role}" — rol viene del select de fase 1
+      const [platform = '', role = ''] = interaction.customId.replace('apply_modal_', '').split('|');
+      const age = interaction.fields.getTextInputValue('apply_age').trim();
+      const aportar = interaction.fields.getTextInputValue('apply_aportar').trim();
+      const disponibilidad = interaction.fields.getTextInputValue('apply_disponibilidad').trim();
+      const colaborar = interaction.fields.getTextInputValue('apply_colaborar').trim();
+      const dudas = interaction.fields.getTextInputValue('apply_dudas').trim();
+
+      // Validar que la edad sea un número entero entre 1 y 99
+      const ageNum = parseInt(age, 10);
+      if (!/^\d{1,2}$/.test(age) || isNaN(ageNum) || ageNum < 1 || ageNum > 99) {
+        await interaction.editReply({
+          embeds: [
+            buildRecruitmentErrorEmbed(
+              'Edad no válida',
+              'Por favor introduce tu edad como un número entero (por ejemplo: `20`).',
+            ),
+          ],
+        });
+        return;
+      }
 
       // Palabras baneadas en cualquier campo de texto libre
       const recruitFilterWords = await getFilteredWords(guildId);
-      const recruitTexts = [experience, contribution, availability];
+      const recruitTexts = [aportar, disponibilidad, colaborar, dudas].filter(Boolean);
       const recruitBanned = recruitTexts.map(t => findBannedWord(t, recruitFilterWords)).find(Boolean);
       if (recruitBanned) {
         await interaction.editReply({
@@ -1237,7 +1302,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           userId: interaction.user.id,
           channelId: channelId ?? null,
           minecraftRole: role,
-          answers: { age, experience, role, contribution, availability },
+          answers: { age, platform, role, aportar, disponibilidad, colaborar, dudas },
         },
       });
 
@@ -1254,11 +1319,13 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const staffEmbed = buildRecruitmentApplicationEmbed({
         applicantId: interaction.user.id,
         username: interaction.user.username,
+        platform,
         role,
         age,
-        experience,
-        availability,
-        contribution,
+        aportar,
+        disponibilidad,
+        colaborar,
+        dudas,
         ticketId: ticket.id,
         avatarUrl: interaction.user.displayAvatarURL(),
       });
@@ -1283,7 +1350,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           const welcomeEmbed = buildRecruitmentTicketWelcomeEmbed(interaction.user.id);
           await ticketChannel.send({ embeds: [welcomeEmbed] });
 
-          if (roles.includes('Builder')) {
+          if (role.split(',').includes('Builder')) {
             await ticketChannel.send({
               embeds: [
                 buildRecruitmentNoticeEmbed({
@@ -1302,7 +1369,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         const recruitLogCh = getLogChannel(interaction.guild, config, 'recruit');
         if (recruitLogCh) {
           await recruitLogCh.send({ embeds: [staffEmbed], components: [buttons] });
-          if (roles.includes('Builder')) {
+          if (role.split(',').includes('Builder')) {
             await recruitLogCh.send({
               embeds: [
                 buildRecruitmentNoticeEmbed({
@@ -1607,15 +1674,19 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         }
       }
 
+      // customId suffix = "{platform}|{role}"
+      const [platform = '', role = ''] = rolesJoined.split('|');
+      if (!platform || !role) return; // estado incompleto, no debería llegar aquí
+
       const modal = new ModalBuilder()
-        .setCustomId(`apply_modal_${rolesJoined}`)
+        .setCustomId(`apply_modal_${platform}|${role}`)
         .setTitle('Solicitud de ingreso — Aquaris');
 
       modal.addComponents(
         new ActionRowBuilder<TextInputBuilder>().addComponents(
           new TextInputBuilder()
             .setCustomId('apply_age')
-            .setLabel('Edad')
+            .setLabel('¿Qué edad tienes?')
             .setStyle(TextInputStyle.Short)
             .setPlaceholder('Ej: 20')
             .setRequired(true)
@@ -1624,31 +1695,40 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         ),
         new ActionRowBuilder<TextInputBuilder>().addComponents(
           new TextInputBuilder()
-            .setCustomId('apply_experience')
-            .setLabel('Experiencia en Minecraft')
-            .setStyle(TextInputStyle.Short)
-            .setPlaceholder('Ej: 5 años, survival/factions/SMP...')
-            .setRequired(true)
-            .setMaxLength(100),
-        ),
-        new ActionRowBuilder<TextInputBuilder>().addComponents(
-          new TextInputBuilder()
-            .setCustomId('apply_availability')
-            .setLabel('Disponibilidad semanal')
-            .setStyle(TextInputStyle.Short)
-            .setPlaceholder('Ej: tardes entre semana, fines de semana')
-            .setRequired(true)
-            .setMaxLength(100),
-        ),
-        new ActionRowBuilder<TextInputBuilder>().addComponents(
-          new TextInputBuilder()
-            .setCustomId('apply_contribution')
+            .setCustomId('apply_aportar')
             .setLabel('¿Qué puedes aportar al clan?')
             .setStyle(TextInputStyle.Paragraph)
             .setPlaceholder('Cuéntanos tus habilidades, proyectos anteriores...')
             .setRequired(true)
             .setMinLength(20)
             .setMaxLength(400),
+        ),
+        new ActionRowBuilder<TextInputBuilder>().addComponents(
+          new TextInputBuilder()
+            .setCustomId('apply_disponibilidad')
+            .setLabel('¿Disponibilidad horaria y país?')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ej: tardes entre semana, fines de semana — España')
+            .setRequired(true)
+            .setMaxLength(150),
+        ),
+        new ActionRowBuilder<TextInputBuilder>().addComponents(
+          new TextInputBuilder()
+            .setCustomId('apply_colaborar')
+            .setLabel('¿Colaboras en proyectos comunitarios?')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('¿Aunque no sean para tu base personal? Sí / No / A veces')
+            .setRequired(true)
+            .setMaxLength(200),
+        ),
+        new ActionRowBuilder<TextInputBuilder>().addComponents(
+          new TextInputBuilder()
+            .setCustomId('apply_dudas')
+            .setLabel('¿Tienes alguna duda sobre nosotros?')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Escribe tus preguntas o deja en blanco si no tienes')
+            .setRequired(false)
+            .setMaxLength(300),
         ),
       );
 
@@ -2524,9 +2604,41 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
         await interaction.deferUpdate();
 
-        const products = await queryCatalogProducts(guildId);
-        const { embed, components } = buildCatalogView(products, mode, undefined, undefined, 1);
-        await interaction.editReply({ embeds: [embed], components });
+        const products = await queryCartProducts(guildId);
+        if (products.length === 0) {
+          await interaction.editReply({
+            embeds: [buildShopNoticeEmbed({ title: 'Tienda sin productos', description: 'La tienda no tiene productos disponibles en este momento.', color: SHOP_COLORS.neutral })],
+            components: [],
+          });
+          return;
+        }
+
+        const existingCart = getCart(guildId, interaction.user.id);
+        const session = existingCart ?? {
+          guildId,
+          userId: interaction.user.id,
+          channelId: interaction.channelId,
+          messageId: interaction.message.id,
+          currentCategory: null,
+          currentCatalogMode: mode,
+          currentPage: 1,
+          currentSubcategory: null,
+          items: [],
+          pendingProductId: null,
+          viewMode: 'browse' as const,
+        };
+
+        session.channelId = interaction.channelId;
+        session.messageId = interaction.message.id;
+        session.currentCatalogMode = mode;
+        session.currentPage = 1;
+        session.currentCategory = null;
+        session.currentSubcategory = null;
+        session.viewMode = 'browse';
+        setCart(session);
+
+        const view = buildCartView(session, products);
+        await interaction.editReply({ embeds: view.embeds, components: view.components });
         return;
       }
 
@@ -2737,19 +2849,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       }
 
       const productId = interaction.values[0];
-      const products = await queryCartProducts(guildId);
-      const product = products.find(p => p.id === productId);
+      if (!productId) return;
 
-      if (!product) {
-        await interaction.reply({
-          embeds: [buildShopErrorEmbed('Producto no disponible', 'Ese producto ya no está disponible.')],
-          ephemeral: true,
-        });
-        return;
-      }
-
-      setCart({ ...cart, pendingProductId: product.id });
-      await interaction.showModal(buildQtyModal(product.name));
+      setCart({ ...cart, pendingProductId: productId });
+      await interaction.showModal(buildQtyModal('producto'));
       return;
     }
 

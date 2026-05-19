@@ -88,7 +88,7 @@ export function startReminderScheduler(): void {
               `**${reminder.template.name}** está disponible para reclamar.`,
               REMINDER_COLORS.warning,
             ).setFooter({
-              text: `Aquaris • Recordatorios · Cooldown: ${formatTime(reminder.template.cooldownMin)} · Pulsa el botón después de reclamarlo`,
+              text: `Aquaris • Recordatorios · Cooldown: ${formatTime(reminder.template.cooldownMin)} · Pulsa el botón después de reclamarlo  ·  💙 by jhadechni`,
             });
 
             const claimBtn = new ButtonBuilder()

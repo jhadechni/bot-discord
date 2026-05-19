@@ -42,22 +42,22 @@ export const topCommand: Command = {
       return;
     }
 
-    const medals: Record<number, string> = { 0: '🥇', 1: '🥈', 2: '🥉' };
+    const MEDALS = ['🥇', '🥈', '🥉'];
 
     const lines = await Promise.all(
       top.map(async (entry, i) => {
-        const user = await interaction.client.users.fetch(entry.userId).catch(() => null);
-        const name = user ? (user.globalName ?? user.username) : `<@${entry.userId}>`;
-        const prefix = medals[i] ?? `**${i + 1}.**`;
+        const user   = await interaction.client.users.fetch(entry.userId).catch(() => null);
+        const name   = user ? (user.globalName ?? user.username) : `<@${entry.userId}>`;
+        const prefix = MEDALS[i] ?? `\` ${i + 1}.\``;
 
         const value =
           tipo === 'xp'
-            ? `${entry.xp.toLocaleString()} XP  ·  Nv. ${entry.level}`
+            ? `⭐ **${entry.xp.toLocaleString()}** XP  ·  Nv. ${entry.level}`
             : tipo === 'mensajes'
-              ? `${entry.messageCount.toLocaleString()} mensajes`
-              : formatVoiceTime(entry.voiceMinutes);
+              ? `💬 **${entry.messageCount.toLocaleString()}** mensajes  ·  Nv. ${entry.level}`
+              : `🎙️ **${formatVoiceTime(entry.voiceMinutes)}**  ·  Nv. ${entry.level}`;
 
-        return `${prefix} ${name}  —  ${value}`;
+        return `${prefix}  ${name}\n     ${value}`;
       }),
     );
 

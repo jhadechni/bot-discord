@@ -67,7 +67,7 @@ export function buildSuggestionPublicEmbed(options: SuggestionPublicEmbedOptions
       { name: '👎 Votos en contra', value: `${downCount}` },
     )
     .setFooter({
-      text: `Recuerda que aunque una sugerencia alcance muchos votos, no siempre se podrán implementar. · ID: ${shortId}`,
+      text: `Recuerda que aunque una sugerencia alcance muchos votos, no siempre se podrán implementar. · ID: ${shortId}  ·  💙 by jhadechni`,
     })
     .setTimestamp();
 

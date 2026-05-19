@@ -168,7 +168,7 @@ export const tempmuteCommand: Command = {
           buildModerationUserDmEmbed({
             title: '🔇 Has sido silenciado temporalmente',
             actionLabel: 'un mute temporal',
-            description: 'Has recibido una sanción de silencio.',
+            description: 'Has recibido una sanción de silencio. <:senzeclosetheortito:1506113834715447436>',
             color: MODERATION_COLORS.mute,
             guildName: interaction.guild.name,
             duration: durationLabel,

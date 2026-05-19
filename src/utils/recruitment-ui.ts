@@ -26,11 +26,13 @@ type RecruitmentColor = AquarisColor;
 type RecruitmentApplicationEmbedOptions = {
   applicantId: string;
   username: string;
+  platform: string;
   role: string;
   age: string;
-  experience: string;
-  availability: string;
-  contribution: string;
+  aportar: string;
+  disponibilidad: string;
+  colaborar: string;
+  dudas: string;
   ticketId: string;
   avatarUrl?: string;
 };
@@ -107,11 +109,13 @@ export function buildRecruitmentApplicationEmbed(options: RecruitmentApplication
     footer: 'logsRecruitment',
     fields: [
       { name: 'Solicitante', value: `<@${options.applicantId}>\n\`${options.username}\``, inline: true },
-      { name: 'Rol solicitado', value: options.role, inline: true },
+      { name: 'Plataforma', value: options.platform, inline: true },
       { name: 'Edad', value: options.age, inline: true },
-      { name: 'Experiencia en Minecraft', value: options.experience },
-      { name: 'Disponibilidad semanal', value: options.availability },
-      { name: 'Aportación al clan', value: options.contribution },
+      { name: 'Rol / Especialidad', value: options.role, inline: true },
+      { name: '¿Qué puedes aportar?', value: options.aportar },
+      { name: '¿Disponibilidad horaria y país?', value: options.disponibilidad },
+      { name: '¿Colaboras en proyectos comunitarios?', value: options.colaborar },
+      ...(options.dudas.length > 0 ? [{ name: '¿Dudas sobre el clan?', value: options.dudas }] : []),
       { name: 'ID interno', value: `\`${options.ticketId}\``, inline: true },
     ],
   });

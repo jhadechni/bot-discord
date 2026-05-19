@@ -70,7 +70,7 @@ export function buildKitReminderListEmbed(params: {
   });
 
   if (params.footerHint) {
-    embed.setFooter({ text: `Aquaris • Recordatorios · ${params.footerHint}` });
+    embed.setFooter({ text: `Aquaris • Recordatorios · ${params.footerHint}  ·  💙 by jhadechni` });
   }
 
   return embed;

@@ -15,14 +15,15 @@ import {
   compareSubcategoryKeys,
   getCategoryDefinition,
   getSubcategoryDefinition,
-  reloadTaxonomyFromDatabase,
+  isValidCategory,
+  normalizeShopTaxonomyKey,
 } from './taxonomy.js';
 import { formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 import { SHOP_COLORS } from '../utils/shop-ui.js';
 import { resolvePresentationLabel } from './quantities.js';
 import { buildProductContentsSummary } from './product-contents.js';
 
-const CATALOG_PAGE_SIZE = 9;
+const CATALOG_PAGE_SIZE = 10;
 const PRODUCT_SELECT_THRESHOLD = 25;
 
 export type CatalogMode = 'products' | 'services';
@@ -102,7 +103,6 @@ type ProductGridEmbedOptions = {
 };
 
 export async function queryCatalogProducts(guildId: string) {
-  await reloadTaxonomyFromDatabase(guildId);
 
   const productsByName = new Map<string, CatalogProduct>();
 
@@ -214,6 +214,7 @@ function parseProductCategoryAssignments(
   const seen = new Set<string>();
 
   const pushAssignment = (categoryValue: string | null | undefined, subcategoryValue: string | null | undefined) => {
+    if (!isValidCategory(normalizeShopTaxonomyKey(categoryValue))) return;
     const taxonomy = coerceShopTaxonomy(categoryValue, subcategoryValue);
     const key = `${taxonomy.category}:${taxonomy.subcategory}`;
 
@@ -379,41 +380,49 @@ export function buildProductGridEmbed(
       }), state.currentCategory, state.currentSubcategory);
   }
 
-  embed.setDescription(
-    [
-      `**${category.label} / ${subcategory.label}**`,
-      modeMeta.description,
-      `${state.totalSubcategoryProducts} ${itemLabel}${state.totalSubcategoryProducts !== 1 ? 's' : ''} en esta sección.`,
-    ].join('\n'),
-  );
+  // Horizontal borders fit within Discord embed code block (~36 chars)
+  // Content lines: left │ only — no right border (avoids overflow wrapping)
+  const HLINE = '─'.repeat(32);
+  const TOP   = `┌${HLINE}┐`;
+  const SEP   = `├${HLINE}┤`;
+  const BOT   = `└${HLINE}┘`;
+  const NAME_MAX   = 26; // │ + sp + emoji(2) + sp + name = 31 chars max
+  const DETAIL_MAX = 29; // │ + 3sp + detail  = 33 chars max
 
-  const fields = state.pageProducts.map((product, index) => {
-    const icon = getProductEmoji(product);
+  const productLines = state.pageProducts.map((product, index) => {
+    const icon   = getProductEmoji(product);
     const prefix = options.numberItems ? `${index + 1}. ` : '';
-    const price = product.prices[0];
-    const priceStr = price ? `💰 **${formatPrice(price.price, price.currency)}**` : '💰 _Sin precio_';
-    const presentationStr = product.productType !== 'service'
-      ? `📐 ${product.presentationLabel ?? resolvePresentationLabel({
+    const price  = product.prices[0];
+    const priceStr = price ? formatPrice(price.price, price.currency) : 'S/P';
+    const presentation = product.productType !== 'service'
+      ? (product.presentationLabel ?? resolvePresentationLabel({
           presentationQuantity: product.presentationQuantity,
           presentationType: product.presentationType as Parameters<typeof resolvePresentationLabel>[0]['presentationType'],
           stackSize: product.baseMaterial?.stackSize ?? 64,
-        })}`
+        }))
       : null;
-
-    return {
-      name: `${prefix}${icon} ${truncateText(product.name, 25)}`.slice(0, 256),
-      value: [presentationStr, priceStr].filter(Boolean).join('\n'),
-      inline: true,
-    };
+    const detailContent = presentation ? `${presentation}  ·  ${priceStr}` : priceStr;
+    return [
+      `│ ${icon} ${truncateText(`${prefix}${product.name}`, NAME_MAX)}`,
+      `│   ${truncateText(detailContent, DETAIL_MAX)}`,
+    ].join('\n');
   });
 
-  embed.addFields(fields);
+  const table = ['```', TOP, productLines.join(`\n${SEP}\n`), BOT, '```'].join('\n');
+
+  embed.setDescription(
+    [
+      `**${category.label} / ${subcategory.label}**`,
+      `${state.totalSubcategoryProducts} ${itemLabel}${state.totalSubcategoryProducts !== 1 ? 's' : ''} en esta sección.`,
+      table,
+    ].join('\n'),
+  );
+
   embed.setFooter({
     text: [
       SHOP_FOOTER.text,
-      `${modeMeta.label} · Página ${state.currentPage}/${state.totalPages}`,
+      `Pág. ${state.currentPage}/${state.totalPages}`,
       footerHint,
-      pageSize > 0 ? `${state.pageProducts.length}/${pageSize} visibles` : null,
     ].filter(Boolean).join('  ·  '),
   });
 
@@ -472,12 +481,12 @@ function buildCatalogModeRow(
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId('tienda:catalog:mode:products')
-      .setLabel(`📦 Productos (${counts.products})`)
+      .setLabel('📦 Productos')
       .setStyle(currentMode === 'products' ? ButtonStyle.Primary : ButtonStyle.Secondary)
       .setDisabled(counts.products === 0),
     new ButtonBuilder()
       .setCustomId('tienda:catalog:mode:services')
-      .setLabel(`⚙️ Servicios (${counts.services})`)
+      .setLabel('⚙️ Servicios')
       .setStyle(currentMode === 'services' ? ButtonStyle.Primary : ButtonStyle.Secondary)
       .setDisabled(counts.services === 0),
     new ButtonBuilder()
@@ -630,6 +639,24 @@ function buildOpenCartRow(state: CatalogViewState): ActionRowBuilder<ButtonBuild
   );
 }
 
+function buildBrowseHintEmbed(state: CatalogViewState): EmbedBuilder {
+  const category = getCategoryDefinition(state.currentCategory);
+  const subcategory = getSubcategoryDefinition(state.currentCategory, state.currentSubcategory);
+  const count = state.totalSubcategoryProducts;
+  const itemLabel = state.currentMode === 'services' ? 'servicio' : 'producto';
+
+  return applyTaxonomyImages(
+    new EmbedBuilder()
+      .setTitle(`${category.emoji} ${category.label} / ${subcategory.label}`)
+      .setDescription(`${count} ${itemLabel}${count !== 1 ? 's' : ''} disponibles. Selecciona uno del menú para ver el detalle.`)
+      .setColor(SHOP_COLORS.info)
+      .setFooter({ text: SHOP_FOOTER.text })
+      .setTimestamp(),
+    state.currentCategory,
+    state.currentSubcategory,
+  );
+}
+
 export function buildCatalogView(
   products: CatalogProduct[],
   mode: CatalogMode,
@@ -691,17 +718,11 @@ export function buildCatalogView(
     const product = (selectedProductId
       ? state.allSubcategoryProducts.find(p => p.id === selectedProductId)
       : null) ?? state.allSubcategoryProducts[0];
-    if (!product) {
-      embed = buildProductGridEmbed(state, { color: SHOP_COLORS.info, pageSize: CATALOG_PAGE_SIZE, titlePrefix: 'Tienda Aquaris' });
-    } else {
-      embed = buildProductDetailEmbed(product, state.currentCategory, state.currentSubcategory);
-    }
+    embed = product
+      ? buildProductDetailEmbed(product, state.currentCategory, state.currentSubcategory)
+      : buildBrowseHintEmbed(state);
   } else {
-    embed = buildProductGridEmbed(state, {
-      color: SHOP_COLORS.info,
-      pageSize: CATALOG_PAGE_SIZE,
-      titlePrefix: 'Tienda Aquaris',
-    });
+    embed = buildBrowseHintEmbed(state);
   }
 
   return { components, embed, state };
