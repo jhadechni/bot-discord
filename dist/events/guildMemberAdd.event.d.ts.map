@@ -1,0 +1,1 @@
+{"version":3,"file":"guildMemberAdd.event.d.ts","sourceRoot":"","sources":["../../src/events/guildMemberAdd.event.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,QAAQ,EAAE,MAAM,mBAAmB,CAAC;AAMlD,QAAA,MAAM,mBAAmB,EAAE,QAAQ,CAAC,gBAAgB,CA4CnD,CAAC;AAEF,eAAe,mBAAmB,CAAC"}

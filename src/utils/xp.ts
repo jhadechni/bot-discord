@@ -35,8 +35,7 @@ export function randomMessageXp(): number {
 export function progressBar(current: number, required: number, length = 14): string {
   const ratio  = required > 0 ? current / required : 0;
   const filled = Math.max(0, Math.min(length, Math.round(ratio * length)));
-  const pct    = Math.round(ratio * 100);
-  return `${'▰'.repeat(filled)}${'▱'.repeat(length - filled)}  ${pct}%`;
+  return `${'▰'.repeat(filled)}${'▱'.repeat(length - filled)}`;
 }
 
 /** Formatea minutos como "Xh Ym" o "Zm". */

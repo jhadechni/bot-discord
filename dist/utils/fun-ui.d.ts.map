@@ -1,0 +1,1 @@
+{"version":3,"file":"fun-ui.d.ts","sourceRoot":"","sources":["../../src/utils/fun-ui.ts"],"names":[],"mappings":"AAAA,OAAO,EAA6D,KAAK,YAAY,EAAE,MAAM,iBAAiB,CAAC;AAE/G,eAAO,MAAM,UAAU;;;;CAIb,CAAC;AAEX,wBAAgB,mBAAmB,CAAC,KAAK,EAAE,MAAM,EAAE,WAAW,EAAE,MAAM,EAAE,KAAK,GAAE,YAA8B,qCAO5G;AAED,wBAAgB,kBAAkB,CAAC,KAAK,EAAE,MAAM,EAAE,WAAW,EAAE,MAAM,qCAEpE"}

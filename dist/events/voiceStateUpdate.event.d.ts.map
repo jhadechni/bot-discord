@@ -1,0 +1,1 @@
+{"version":3,"file":"voiceStateUpdate.event.d.ts","sourceRoot":"","sources":["../../src/events/voiceStateUpdate.event.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,QAAQ,EAAE,MAAM,mBAAmB,CAAC;AAUlD,QAAA,MAAM,qBAAqB,EAAE,QAAQ,CAAC,kBAAkB,CAiEvD,CAAC;AAEF,eAAe,qBAAqB,CAAC"}

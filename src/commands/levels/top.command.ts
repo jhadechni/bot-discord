@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
 import { formatVoiceTime } from '../../utils/xp.js';
-import { buildLevelEmptyEmbed, buildLevelTopEmbed } from '../../utils/levels-ui.js';
+import { buildLevelEmptyEmbed, buildTopEmbed } from '../../utils/levels-ui.js';
 
 export const topCommand: Command = {
   data: new SlashCommandBuilder()
@@ -14,9 +14,9 @@ export const topCommand: Command = {
         .setDescription('Tipo de ranking (por defecto: XP)')
         .setRequired(false)
         .addChoices(
-          { name: '⭐ XP', value: 'xp' },
-          { name: '💬 Mensajes', value: 'mensajes' },
-          { name: '🎙️ Tiempo en voz', value: 'voz' },
+          { name: 'XP', value: 'xp' },
+          { name: 'Mensajes', value: 'mensajes' },
+          { name: 'Tiempo en voz', value: 'voz' },
         ),
     ),
 
@@ -27,7 +27,6 @@ export const topCommand: Command = {
     if (!guildId) return;
 
     const tipo = interaction.options.getString('tipo') ?? 'xp';
-
     const orderField =
       tipo === 'mensajes' ? 'messageCount' : tipo === 'voz' ? 'voiceMinutes' : 'xp';
 
@@ -42,34 +41,32 @@ export const topCommand: Command = {
       return;
     }
 
-    const MEDALS = ['🥇', '🥈', '🥉'];
-
-    const lines = await Promise.all(
+    const entries = await Promise.all(
       top.map(async (entry, i) => {
-        const user   = await interaction.client.users.fetch(entry.userId).catch(() => null);
-        const name   = user ? (user.globalName ?? user.username) : `<@${entry.userId}>`;
-        const prefix = MEDALS[i] ?? `\` ${i + 1}.\``;
+        const user = await interaction.client.users.fetch(entry.userId).catch(() => null);
+        const name = user ? (user.globalName ?? user.username) : `Usuario ${entry.userId.slice(-4)}`;
+        const avatarUrl = user?.displayAvatarURL({ size: 256 }) ?? null;
 
-        const value =
+        const statLine =
           tipo === 'xp'
-            ? `⭐ **${entry.xp.toLocaleString()}** XP  ·  Nv. ${entry.level}`
+            ? `**${entry.xp.toLocaleString()}** XP`
             : tipo === 'mensajes'
-              ? `💬 **${entry.messageCount.toLocaleString()}** mensajes  ·  Nv. ${entry.level}`
-              : `🎙️ **${formatVoiceTime(entry.voiceMinutes)}**  ·  Nv. ${entry.level}`;
+              ? `**${entry.messageCount.toLocaleString()}** mensajes`
+              : `**${formatVoiceTime(entry.voiceMinutes)}**`;
 
-        return `${prefix}  ${name}\n     ${value}`;
+        return { rank: i + 1, name, avatarUrl, statLine, level: entry.level };
       }),
     );
 
     const titles: Record<string, string> = {
-      xp: '⭐ Top XP',
-      mensajes: '💬 Top Mensajes',
-      voz: '🎙️ Top Tiempo en Voz',
+      xp: 'Top XP',
+      mensajes: 'Top Mensajes',
+      voz: 'Top Tiempo en Voz',
     };
 
-    const embed = buildLevelTopEmbed({
+    const embed = buildTopEmbed({
       title: titles[tipo] ?? 'Top XP',
-      lines,
+      entries,
       guildName: interaction.guild?.name ?? 'Servidor',
     });
 

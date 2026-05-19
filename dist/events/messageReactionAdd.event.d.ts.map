@@ -1,0 +1,1 @@
+{"version":3,"file":"messageReactionAdd.event.d.ts","sourceRoot":"","sources":["../../src/events/messageReactionAdd.event.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,QAAQ,EAAE,MAAM,mBAAmB,CAAC;AAElD,QAAA,MAAM,uBAAuB,EAAE,QAAQ,CAAC,oBAAoB,CAG3D,CAAC;AAEF,eAAe,uBAAuB,CAAC"}

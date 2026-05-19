@@ -1,0 +1,1 @@
+{"version":3,"file":"messageReactionRemove.event.js","sourceRoot":"","sources":["../../src/events/messageReactionRemove.event.ts"],"names":[],"mappings":"AAEA,MAAM,0BAA0B,GAAsC;IACpE,IAAI,EAAE,uBAAuB;IAC7B,KAAK,CAAC,OAAO,KAAI,CAAC;CACnB,CAAC;AAEF,eAAe,0BAA0B,CAAC"}

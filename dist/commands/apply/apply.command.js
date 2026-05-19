@@ -1,0 +1,41 @@
+import { SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } from 'discord.js';
+import { buildRecruitmentNoticeEmbed } from '../../utils/recruitment-ui.js';
+export const applyCommand = {
+    data: new SlashCommandBuilder()
+        .setName('apply')
+        .setDescription('Abre una solicitud de ingreso al clan Aquaris'),
+    async execute(interaction) {
+        const platformSelect = new StringSelectMenuBuilder()
+            .setCustomId('apply_platform_select')
+            .setPlaceholder('¿En qué plataforma juegas? (Java / Bedrock)')
+            .setMinValues(1)
+            .setMaxValues(1)
+            .addOptions(new StringSelectMenuOptionBuilder().setLabel('Java Edition').setDescription('PC — versión Java').setValue('Java').setEmoji('☕'), new StringSelectMenuOptionBuilder().setLabel('Bedrock Edition').setDescription('Móvil, consola, Windows 10/11').setValue('Bedrock').setEmoji('📱'));
+        const roleSelect = new StringSelectMenuBuilder()
+            .setCustomId('apply_role_select')
+            .setPlaceholder('¿En qué destacas dentro del juego?')
+            .setMinValues(1)
+            .setMaxValues(5)
+            .addOptions(new StringSelectMenuOptionBuilder().setLabel('Builder').setDescription('Construcción y diseño').setValue('Builder').setEmoji('🏗️'), new StringSelectMenuOptionBuilder().setLabel('Técnico / Redstone').setDescription('Farms, mecánicas y redstone').setValue('Técnico').setEmoji('⚙️'), new StringSelectMenuOptionBuilder().setLabel('PvP').setDescription('Combate y defensa del clan').setValue('PvP').setEmoji('⚔️'), new StringSelectMenuOptionBuilder().setLabel('Farmer').setDescription('Producción de recursos').setValue('Farmer').setEmoji('🌾'), new StringSelectMenuOptionBuilder().setLabel('Otro').setDescription('Otro rol o perfil').setValue('Otro').setEmoji('✨'));
+        const embed = buildRecruitmentNoticeEmbed({
+            title: 'Solicitud de ingreso',
+            description: 'Selecciona tu **plataforma** y en qué **destacas**, luego pulsa **Continuar**.',
+        });
+        // customId encodes state as apply_confirm_{platform}|{role} — empty = not selected yet
+        const confirmBtn = new ButtonBuilder()
+            .setCustomId('apply_confirm_|')
+            .setLabel('Continuar')
+            .setStyle(ButtonStyle.Primary)
+            .setDisabled(true);
+        await interaction.reply({
+            embeds: [embed],
+            components: [
+                new ActionRowBuilder().addComponents(platformSelect),
+                new ActionRowBuilder().addComponents(roleSelect),
+                new ActionRowBuilder().addComponents(confirmBtn),
+            ],
+            ephemeral: true,
+        });
+    },
+};
+//# sourceMappingURL=apply.command.js.map
