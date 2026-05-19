@@ -37,5 +37,6 @@ COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/dist /app/dist
 COPY --from=build /app/prisma /app/prisma
 COPY --from=build /app/package.json /app/package.json
+COPY --from=build /app/prisma.config.ts /app/prisma.config.ts
 
 CMD [ "npm", "run", "start" ]

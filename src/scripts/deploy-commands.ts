@@ -44,7 +44,10 @@ const rest = new REST().setToken(env.discordToken);
 try {
   logger.info(`Registrando ${commands.length} comandos...`);
 
-  await rest.put(Routes.applicationGuildCommands(env.clientId, env.guildId), {
+  const route = env.guildId
+    ? Routes.applicationGuildCommands(env.clientId, env.guildId)
+    : Routes.applicationCommands(env.clientId);
+  await rest.put(route, {
     body: commands,
   });
 

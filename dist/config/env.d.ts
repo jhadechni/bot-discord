@@ -2,7 +2,7 @@ import "dotenv/config";
 export declare const env: {
     discordToken: string;
     clientId: string;
-    guildId: string;
+    guildId: string | null;
     databaseUrl: string;
     nodeEnv: string;
     perspectiveApiKey: string | null;

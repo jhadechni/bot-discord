@@ -1,0 +1,10 @@
+app = 'aquaris-bot'
+primary_region = 'gru'
+
+[deploy]
+  strategy = 'immediate'
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1
