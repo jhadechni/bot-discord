@@ -1,0 +1,13 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/src/generated/prisma
+credentials
+.agents
+.claude
+AGENTS.md
+bd.md
+CLAUDE.md
+skills-lock.json
+tienda.md
