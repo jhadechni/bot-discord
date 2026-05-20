@@ -14,18 +14,21 @@ export type NicknameRoleMinAggregateOutputType = {
     id: string | null;
     guildId: string | null;
     roleId: string | null;
+    emoji: string | null;
     createdAt: Date | null;
 };
 export type NicknameRoleMaxAggregateOutputType = {
     id: string | null;
     guildId: string | null;
     roleId: string | null;
+    emoji: string | null;
     createdAt: Date | null;
 };
 export type NicknameRoleCountAggregateOutputType = {
     id: number;
     guildId: number;
     roleId: number;
+    emoji: number;
     createdAt: number;
     _all: number;
 };
@@ -33,18 +36,21 @@ export type NicknameRoleMinAggregateInputType = {
     id?: true;
     guildId?: true;
     roleId?: true;
+    emoji?: true;
     createdAt?: true;
 };
 export type NicknameRoleMaxAggregateInputType = {
     id?: true;
     guildId?: true;
     roleId?: true;
+    emoji?: true;
     createdAt?: true;
 };
 export type NicknameRoleCountAggregateInputType = {
     id?: true;
     guildId?: true;
     roleId?: true;
+    emoji?: true;
     createdAt?: true;
     _all?: true;
 };
@@ -114,6 +120,7 @@ export type NicknameRoleGroupByOutputType = {
     id: string;
     guildId: string;
     roleId: string;
+    emoji: string | null;
     createdAt: Date;
     _count: NicknameRoleCountAggregateOutputType | null;
     _min: NicknameRoleMinAggregateOutputType | null;
@@ -129,12 +136,14 @@ export type NicknameRoleWhereInput = {
     id?: Prisma.StringFilter<"NicknameRole"> | string;
     guildId?: Prisma.StringFilter<"NicknameRole"> | string;
     roleId?: Prisma.StringFilter<"NicknameRole"> | string;
+    emoji?: Prisma.StringNullableFilter<"NicknameRole"> | string | null;
     createdAt?: Prisma.DateTimeFilter<"NicknameRole"> | Date | string;
 };
 export type NicknameRoleOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
     guildId?: Prisma.SortOrder;
     roleId?: Prisma.SortOrder;
+    emoji?: Prisma.SortOrderInput | Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
 };
 export type NicknameRoleWhereUniqueInput = Prisma.AtLeast<{
@@ -145,12 +154,14 @@ export type NicknameRoleWhereUniqueInput = Prisma.AtLeast<{
     NOT?: Prisma.NicknameRoleWhereInput | Prisma.NicknameRoleWhereInput[];
     guildId?: Prisma.StringFilter<"NicknameRole"> | string;
     roleId?: Prisma.StringFilter<"NicknameRole"> | string;
+    emoji?: Prisma.StringNullableFilter<"NicknameRole"> | string | null;
     createdAt?: Prisma.DateTimeFilter<"NicknameRole"> | Date | string;
 }, "id" | "guildId_roleId">;
 export type NicknameRoleOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
     guildId?: Prisma.SortOrder;
     roleId?: Prisma.SortOrder;
+    emoji?: Prisma.SortOrderInput | Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     _count?: Prisma.NicknameRoleCountOrderByAggregateInput;
     _max?: Prisma.NicknameRoleMaxOrderByAggregateInput;
@@ -163,48 +174,56 @@ export type NicknameRoleScalarWhereWithAggregatesInput = {
     id?: Prisma.StringWithAggregatesFilter<"NicknameRole"> | string;
     guildId?: Prisma.StringWithAggregatesFilter<"NicknameRole"> | string;
     roleId?: Prisma.StringWithAggregatesFilter<"NicknameRole"> | string;
+    emoji?: Prisma.StringNullableWithAggregatesFilter<"NicknameRole"> | string | null;
     createdAt?: Prisma.DateTimeWithAggregatesFilter<"NicknameRole"> | Date | string;
 };
 export type NicknameRoleCreateInput = {
     id?: string;
     guildId: string;
     roleId: string;
+    emoji?: string | null;
     createdAt?: Date | string;
 };
 export type NicknameRoleUncheckedCreateInput = {
     id?: string;
     guildId: string;
     roleId: string;
+    emoji?: string | null;
     createdAt?: Date | string;
 };
 export type NicknameRoleUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     roleId?: Prisma.StringFieldUpdateOperationsInput | string;
+    emoji?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type NicknameRoleUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     roleId?: Prisma.StringFieldUpdateOperationsInput | string;
+    emoji?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type NicknameRoleCreateManyInput = {
     id?: string;
     guildId: string;
     roleId: string;
+    emoji?: string | null;
     createdAt?: Date | string;
 };
 export type NicknameRoleUpdateManyMutationInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     roleId?: Prisma.StringFieldUpdateOperationsInput | string;
+    emoji?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type NicknameRoleUncheckedUpdateManyInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     roleId?: Prisma.StringFieldUpdateOperationsInput | string;
+    emoji?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type NicknameRoleGuildIdRoleIdCompoundUniqueInput = {
@@ -215,45 +234,52 @@ export type NicknameRoleCountOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     guildId?: Prisma.SortOrder;
     roleId?: Prisma.SortOrder;
+    emoji?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
 };
 export type NicknameRoleMaxOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     guildId?: Prisma.SortOrder;
     roleId?: Prisma.SortOrder;
+    emoji?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
 };
 export type NicknameRoleMinOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     guildId?: Prisma.SortOrder;
     roleId?: Prisma.SortOrder;
+    emoji?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
 };
 export type NicknameRoleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     guildId?: boolean;
     roleId?: boolean;
+    emoji?: boolean;
     createdAt?: boolean;
 }, ExtArgs["result"]["nicknameRole"]>;
 export type NicknameRoleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     guildId?: boolean;
     roleId?: boolean;
+    emoji?: boolean;
     createdAt?: boolean;
 }, ExtArgs["result"]["nicknameRole"]>;
 export type NicknameRoleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     guildId?: boolean;
     roleId?: boolean;
+    emoji?: boolean;
     createdAt?: boolean;
 }, ExtArgs["result"]["nicknameRole"]>;
 export type NicknameRoleSelectScalar = {
     id?: boolean;
     guildId?: boolean;
     roleId?: boolean;
+    emoji?: boolean;
     createdAt?: boolean;
 };
-export type NicknameRoleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "roleId" | "createdAt", ExtArgs["result"]["nicknameRole"]>;
+export type NicknameRoleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "roleId" | "emoji" | "createdAt", ExtArgs["result"]["nicknameRole"]>;
 export type $NicknameRolePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "NicknameRole";
     objects: {};
@@ -261,6 +287,7 @@ export type $NicknameRolePayload<ExtArgs extends runtime.Types.Extensions.Intern
         id: string;
         guildId: string;
         roleId: string;
+        emoji: string | null;
         createdAt: Date;
     }, ExtArgs["result"]["nicknameRole"]>;
     composites: {};
@@ -619,6 +646,7 @@ export interface NicknameRoleFieldRefs {
     readonly id: Prisma.FieldRef<"NicknameRole", 'String'>;
     readonly guildId: Prisma.FieldRef<"NicknameRole", 'String'>;
     readonly roleId: Prisma.FieldRef<"NicknameRole", 'String'>;
+    readonly emoji: Prisma.FieldRef<"NicknameRole", 'String'>;
     readonly createdAt: Prisma.FieldRef<"NicknameRole", 'DateTime'>;
 }
 /**

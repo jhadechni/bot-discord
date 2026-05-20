@@ -72,8 +72,12 @@ export const configCommand = {
         .addSubcommand(sub => sub
         .setName('nick-rol-agregar')
         .setDescription('Agrega un rol al sistema de autonickname')
+        .addRoleOption(opt => opt.setName('rol').setDescription('Rol de Discord').setRequired(true)))
+        .addSubcommand(sub => sub
+        .setName('nick-rol-emoji')
+        .setDescription('Asigna o actualiza el emoji de un rol en el autonickname')
         .addRoleOption(opt => opt.setName('rol').setDescription('Rol de Discord').setRequired(true))
-        .addStringOption(opt => opt.setName('emoji').setDescription('Emoji antes del nombre en el nickname (ej: 🌊 o <:nombre:id>)').setRequired(false)))
+        .addStringOption(opt => opt.setName('emoji').setDescription('Emoji Unicode antes del nombre (ej: 🌊 ⚔️ 🔥). Solo emojis estándar, no emojis de servidor').setRequired(true)))
         .addSubcommand(sub => sub
         .setName('nick-rol-quitar')
         .setDescription('Quita un rol del sistema de autonickname')
@@ -224,15 +228,35 @@ export const configCommand = {
         }
         if (sub === 'nick-rol-agregar') {
             const rol = interaction.options.getRole('rol', true);
-            const emoji = interaction.options.getString('emoji') ?? null;
             await prisma.nicknameRole.upsert({
                 where: { guildId_roleId: { guildId, roleId: rol.id } },
-                update: { emoji },
-                create: { guildId, roleId: rol.id, emoji },
+                update: {},
+                create: { guildId, roleId: rol.id, emoji: null },
             });
-            const desc = emoji ? `Rol: <@&${rol.id}> — Emoji: ${emoji}` : `Rol: <@&${rol.id}>`;
             await interaction.editReply({
-                embeds: [buildSystemNoticeEmbed('Rol agregado al autonickname', desc)],
+                embeds: [buildSystemNoticeEmbed('Rol agregado al autonickname', `Rol: <@&${rol.id}>`)],
+            });
+            return;
+        }
+        if (sub === 'nick-rol-emoji') {
+            const rol = interaction.options.getRole('rol', true);
+            const emoji = interaction.options.getString('emoji', true).trim();
+            const exists = await prisma.nicknameRole.findUnique({
+                where: { guildId_roleId: { guildId, roleId: rol.id } },
+            });
+            if (!exists) {
+                await interaction.editReply({
+                    embeds: [buildSystemNoticeEmbed('Rol no encontrado', `<@&${rol.id}> no está en el sistema de autonickname. Agrégalo primero con \`/config nick-rol-agregar\`.`)],
+                });
+                return;
+            }
+            await prisma.nicknameRole.update({
+                where: { guildId_roleId: { guildId, roleId: rol.id } },
+                data: { emoji: emoji || null },
+            });
+            const desc = emoji ? `Rol: <@&${rol.id}> — Emoji: ${emoji}` : `Rol: <@&${rol.id}> — Emoji eliminado`;
+            await interaction.editReply({
+                embeds: [buildSystemNoticeEmbed('Emoji actualizado', desc)],
             });
             return;
         }

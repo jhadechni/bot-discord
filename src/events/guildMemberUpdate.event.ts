@@ -42,7 +42,7 @@ async function updateNickname(member: GuildMember): Promise<void> {
     if (topRole) {
       const emoji = emojiByRoleId.get(topRole.id);
       const prefix = emoji ? `${emoji} ${topRole.name.toUpperCase()}` : topRole.name.toUpperCase();
-      const newNick = `${prefix} | ${baseName}`;
+      const newNick = `${prefix} | ${baseName}`.slice(0, 32);
       if (fresh.displayName !== newNick) {
         await fresh.setNickname(newNick);
       }

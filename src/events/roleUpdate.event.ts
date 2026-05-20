@@ -44,7 +44,7 @@ async function updateMembersWithRole(role: Role): Promise<void> {
     const emoji = roleRecord?.emoji;
     const prefix = emoji ? `${emoji} ${role.name.toUpperCase()}` : role.name.toUpperCase();
     const baseName = getBaseName(member.nickname, member.user.username);
-    const newNick = `${prefix} | ${baseName}`;
+    const newNick = `${prefix} | ${baseName}`.slice(0, 32);
 
     if (member.displayName === newNick) continue;
 

@@ -177,6 +177,7 @@ export declare const NicknameRoleScalarFieldEnum: {
     readonly id: "id";
     readonly guildId: "guildId";
     readonly roleId: "roleId";
+    readonly emoji: "emoji";
     readonly createdAt: "createdAt";
 };
 export type NicknameRoleScalarFieldEnum = (typeof NicknameRoleScalarFieldEnum)[keyof typeof NicknameRoleScalarFieldEnum];

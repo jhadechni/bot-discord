@@ -211,6 +211,7 @@ export const NicknameRoleScalarFieldEnum = {
     id: 'id',
     guildId: 'guildId',
     roleId: 'roleId',
+    emoji: 'emoji',
     createdAt: 'createdAt'
 };
 export const ClanPlayerScalarFieldEnum = {
