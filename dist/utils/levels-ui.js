@@ -77,8 +77,9 @@ export function buildLevelEmptyEmbed() {
 }
 export function buildLevelUpEmbed(userId, level) {
     return buildAquarisEmbed({
-        title: '🎉 Subida de nivel',
-        description: `<@${userId}> alcanzó el **nivel ${level}**.`,
+        title: '<:levelup:1506694906503233556>  **Subida de nivel**',
+        description: `<@${userId}> acaba de subir al **nivel ${level}**.\n\n` +
+            `-# ✨ La actividad en Aquaris también deja huella. <:LogoDiscord:1506669476035432638>`,
         color: LEVEL_COLORS.success,
         footer: 'levels',
     });

@@ -61,7 +61,7 @@ export type AquarisModule = 'moderation' | 'automod' | 'recruitment' | 'reminder
 export type AquarisMessageContext = 'public' | 'dm' | 'ephemeral' | 'log';
 export type AquarisMessageIntent = 'info' | 'success' | 'warning' | 'error' | 'audit';
 export type AquarisEmbedOptions = {
-    title: string;
+    title?: string | null;
     description?: string | null;
     color?: AquarisColor;
     footer?: AquarisFooterKey;

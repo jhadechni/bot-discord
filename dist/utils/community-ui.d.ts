@@ -19,6 +19,7 @@ type MemberLogOptions = {
 };
 export declare function buildWelcomePublicEmbed(options: MemberMessageOptions): import("discord.js").EmbedBuilder;
 export declare function buildJoinLogEmbed(options: MemberLogOptions): import("discord.js").EmbedBuilder;
+export declare function buildFarewellPublicEmbed(options: MemberMessageOptions): import("discord.js").EmbedBuilder;
 export declare function buildLeaveLogEmbed(options: MemberLogOptions): import("discord.js").EmbedBuilder;
 export declare function buildBoostPublicEmbed(options: Omit<MemberMessageOptions, 'memberCount'>): import("discord.js").EmbedBuilder;
 export {};

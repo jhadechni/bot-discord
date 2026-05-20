@@ -5,12 +5,14 @@ import { startRecruitmentScheduler } from '../utils/recruitment-scheduler.js';
 import { startTempbanScheduler } from '../utils/tempban-scheduler.js';
 import { reloadTaxonomyFromDatabase } from '../shop/taxonomy.js';
 import { syncAutoModRule } from '../utils/automod-sync.js';
+import { initVoiceSessions } from './voiceStateUpdate.event.js';
 
 const readyEvent: BotEvent<'ready'> = {
   name: 'ready',
   once: true,
   async execute(client) {
     logger.info(`Bot conectado como ${client.user.tag} en ${client.guilds.cache.size} servidor(es)`);
+    initVoiceSessions(client.guilds.cache);
     startReminderScheduler();
     logger.info('Reminder scheduler iniciado');
     startRecruitmentScheduler();

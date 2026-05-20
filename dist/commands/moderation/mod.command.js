@@ -11,6 +11,7 @@ import { timeoutCommand, untimeoutCommand } from './timeout.command.js';
 import { unbanCommand } from './unban.command.js';
 import { warnCommand } from './warn.command.js';
 import { warningsCommand } from './warnings.command.js';
+import { avisoCommand } from './aviso.command.js';
 import { buildModerationErrorEmbed } from '../../utils/moderation-ui.js';
 function resolveRequiredPermission(group, subcommand) {
     if (group === 'filtro' || (group === 'chat' && subcommand === 'clear')) {
@@ -154,6 +155,14 @@ export const modCommand = {
         .setMaxValue(100))
         .addUserOption(opt => opt.setName('usuario').setDescription('Filtrar por usuario (opcional)').setRequired(false))))
         .addSubcommandGroup(group => group
+        .setName('informar')
+        .setDescription('Envío de mensajes informativos a usuarios')
+        .addSubcommand(sub => sub
+        .setName('aviso')
+        .setDescription('Envía un aviso por DM a un usuario')
+        .addUserOption(opt => opt.setName('usuario').setDescription('Usuario que recibirá el aviso').setRequired(true))
+        .addStringOption(opt => opt.setName('mensaje').setDescription('Mensaje del aviso').setRequired(true).setMaxLength(1000))))
+        .addSubcommandGroup(group => group
         .setName('filtro')
         .setDescription('Gestiona las palabras filtradas del servidor')
         .addSubcommand(sub => sub
@@ -220,6 +229,10 @@ export const modCommand = {
         }
         if (group === 'chat' && subcommand === 'clear') {
             await clearCommand.execute(interaction);
+            return;
+        }
+        if (group === 'informar' && subcommand === 'aviso') {
+            await avisoCommand.execute(interaction);
             return;
         }
         if (group === 'filtro') {

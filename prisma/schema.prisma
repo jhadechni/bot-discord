@@ -11,6 +11,7 @@ model GuildConfig {
   id                     String   @id @default(cuid())
   guildId                String   @unique
   welcomeChannelId       String?
+  farewellChannelId      String?
   logsChannelId          String?  // fallback general
   logsModChannelId       String?  // moderación manual
   logsAutomodChannelId   String?  // auto-moderación (filtro, spam)

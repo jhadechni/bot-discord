@@ -109,6 +109,7 @@ export const GuildConfigScalarFieldEnum = {
     id: 'id',
     guildId: 'guildId',
     welcomeChannelId: 'welcomeChannelId',
+    farewellChannelId: 'farewellChannelId',
     logsChannelId: 'logsChannelId',
     logsModChannelId: 'logsModChannelId',
     logsAutomodChannelId: 'logsAutomodChannelId',

@@ -22,14 +22,15 @@ const guildMemberAddEvent: BotEvent<'guildMemberAdd'> = {
     if (config.welcomeChannelId) {
       const channel = member.guild.channels.cache.get(config.welcomeChannelId);
       if (channel?.isTextBased()) {
-        const embed = buildWelcomePublicEmbed({
-          userId: member.id,
-          userTag: member.user.globalName ?? member.user.username,
-          guildName: member.guild.name,
-          memberCount: member.guild.memberCount,
-          avatarUrl: member.user.displayAvatarURL(),
+        await channel.send({
+          embeds: [buildWelcomePublicEmbed({
+            userId: member.id,
+            userTag: member.user.globalName ?? member.user.username,
+            guildName: member.guild.name,
+            memberCount: member.guild.memberCount,
+            avatarUrl: member.user.displayAvatarURL(),
+          })],
         });
-        await channel.send({ embeds: [embed] });
       }
     }
 

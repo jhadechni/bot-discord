@@ -3,6 +3,7 @@ export declare function getOrCreateGuildConfig(guildId: string): Promise<{
     id: string;
     guildId: string;
     welcomeChannelId: string | null;
+    farewellChannelId: string | null;
     logsChannelId: string | null;
     logsModChannelId: string | null;
     logsAutomodChannelId: string | null;

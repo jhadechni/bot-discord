@@ -39,7 +39,7 @@ export function normalizeMessageReason(reason) {
 export function buildAquarisEmbed(options) {
     const embed = new EmbedBuilder()
         .setColor(options.color ?? AQUARIS_COLORS.info)
-        .setTitle(options.title)
+        .setTitle(options.title ?? null)
         .setFooter(AQUARIS_FOOTERS[options.footer ?? 'general'])
         .setTimestamp(options.timestamp ?? new Date());
     if (options.description) {

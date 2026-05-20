@@ -1,1 +1,1 @@
-{"version":3,"file":"mod.command.d.ts","sourceRoot":"","sources":["../../../src/commands/moderation/mod.command.ts"],"names":[],"mappings":"AAKA,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,wBAAwB,CAAC;AA+DtD,eAAO,MAAM,UAAU,EAAE,OAiTxB,CAAC"}
+{"version":3,"file":"mod.command.d.ts","sourceRoot":"","sources":["../../../src/commands/moderation/mod.command.ts"],"names":[],"mappings":"AAKA,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,wBAAwB,CAAC;AAgEtD,eAAO,MAAM,UAAU,EAAE,OAsUxB,CAAC"}

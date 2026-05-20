@@ -14,6 +14,7 @@ export type GuildConfigMinAggregateOutputType = {
     id: string | null;
     guildId: string | null;
     welcomeChannelId: string | null;
+    farewellChannelId: string | null;
     logsChannelId: string | null;
     logsModChannelId: string | null;
     logsAutomodChannelId: string | null;
@@ -39,6 +40,7 @@ export type GuildConfigMaxAggregateOutputType = {
     id: string | null;
     guildId: string | null;
     welcomeChannelId: string | null;
+    farewellChannelId: string | null;
     logsChannelId: string | null;
     logsModChannelId: string | null;
     logsAutomodChannelId: string | null;
@@ -64,6 +66,7 @@ export type GuildConfigCountAggregateOutputType = {
     id: number;
     guildId: number;
     welcomeChannelId: number;
+    farewellChannelId: number;
     logsChannelId: number;
     logsModChannelId: number;
     logsAutomodChannelId: number;
@@ -90,6 +93,7 @@ export type GuildConfigMinAggregateInputType = {
     id?: true;
     guildId?: true;
     welcomeChannelId?: true;
+    farewellChannelId?: true;
     logsChannelId?: true;
     logsModChannelId?: true;
     logsAutomodChannelId?: true;
@@ -115,6 +119,7 @@ export type GuildConfigMaxAggregateInputType = {
     id?: true;
     guildId?: true;
     welcomeChannelId?: true;
+    farewellChannelId?: true;
     logsChannelId?: true;
     logsModChannelId?: true;
     logsAutomodChannelId?: true;
@@ -140,6 +145,7 @@ export type GuildConfigCountAggregateInputType = {
     id?: true;
     guildId?: true;
     welcomeChannelId?: true;
+    farewellChannelId?: true;
     logsChannelId?: true;
     logsModChannelId?: true;
     logsAutomodChannelId?: true;
@@ -228,6 +234,7 @@ export type GuildConfigGroupByOutputType = {
     id: string;
     guildId: string;
     welcomeChannelId: string | null;
+    farewellChannelId: string | null;
     logsChannelId: string | null;
     logsModChannelId: string | null;
     logsAutomodChannelId: string | null;
@@ -262,6 +269,7 @@ export type GuildConfigWhereInput = {
     id?: Prisma.StringFilter<"GuildConfig"> | string;
     guildId?: Prisma.StringFilter<"GuildConfig"> | string;
     welcomeChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
+    farewellChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     logsChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     logsModChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     logsAutomodChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
@@ -287,6 +295,7 @@ export type GuildConfigOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
     guildId?: Prisma.SortOrder;
     welcomeChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
+    farewellChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     logsChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     logsModChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     logsAutomodChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -315,6 +324,7 @@ export type GuildConfigWhereUniqueInput = Prisma.AtLeast<{
     OR?: Prisma.GuildConfigWhereInput[];
     NOT?: Prisma.GuildConfigWhereInput | Prisma.GuildConfigWhereInput[];
     welcomeChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
+    farewellChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     logsChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     logsModChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     logsAutomodChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
@@ -340,6 +350,7 @@ export type GuildConfigOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
     guildId?: Prisma.SortOrder;
     welcomeChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
+    farewellChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     logsChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     logsModChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     logsAutomodChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -371,6 +382,7 @@ export type GuildConfigScalarWhereWithAggregatesInput = {
     id?: Prisma.StringWithAggregatesFilter<"GuildConfig"> | string;
     guildId?: Prisma.StringWithAggregatesFilter<"GuildConfig"> | string;
     welcomeChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
+    farewellChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     logsChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     logsModChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     logsAutomodChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
@@ -396,6 +408,7 @@ export type GuildConfigCreateInput = {
     id?: string;
     guildId: string;
     welcomeChannelId?: string | null;
+    farewellChannelId?: string | null;
     logsChannelId?: string | null;
     logsModChannelId?: string | null;
     logsAutomodChannelId?: string | null;
@@ -421,6 +434,7 @@ export type GuildConfigUncheckedCreateInput = {
     id?: string;
     guildId: string;
     welcomeChannelId?: string | null;
+    farewellChannelId?: string | null;
     logsChannelId?: string | null;
     logsModChannelId?: string | null;
     logsAutomodChannelId?: string | null;
@@ -446,6 +460,7 @@ export type GuildConfigUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     welcomeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    farewellChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     logsChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     logsModChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     logsAutomodChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -471,6 +486,7 @@ export type GuildConfigUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     welcomeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    farewellChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     logsChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     logsModChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     logsAutomodChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -496,6 +512,7 @@ export type GuildConfigCreateManyInput = {
     id?: string;
     guildId: string;
     welcomeChannelId?: string | null;
+    farewellChannelId?: string | null;
     logsChannelId?: string | null;
     logsModChannelId?: string | null;
     logsAutomodChannelId?: string | null;
@@ -521,6 +538,7 @@ export type GuildConfigUpdateManyMutationInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     welcomeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    farewellChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     logsChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     logsModChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     logsAutomodChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -546,6 +564,7 @@ export type GuildConfigUncheckedUpdateManyInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     welcomeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    farewellChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     logsChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     logsModChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     logsAutomodChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -571,6 +590,7 @@ export type GuildConfigCountOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     guildId?: Prisma.SortOrder;
     welcomeChannelId?: Prisma.SortOrder;
+    farewellChannelId?: Prisma.SortOrder;
     logsChannelId?: Prisma.SortOrder;
     logsModChannelId?: Prisma.SortOrder;
     logsAutomodChannelId?: Prisma.SortOrder;
@@ -596,6 +616,7 @@ export type GuildConfigMaxOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     guildId?: Prisma.SortOrder;
     welcomeChannelId?: Prisma.SortOrder;
+    farewellChannelId?: Prisma.SortOrder;
     logsChannelId?: Prisma.SortOrder;
     logsModChannelId?: Prisma.SortOrder;
     logsAutomodChannelId?: Prisma.SortOrder;
@@ -621,6 +642,7 @@ export type GuildConfigMinOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     guildId?: Prisma.SortOrder;
     welcomeChannelId?: Prisma.SortOrder;
+    farewellChannelId?: Prisma.SortOrder;
     logsChannelId?: Prisma.SortOrder;
     logsModChannelId?: Prisma.SortOrder;
     logsAutomodChannelId?: Prisma.SortOrder;
@@ -655,6 +677,7 @@ export type GuildConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalA
     id?: boolean;
     guildId?: boolean;
     welcomeChannelId?: boolean;
+    farewellChannelId?: boolean;
     logsChannelId?: boolean;
     logsModChannelId?: boolean;
     logsAutomodChannelId?: boolean;
@@ -680,6 +703,7 @@ export type GuildConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
     id?: boolean;
     guildId?: boolean;
     welcomeChannelId?: boolean;
+    farewellChannelId?: boolean;
     logsChannelId?: boolean;
     logsModChannelId?: boolean;
     logsAutomodChannelId?: boolean;
@@ -705,6 +729,7 @@ export type GuildConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
     id?: boolean;
     guildId?: boolean;
     welcomeChannelId?: boolean;
+    farewellChannelId?: boolean;
     logsChannelId?: boolean;
     logsModChannelId?: boolean;
     logsAutomodChannelId?: boolean;
@@ -730,6 +755,7 @@ export type GuildConfigSelectScalar = {
     id?: boolean;
     guildId?: boolean;
     welcomeChannelId?: boolean;
+    farewellChannelId?: boolean;
     logsChannelId?: boolean;
     logsModChannelId?: boolean;
     logsAutomodChannelId?: boolean;
@@ -751,7 +777,7 @@ export type GuildConfigSelectScalar = {
     createdAt?: boolean;
     updatedAt?: boolean;
 };
-export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "welcomeChannelId" | "logsChannelId" | "logsModChannelId" | "logsAutomodChannelId" | "logsRecruitChannelId" | "logsJoinsChannelId" | "logsLeavesChannelId" | "suggestionsChannelId" | "recruitmentCategoryId" | "visitorRoleId" | "aspirantRoleId" | "liderRoleId" | "coLiderRoleId" | "aquarisRoleId" | "staffRoleId" | "levelUpChannelId" | "boostChannelId" | "shopStaffChannelId" | "shopCategoryId" | "createdAt" | "updatedAt", ExtArgs["result"]["guildConfig"]>;
+export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "welcomeChannelId" | "farewellChannelId" | "logsChannelId" | "logsModChannelId" | "logsAutomodChannelId" | "logsRecruitChannelId" | "logsJoinsChannelId" | "logsLeavesChannelId" | "suggestionsChannelId" | "recruitmentCategoryId" | "visitorRoleId" | "aspirantRoleId" | "liderRoleId" | "coLiderRoleId" | "aquarisRoleId" | "staffRoleId" | "levelUpChannelId" | "boostChannelId" | "shopStaffChannelId" | "shopCategoryId" | "createdAt" | "updatedAt", ExtArgs["result"]["guildConfig"]>;
 export type $GuildConfigPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "GuildConfig";
     objects: {};
@@ -759,6 +785,7 @@ export type $GuildConfigPayload<ExtArgs extends runtime.Types.Extensions.Interna
         id: string;
         guildId: string;
         welcomeChannelId: string | null;
+        farewellChannelId: string | null;
         logsChannelId: string | null;
         logsModChannelId: string | null;
         logsAutomodChannelId: string | null;
@@ -1136,6 +1163,7 @@ export interface GuildConfigFieldRefs {
     readonly id: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly guildId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly welcomeChannelId: Prisma.FieldRef<"GuildConfig", 'String'>;
+    readonly farewellChannelId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly logsChannelId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly logsModChannelId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly logsAutomodChannelId: Prisma.FieldRef<"GuildConfig", 'String'>;

@@ -10,7 +10,15 @@ export const configCommand = {
         .addSubcommand(sub => sub.setName('ver').setDescription('Ver la configuración actual del bot'))
         .addSubcommand(sub => sub
         .setName('set-welcome')
-        .setDescription('Canal de bienvenida y despedida')
+        .setDescription('Canal de bienvenida')
+        .addChannelOption(opt => opt
+        .setName('canal')
+        .setDescription('Canal de texto')
+        .addChannelTypes(ChannelType.GuildText)
+        .setRequired(true)))
+        .addSubcommand(sub => sub
+        .setName('set-farewell')
+        .setDescription('Canal de despedida')
         .addChannelOption(opt => opt
         .setName('canal')
         .setDescription('Canal de texto')
@@ -117,6 +125,18 @@ export const configCommand = {
             });
             await interaction.editReply({
                 embeds: [buildSystemNoticeEmbed('Canal de bienvenida actualizado', `Nuevo canal: <#${channel.id}>`)],
+            });
+            return;
+        }
+        if (sub === 'set-farewell') {
+            const channel = interaction.options.getChannel('canal', true);
+            await prisma.guildConfig.upsert({
+                where: { guildId },
+                update: { farewellChannelId: channel.id },
+                create: { guildId, farewellChannelId: channel.id },
+            });
+            await interaction.editReply({
+                embeds: [buildSystemNoticeEmbed('Canal de despedida actualizado', `Nuevo canal: <#${channel.id}>`)],
             });
             return;
         }

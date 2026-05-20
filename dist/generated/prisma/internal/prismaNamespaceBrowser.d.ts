@@ -66,6 +66,7 @@ export declare const GuildConfigScalarFieldEnum: {
     readonly id: "id";
     readonly guildId: "guildId";
     readonly welcomeChannelId: "welcomeChannelId";
+    readonly farewellChannelId: "farewellChannelId";
     readonly logsChannelId: "logsChannelId";
     readonly logsModChannelId: "logsModChannelId";
     readonly logsAutomodChannelId: "logsAutomodChannelId";

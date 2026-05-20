@@ -4,7 +4,25 @@ import { buildLevelUpEmbed } from '../utils/levels-ui.js';
 import { calcLevel } from '../utils/xp.js';
 import { logger } from '../core/logger.js';
 // Map<"guildId-userId", joinTimestamp> — sesiones de voz activas
-const voiceJoinTimes = new Map();
+export const voiceJoinTimes = new Map();
+/** Registra en voiceJoinTimes a todos los miembros ya en voz al arrancar el bot. */
+export function initVoiceSessions(guilds) {
+    for (const [guildId, guild] of guilds) {
+        for (const [, channel] of guild.channels.cache) {
+            if (!channel.isVoiceBased())
+                continue;
+            for (const [userId, member] of channel.members) {
+                if (member.user.bot)
+                    continue;
+                const state = member.voice;
+                const isMuted = state.selfMute || state.selfDeaf || state.serverMute || state.serverDeaf;
+                if (!isMuted) {
+                    voiceJoinTimes.set(`${guildId}-${userId}`, Date.now());
+                }
+            }
+        }
+    }
+}
 const voiceStateUpdateEvent = {
     name: 'voiceStateUpdate',
     async execute(oldState, newState) {
