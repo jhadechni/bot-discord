@@ -47,8 +47,8 @@ export function buildTopEmbed(options) {
     const top3 = options.entries.slice(0, 3);
     const rest = options.entries.slice(3);
     const top1 = options.entries[0];
-    const podiumLines = top3.map(e => `${MEDALS[e.rank - 1]}  **${e.name}**\n     ${e.statLine}  ·  Nv. ${e.level}`);
-    const sep = '─'.repeat(32);
+    const podiumLines = top3.map(e => `${MEDALS[e.rank - 1]}  **${e.name}**\n> ${e.statLine}  ·  Nivel **${e.level}**`);
+    const sep = `\n${'─'.repeat(30)}\n`;
     const restLines = rest.map(e => {
         const rankStr = String(e.rank).padStart(2, ' ');
         return `\`${rankStr}.\`  ${e.name}  —  ${e.statLine}  ·  Nv. ${e.level}`;
@@ -58,9 +58,9 @@ export function buildTopEmbed(options) {
         ...(restLines.length > 0 ? [sep, ...restLines] : []),
     ].join('\n');
     const embed = new EmbedBuilder()
-        .setTitle(options.title)
+        .setTitle(`🏆  ${options.title}`)
         .setDescription(description)
-        .setColor(0xffd700)
+        .setColor(0xFFD700)
         .setFooter(AQUARIS_FOOTERS.levels)
         .setTimestamp();
     if (top1?.avatarUrl)

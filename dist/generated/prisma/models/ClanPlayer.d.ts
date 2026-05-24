@@ -16,14 +16,14 @@ export type ClanPlayerMinAggregateOutputType = {
     fullName: string | null;
     minecraftNick: string | null;
     rank: string | null;
-    minecraftRank: string | null;
     joinedAt: Date | null;
     country: string | null;
     utcOffset: string | null;
     status: string | null;
-    notes: string | null;
     createdAt: Date | null;
     updatedAt: Date | null;
+    notes: string | null;
+    minecraftRank: string | null;
 };
 export type ClanPlayerMaxAggregateOutputType = {
     id: string | null;
@@ -31,14 +31,14 @@ export type ClanPlayerMaxAggregateOutputType = {
     fullName: string | null;
     minecraftNick: string | null;
     rank: string | null;
-    minecraftRank: string | null;
     joinedAt: Date | null;
     country: string | null;
     utcOffset: string | null;
     status: string | null;
-    notes: string | null;
     createdAt: Date | null;
     updatedAt: Date | null;
+    notes: string | null;
+    minecraftRank: string | null;
 };
 export type ClanPlayerCountAggregateOutputType = {
     id: number;
@@ -46,14 +46,14 @@ export type ClanPlayerCountAggregateOutputType = {
     fullName: number;
     minecraftNick: number;
     rank: number;
-    minecraftRank: number;
     joinedAt: number;
     country: number;
     utcOffset: number;
     status: number;
-    notes: number;
     createdAt: number;
     updatedAt: number;
+    notes: number;
+    minecraftRank: number;
     _all: number;
 };
 export type ClanPlayerMinAggregateInputType = {
@@ -62,14 +62,14 @@ export type ClanPlayerMinAggregateInputType = {
     fullName?: true;
     minecraftNick?: true;
     rank?: true;
-    minecraftRank?: true;
     joinedAt?: true;
     country?: true;
     utcOffset?: true;
     status?: true;
-    notes?: true;
     createdAt?: true;
     updatedAt?: true;
+    notes?: true;
+    minecraftRank?: true;
 };
 export type ClanPlayerMaxAggregateInputType = {
     id?: true;
@@ -77,14 +77,14 @@ export type ClanPlayerMaxAggregateInputType = {
     fullName?: true;
     minecraftNick?: true;
     rank?: true;
-    minecraftRank?: true;
     joinedAt?: true;
     country?: true;
     utcOffset?: true;
     status?: true;
-    notes?: true;
     createdAt?: true;
     updatedAt?: true;
+    notes?: true;
+    minecraftRank?: true;
 };
 export type ClanPlayerCountAggregateInputType = {
     id?: true;
@@ -92,14 +92,14 @@ export type ClanPlayerCountAggregateInputType = {
     fullName?: true;
     minecraftNick?: true;
     rank?: true;
-    minecraftRank?: true;
     joinedAt?: true;
     country?: true;
     utcOffset?: true;
     status?: true;
-    notes?: true;
     createdAt?: true;
     updatedAt?: true;
+    notes?: true;
+    minecraftRank?: true;
     _all?: true;
 };
 export type ClanPlayerAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -170,14 +170,14 @@ export type ClanPlayerGroupByOutputType = {
     fullName: string;
     minecraftNick: string;
     rank: string;
-    minecraftRank: string;
     joinedAt: Date;
     country: string;
     utcOffset: string;
     status: string;
-    notes: string | null;
     createdAt: Date;
     updatedAt: Date;
+    notes: string | null;
+    minecraftRank: string;
     _count: ClanPlayerCountAggregateOutputType | null;
     _min: ClanPlayerMinAggregateOutputType | null;
     _max: ClanPlayerMaxAggregateOutputType | null;
@@ -194,14 +194,14 @@ export type ClanPlayerWhereInput = {
     fullName?: Prisma.StringFilter<"ClanPlayer"> | string;
     minecraftNick?: Prisma.StringFilter<"ClanPlayer"> | string;
     rank?: Prisma.StringFilter<"ClanPlayer"> | string;
-    minecraftRank?: Prisma.StringFilter<"ClanPlayer"> | string;
     joinedAt?: Prisma.DateTimeFilter<"ClanPlayer"> | Date | string;
     country?: Prisma.StringFilter<"ClanPlayer"> | string;
     utcOffset?: Prisma.StringFilter<"ClanPlayer"> | string;
     status?: Prisma.StringFilter<"ClanPlayer"> | string;
-    notes?: Prisma.StringNullableFilter<"ClanPlayer"> | string | null;
     createdAt?: Prisma.DateTimeFilter<"ClanPlayer"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"ClanPlayer"> | Date | string;
+    notes?: Prisma.StringNullableFilter<"ClanPlayer"> | string | null;
+    minecraftRank?: Prisma.StringFilter<"ClanPlayer"> | string;
 };
 export type ClanPlayerOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -209,14 +209,14 @@ export type ClanPlayerOrderByWithRelationInput = {
     fullName?: Prisma.SortOrder;
     minecraftNick?: Prisma.SortOrder;
     rank?: Prisma.SortOrder;
-    minecraftRank?: Prisma.SortOrder;
     joinedAt?: Prisma.SortOrder;
     country?: Prisma.SortOrder;
     utcOffset?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
-    notes?: Prisma.SortOrderInput | Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    notes?: Prisma.SortOrderInput | Prisma.SortOrder;
+    minecraftRank?: Prisma.SortOrder;
 };
 export type ClanPlayerWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -227,14 +227,14 @@ export type ClanPlayerWhereUniqueInput = Prisma.AtLeast<{
     NOT?: Prisma.ClanPlayerWhereInput | Prisma.ClanPlayerWhereInput[];
     fullName?: Prisma.StringFilter<"ClanPlayer"> | string;
     rank?: Prisma.StringFilter<"ClanPlayer"> | string;
-    minecraftRank?: Prisma.StringFilter<"ClanPlayer"> | string;
     joinedAt?: Prisma.DateTimeFilter<"ClanPlayer"> | Date | string;
     country?: Prisma.StringFilter<"ClanPlayer"> | string;
     utcOffset?: Prisma.StringFilter<"ClanPlayer"> | string;
     status?: Prisma.StringFilter<"ClanPlayer"> | string;
-    notes?: Prisma.StringNullableFilter<"ClanPlayer"> | string | null;
     createdAt?: Prisma.DateTimeFilter<"ClanPlayer"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"ClanPlayer"> | Date | string;
+    notes?: Prisma.StringNullableFilter<"ClanPlayer"> | string | null;
+    minecraftRank?: Prisma.StringFilter<"ClanPlayer"> | string;
 }, "id" | "discord" | "minecraftNick">;
 export type ClanPlayerOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -242,14 +242,14 @@ export type ClanPlayerOrderByWithAggregationInput = {
     fullName?: Prisma.SortOrder;
     minecraftNick?: Prisma.SortOrder;
     rank?: Prisma.SortOrder;
-    minecraftRank?: Prisma.SortOrder;
     joinedAt?: Prisma.SortOrder;
     country?: Prisma.SortOrder;
     utcOffset?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
-    notes?: Prisma.SortOrderInput | Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    notes?: Prisma.SortOrderInput | Prisma.SortOrder;
+    minecraftRank?: Prisma.SortOrder;
     _count?: Prisma.ClanPlayerCountOrderByAggregateInput;
     _max?: Prisma.ClanPlayerMaxOrderByAggregateInput;
     _min?: Prisma.ClanPlayerMinOrderByAggregateInput;
@@ -263,14 +263,14 @@ export type ClanPlayerScalarWhereWithAggregatesInput = {
     fullName?: Prisma.StringWithAggregatesFilter<"ClanPlayer"> | string;
     minecraftNick?: Prisma.StringWithAggregatesFilter<"ClanPlayer"> | string;
     rank?: Prisma.StringWithAggregatesFilter<"ClanPlayer"> | string;
-    minecraftRank?: Prisma.StringWithAggregatesFilter<"ClanPlayer"> | string;
     joinedAt?: Prisma.DateTimeWithAggregatesFilter<"ClanPlayer"> | Date | string;
     country?: Prisma.StringWithAggregatesFilter<"ClanPlayer"> | string;
     utcOffset?: Prisma.StringWithAggregatesFilter<"ClanPlayer"> | string;
     status?: Prisma.StringWithAggregatesFilter<"ClanPlayer"> | string;
-    notes?: Prisma.StringNullableWithAggregatesFilter<"ClanPlayer"> | string | null;
     createdAt?: Prisma.DateTimeWithAggregatesFilter<"ClanPlayer"> | Date | string;
     updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ClanPlayer"> | Date | string;
+    notes?: Prisma.StringNullableWithAggregatesFilter<"ClanPlayer"> | string | null;
+    minecraftRank?: Prisma.StringWithAggregatesFilter<"ClanPlayer"> | string;
 };
 export type ClanPlayerCreateInput = {
     id: string;
@@ -278,14 +278,14 @@ export type ClanPlayerCreateInput = {
     fullName: string;
     minecraftNick: string;
     rank: string;
-    minecraftRank?: string;
     joinedAt: Date | string;
     country: string;
     utcOffset: string;
     status?: string;
-    notes?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    notes?: string | null;
+    minecraftRank?: string;
 };
 export type ClanPlayerUncheckedCreateInput = {
     id: string;
@@ -293,14 +293,14 @@ export type ClanPlayerUncheckedCreateInput = {
     fullName: string;
     minecraftNick: string;
     rank: string;
-    minecraftRank?: string;
     joinedAt: Date | string;
     country: string;
     utcOffset: string;
     status?: string;
-    notes?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    notes?: string | null;
+    minecraftRank?: string;
 };
 export type ClanPlayerUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -308,14 +308,14 @@ export type ClanPlayerUpdateInput = {
     fullName?: Prisma.StringFieldUpdateOperationsInput | string;
     minecraftNick?: Prisma.StringFieldUpdateOperationsInput | string;
     rank?: Prisma.StringFieldUpdateOperationsInput | string;
-    minecraftRank?: Prisma.StringFieldUpdateOperationsInput | string;
     joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     country?: Prisma.StringFieldUpdateOperationsInput | string;
     utcOffset?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
-    notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    minecraftRank?: Prisma.StringFieldUpdateOperationsInput | string;
 };
 export type ClanPlayerUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -323,14 +323,14 @@ export type ClanPlayerUncheckedUpdateInput = {
     fullName?: Prisma.StringFieldUpdateOperationsInput | string;
     minecraftNick?: Prisma.StringFieldUpdateOperationsInput | string;
     rank?: Prisma.StringFieldUpdateOperationsInput | string;
-    minecraftRank?: Prisma.StringFieldUpdateOperationsInput | string;
     joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     country?: Prisma.StringFieldUpdateOperationsInput | string;
     utcOffset?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
-    notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    minecraftRank?: Prisma.StringFieldUpdateOperationsInput | string;
 };
 export type ClanPlayerCreateManyInput = {
     id: string;
@@ -338,14 +338,14 @@ export type ClanPlayerCreateManyInput = {
     fullName: string;
     minecraftNick: string;
     rank: string;
-    minecraftRank?: string;
     joinedAt: Date | string;
     country: string;
     utcOffset: string;
     status?: string;
-    notes?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    notes?: string | null;
+    minecraftRank?: string;
 };
 export type ClanPlayerUpdateManyMutationInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -353,14 +353,14 @@ export type ClanPlayerUpdateManyMutationInput = {
     fullName?: Prisma.StringFieldUpdateOperationsInput | string;
     minecraftNick?: Prisma.StringFieldUpdateOperationsInput | string;
     rank?: Prisma.StringFieldUpdateOperationsInput | string;
-    minecraftRank?: Prisma.StringFieldUpdateOperationsInput | string;
     joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     country?: Prisma.StringFieldUpdateOperationsInput | string;
     utcOffset?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
-    notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    minecraftRank?: Prisma.StringFieldUpdateOperationsInput | string;
 };
 export type ClanPlayerUncheckedUpdateManyInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -368,14 +368,14 @@ export type ClanPlayerUncheckedUpdateManyInput = {
     fullName?: Prisma.StringFieldUpdateOperationsInput | string;
     minecraftNick?: Prisma.StringFieldUpdateOperationsInput | string;
     rank?: Prisma.StringFieldUpdateOperationsInput | string;
-    minecraftRank?: Prisma.StringFieldUpdateOperationsInput | string;
     joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     country?: Prisma.StringFieldUpdateOperationsInput | string;
     utcOffset?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
-    notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    minecraftRank?: Prisma.StringFieldUpdateOperationsInput | string;
 };
 export type ClanPlayerCountOrderByAggregateInput = {
     id?: Prisma.SortOrder;
@@ -383,14 +383,14 @@ export type ClanPlayerCountOrderByAggregateInput = {
     fullName?: Prisma.SortOrder;
     minecraftNick?: Prisma.SortOrder;
     rank?: Prisma.SortOrder;
-    minecraftRank?: Prisma.SortOrder;
     joinedAt?: Prisma.SortOrder;
     country?: Prisma.SortOrder;
     utcOffset?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
-    notes?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    notes?: Prisma.SortOrder;
+    minecraftRank?: Prisma.SortOrder;
 };
 export type ClanPlayerMaxOrderByAggregateInput = {
     id?: Prisma.SortOrder;
@@ -398,14 +398,14 @@ export type ClanPlayerMaxOrderByAggregateInput = {
     fullName?: Prisma.SortOrder;
     minecraftNick?: Prisma.SortOrder;
     rank?: Prisma.SortOrder;
-    minecraftRank?: Prisma.SortOrder;
     joinedAt?: Prisma.SortOrder;
     country?: Prisma.SortOrder;
     utcOffset?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
-    notes?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    notes?: Prisma.SortOrder;
+    minecraftRank?: Prisma.SortOrder;
 };
 export type ClanPlayerMinOrderByAggregateInput = {
     id?: Prisma.SortOrder;
@@ -413,14 +413,14 @@ export type ClanPlayerMinOrderByAggregateInput = {
     fullName?: Prisma.SortOrder;
     minecraftNick?: Prisma.SortOrder;
     rank?: Prisma.SortOrder;
-    minecraftRank?: Prisma.SortOrder;
     joinedAt?: Prisma.SortOrder;
     country?: Prisma.SortOrder;
     utcOffset?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
-    notes?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    notes?: Prisma.SortOrder;
+    minecraftRank?: Prisma.SortOrder;
 };
 export type ClanPlayerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -428,14 +428,14 @@ export type ClanPlayerSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
     fullName?: boolean;
     minecraftNick?: boolean;
     rank?: boolean;
-    minecraftRank?: boolean;
     joinedAt?: boolean;
     country?: boolean;
     utcOffset?: boolean;
     status?: boolean;
-    notes?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
+    notes?: boolean;
+    minecraftRank?: boolean;
 }, ExtArgs["result"]["clanPlayer"]>;
 export type ClanPlayerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -443,14 +443,14 @@ export type ClanPlayerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
     fullName?: boolean;
     minecraftNick?: boolean;
     rank?: boolean;
-    minecraftRank?: boolean;
     joinedAt?: boolean;
     country?: boolean;
     utcOffset?: boolean;
     status?: boolean;
-    notes?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
+    notes?: boolean;
+    minecraftRank?: boolean;
 }, ExtArgs["result"]["clanPlayer"]>;
 export type ClanPlayerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -458,14 +458,14 @@ export type ClanPlayerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
     fullName?: boolean;
     minecraftNick?: boolean;
     rank?: boolean;
-    minecraftRank?: boolean;
     joinedAt?: boolean;
     country?: boolean;
     utcOffset?: boolean;
     status?: boolean;
-    notes?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
+    notes?: boolean;
+    minecraftRank?: boolean;
 }, ExtArgs["result"]["clanPlayer"]>;
 export type ClanPlayerSelectScalar = {
     id?: boolean;
@@ -473,16 +473,16 @@ export type ClanPlayerSelectScalar = {
     fullName?: boolean;
     minecraftNick?: boolean;
     rank?: boolean;
-    minecraftRank?: boolean;
     joinedAt?: boolean;
     country?: boolean;
     utcOffset?: boolean;
     status?: boolean;
-    notes?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
+    notes?: boolean;
+    minecraftRank?: boolean;
 };
-export type ClanPlayerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "discord" | "fullName" | "minecraftNick" | "rank" | "minecraftRank" | "joinedAt" | "country" | "utcOffset" | "status" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["clanPlayer"]>;
+export type ClanPlayerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "discord" | "fullName" | "minecraftNick" | "rank" | "joinedAt" | "country" | "utcOffset" | "status" | "createdAt" | "updatedAt" | "notes" | "minecraftRank", ExtArgs["result"]["clanPlayer"]>;
 export type $ClanPlayerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "ClanPlayer";
     objects: {};
@@ -492,14 +492,14 @@ export type $ClanPlayerPayload<ExtArgs extends runtime.Types.Extensions.Internal
         fullName: string;
         minecraftNick: string;
         rank: string;
-        minecraftRank: string;
         joinedAt: Date;
         country: string;
         utcOffset: string;
         status: string;
-        notes: string | null;
         createdAt: Date;
         updatedAt: Date;
+        notes: string | null;
+        minecraftRank: string;
     }, ExtArgs["result"]["clanPlayer"]>;
     composites: {};
 };
@@ -859,14 +859,14 @@ export interface ClanPlayerFieldRefs {
     readonly fullName: Prisma.FieldRef<"ClanPlayer", 'String'>;
     readonly minecraftNick: Prisma.FieldRef<"ClanPlayer", 'String'>;
     readonly rank: Prisma.FieldRef<"ClanPlayer", 'String'>;
-    readonly minecraftRank: Prisma.FieldRef<"ClanPlayer", 'String'>;
     readonly joinedAt: Prisma.FieldRef<"ClanPlayer", 'DateTime'>;
     readonly country: Prisma.FieldRef<"ClanPlayer", 'String'>;
     readonly utcOffset: Prisma.FieldRef<"ClanPlayer", 'String'>;
     readonly status: Prisma.FieldRef<"ClanPlayer", 'String'>;
-    readonly notes: Prisma.FieldRef<"ClanPlayer", 'String'>;
     readonly createdAt: Prisma.FieldRef<"ClanPlayer", 'DateTime'>;
     readonly updatedAt: Prisma.FieldRef<"ClanPlayer", 'DateTime'>;
+    readonly notes: Prisma.FieldRef<"ClanPlayer", 'String'>;
+    readonly minecraftRank: Prisma.FieldRef<"ClanPlayer", 'String'>;
 }
 /**
  * ClanPlayer findUnique

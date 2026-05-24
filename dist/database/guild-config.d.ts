@@ -3,7 +3,6 @@ export declare function getOrCreateGuildConfig(guildId: string): Promise<{
     id: string;
     guildId: string;
     welcomeChannelId: string | null;
-    farewellChannelId: string | null;
     logsChannelId: string | null;
     logsModChannelId: string | null;
     logsAutomodChannelId: string | null;
@@ -23,5 +22,10 @@ export declare function getOrCreateGuildConfig(guildId: string): Promise<{
     shopStaffChannelId: string | null;
     shopCategoryId: string | null;
     updatedAt: Date;
+    farewellChannelId: string | null;
+    notifRoles: import("@prisma/client/runtime/client").JsonValue;
+    expulsionReasons: import("@prisma/client/runtime/client").JsonValue;
+    notifPanelChannelId: string | null;
+    notifPanelMessageId: string | null;
 }>;
 //# sourceMappingURL=guild-config.d.ts.map

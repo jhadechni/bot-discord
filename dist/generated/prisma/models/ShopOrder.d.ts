@@ -296,15 +296,15 @@ export type ShopOrderWhereInput = {
     rejectedAt?: Prisma.DateTimeNullableFilter<"ShopOrder"> | Date | string | null;
     closedAt?: Prisma.DateTimeNullableFilter<"ShopOrder"> | Date | string | null;
     cancelledAt?: Prisma.DateTimeNullableFilter<"ShopOrder"> | Date | string | null;
-    customer?: Prisma.XOR<Prisma.ShopUserScalarRelationFilter, Prisma.ShopUserWhereInput>;
-    acceptedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
-    rejectedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
-    closedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
-    items?: Prisma.ShopOrderItemListRelationFilter;
-    movements?: Prisma.ShopInventoryMovementListRelationFilter;
-    sale?: Prisma.XOR<Prisma.ShopSaleNullableScalarRelationFilter, Prisma.ShopSaleWhereInput> | null;
-    events?: Prisma.ShopOrderEventListRelationFilter;
     appliedDiscounts?: Prisma.ShopAppliedDiscountListRelationFilter;
+    movements?: Prisma.ShopInventoryMovementListRelationFilter;
+    acceptedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
+    closedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
+    customer?: Prisma.XOR<Prisma.ShopUserScalarRelationFilter, Prisma.ShopUserWhereInput>;
+    rejectedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
+    events?: Prisma.ShopOrderEventListRelationFilter;
+    items?: Prisma.ShopOrderItemListRelationFilter;
+    sale?: Prisma.XOR<Prisma.ShopSaleNullableScalarRelationFilter, Prisma.ShopSaleWhereInput> | null;
 };
 export type ShopOrderOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -327,15 +327,15 @@ export type ShopOrderOrderByWithRelationInput = {
     rejectedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
     closedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
     cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder;
-    customer?: Prisma.ShopUserOrderByWithRelationInput;
-    acceptedBy?: Prisma.ShopUserOrderByWithRelationInput;
-    rejectedBy?: Prisma.ShopUserOrderByWithRelationInput;
-    closedBy?: Prisma.ShopUserOrderByWithRelationInput;
-    items?: Prisma.ShopOrderItemOrderByRelationAggregateInput;
-    movements?: Prisma.ShopInventoryMovementOrderByRelationAggregateInput;
-    sale?: Prisma.ShopSaleOrderByWithRelationInput;
-    events?: Prisma.ShopOrderEventOrderByRelationAggregateInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountOrderByRelationAggregateInput;
+    movements?: Prisma.ShopInventoryMovementOrderByRelationAggregateInput;
+    acceptedBy?: Prisma.ShopUserOrderByWithRelationInput;
+    closedBy?: Prisma.ShopUserOrderByWithRelationInput;
+    customer?: Prisma.ShopUserOrderByWithRelationInput;
+    rejectedBy?: Prisma.ShopUserOrderByWithRelationInput;
+    events?: Prisma.ShopOrderEventOrderByRelationAggregateInput;
+    items?: Prisma.ShopOrderItemOrderByRelationAggregateInput;
+    sale?: Prisma.ShopSaleOrderByWithRelationInput;
 };
 export type ShopOrderWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -361,15 +361,15 @@ export type ShopOrderWhereUniqueInput = Prisma.AtLeast<{
     rejectedAt?: Prisma.DateTimeNullableFilter<"ShopOrder"> | Date | string | null;
     closedAt?: Prisma.DateTimeNullableFilter<"ShopOrder"> | Date | string | null;
     cancelledAt?: Prisma.DateTimeNullableFilter<"ShopOrder"> | Date | string | null;
-    customer?: Prisma.XOR<Prisma.ShopUserScalarRelationFilter, Prisma.ShopUserWhereInput>;
-    acceptedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
-    rejectedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
-    closedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
-    items?: Prisma.ShopOrderItemListRelationFilter;
-    movements?: Prisma.ShopInventoryMovementListRelationFilter;
-    sale?: Prisma.XOR<Prisma.ShopSaleNullableScalarRelationFilter, Prisma.ShopSaleWhereInput> | null;
-    events?: Prisma.ShopOrderEventListRelationFilter;
     appliedDiscounts?: Prisma.ShopAppliedDiscountListRelationFilter;
+    movements?: Prisma.ShopInventoryMovementListRelationFilter;
+    acceptedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
+    closedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
+    customer?: Prisma.XOR<Prisma.ShopUserScalarRelationFilter, Prisma.ShopUserWhereInput>;
+    rejectedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
+    events?: Prisma.ShopOrderEventListRelationFilter;
+    items?: Prisma.ShopOrderItemListRelationFilter;
+    sale?: Prisma.XOR<Prisma.ShopSaleNullableScalarRelationFilter, Prisma.ShopSaleWhereInput> | null;
 }, "id" | "orderCode">;
 export type ShopOrderOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -440,15 +440,15 @@ export type ShopOrderCreateInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
-    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
-    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
-    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
-    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
-    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
-    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
+    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
+    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
+    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
+    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
+    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateInput = {
     id?: string;
@@ -471,11 +471,11 @@ export type ShopOrderUncheckedCreateInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
-    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
-    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
+    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -494,15 +494,15 @@ export type ShopOrderUpdateInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
-    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
-    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
-    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
-    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
-    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
-    events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
+    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
+    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
+    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
+    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
+    events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -525,11 +525,11 @@ export type ShopOrderUncheckedUpdateInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
-    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
-    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
+    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderCreateManyInput = {
     id?: string;
@@ -685,16 +685,22 @@ export type ShopOrderNullableScalarRelationFilter = {
     is?: Prisma.ShopOrderWhereInput | null;
     isNot?: Prisma.ShopOrderWhereInput | null;
 };
-export type ShopOrderCreateNestedManyWithoutCustomerInput = {
-    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutCustomerInput, Prisma.ShopOrderUncheckedCreateWithoutCustomerInput> | Prisma.ShopOrderCreateWithoutCustomerInput[] | Prisma.ShopOrderUncheckedCreateWithoutCustomerInput[];
-    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutCustomerInput | Prisma.ShopOrderCreateOrConnectWithoutCustomerInput[];
-    createMany?: Prisma.ShopOrderCreateManyCustomerInputEnvelope;
-    connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-};
 export type ShopOrderCreateNestedManyWithoutAcceptedByInput = {
     create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutAcceptedByInput, Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput> | Prisma.ShopOrderCreateWithoutAcceptedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput[];
     connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutAcceptedByInput | Prisma.ShopOrderCreateOrConnectWithoutAcceptedByInput[];
     createMany?: Prisma.ShopOrderCreateManyAcceptedByInputEnvelope;
+    connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+};
+export type ShopOrderCreateNestedManyWithoutClosedByInput = {
+    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutClosedByInput, Prisma.ShopOrderUncheckedCreateWithoutClosedByInput> | Prisma.ShopOrderCreateWithoutClosedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutClosedByInput[];
+    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutClosedByInput | Prisma.ShopOrderCreateOrConnectWithoutClosedByInput[];
+    createMany?: Prisma.ShopOrderCreateManyClosedByInputEnvelope;
+    connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+};
+export type ShopOrderCreateNestedManyWithoutCustomerInput = {
+    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutCustomerInput, Prisma.ShopOrderUncheckedCreateWithoutCustomerInput> | Prisma.ShopOrderCreateWithoutCustomerInput[] | Prisma.ShopOrderUncheckedCreateWithoutCustomerInput[];
+    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutCustomerInput | Prisma.ShopOrderCreateOrConnectWithoutCustomerInput[];
+    createMany?: Prisma.ShopOrderCreateManyCustomerInputEnvelope;
     connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
 };
 export type ShopOrderCreateNestedManyWithoutRejectedByInput = {
@@ -703,7 +709,13 @@ export type ShopOrderCreateNestedManyWithoutRejectedByInput = {
     createMany?: Prisma.ShopOrderCreateManyRejectedByInputEnvelope;
     connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
 };
-export type ShopOrderCreateNestedManyWithoutClosedByInput = {
+export type ShopOrderUncheckedCreateNestedManyWithoutAcceptedByInput = {
+    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutAcceptedByInput, Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput> | Prisma.ShopOrderCreateWithoutAcceptedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput[];
+    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutAcceptedByInput | Prisma.ShopOrderCreateOrConnectWithoutAcceptedByInput[];
+    createMany?: Prisma.ShopOrderCreateManyAcceptedByInputEnvelope;
+    connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+};
+export type ShopOrderUncheckedCreateNestedManyWithoutClosedByInput = {
     create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutClosedByInput, Prisma.ShopOrderUncheckedCreateWithoutClosedByInput> | Prisma.ShopOrderCreateWithoutClosedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutClosedByInput[];
     connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutClosedByInput | Prisma.ShopOrderCreateOrConnectWithoutClosedByInput[];
     createMany?: Prisma.ShopOrderCreateManyClosedByInputEnvelope;
@@ -715,36 +727,11 @@ export type ShopOrderUncheckedCreateNestedManyWithoutCustomerInput = {
     createMany?: Prisma.ShopOrderCreateManyCustomerInputEnvelope;
     connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
 };
-export type ShopOrderUncheckedCreateNestedManyWithoutAcceptedByInput = {
-    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutAcceptedByInput, Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput> | Prisma.ShopOrderCreateWithoutAcceptedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput[];
-    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutAcceptedByInput | Prisma.ShopOrderCreateOrConnectWithoutAcceptedByInput[];
-    createMany?: Prisma.ShopOrderCreateManyAcceptedByInputEnvelope;
-    connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-};
 export type ShopOrderUncheckedCreateNestedManyWithoutRejectedByInput = {
     create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutRejectedByInput, Prisma.ShopOrderUncheckedCreateWithoutRejectedByInput> | Prisma.ShopOrderCreateWithoutRejectedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutRejectedByInput[];
     connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutRejectedByInput | Prisma.ShopOrderCreateOrConnectWithoutRejectedByInput[];
     createMany?: Prisma.ShopOrderCreateManyRejectedByInputEnvelope;
     connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-};
-export type ShopOrderUncheckedCreateNestedManyWithoutClosedByInput = {
-    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutClosedByInput, Prisma.ShopOrderUncheckedCreateWithoutClosedByInput> | Prisma.ShopOrderCreateWithoutClosedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutClosedByInput[];
-    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutClosedByInput | Prisma.ShopOrderCreateOrConnectWithoutClosedByInput[];
-    createMany?: Prisma.ShopOrderCreateManyClosedByInputEnvelope;
-    connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-};
-export type ShopOrderUpdateManyWithoutCustomerNestedInput = {
-    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutCustomerInput, Prisma.ShopOrderUncheckedCreateWithoutCustomerInput> | Prisma.ShopOrderCreateWithoutCustomerInput[] | Prisma.ShopOrderUncheckedCreateWithoutCustomerInput[];
-    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutCustomerInput | Prisma.ShopOrderCreateOrConnectWithoutCustomerInput[];
-    upsert?: Prisma.ShopOrderUpsertWithWhereUniqueWithoutCustomerInput | Prisma.ShopOrderUpsertWithWhereUniqueWithoutCustomerInput[];
-    createMany?: Prisma.ShopOrderCreateManyCustomerInputEnvelope;
-    set?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-    disconnect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-    delete?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-    connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-    update?: Prisma.ShopOrderUpdateWithWhereUniqueWithoutCustomerInput | Prisma.ShopOrderUpdateWithWhereUniqueWithoutCustomerInput[];
-    updateMany?: Prisma.ShopOrderUpdateManyWithWhereWithoutCustomerInput | Prisma.ShopOrderUpdateManyWithWhereWithoutCustomerInput[];
-    deleteMany?: Prisma.ShopOrderScalarWhereInput | Prisma.ShopOrderScalarWhereInput[];
 };
 export type ShopOrderUpdateManyWithoutAcceptedByNestedInput = {
     create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutAcceptedByInput, Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput> | Prisma.ShopOrderCreateWithoutAcceptedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput[];
@@ -757,6 +744,32 @@ export type ShopOrderUpdateManyWithoutAcceptedByNestedInput = {
     connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
     update?: Prisma.ShopOrderUpdateWithWhereUniqueWithoutAcceptedByInput | Prisma.ShopOrderUpdateWithWhereUniqueWithoutAcceptedByInput[];
     updateMany?: Prisma.ShopOrderUpdateManyWithWhereWithoutAcceptedByInput | Prisma.ShopOrderUpdateManyWithWhereWithoutAcceptedByInput[];
+    deleteMany?: Prisma.ShopOrderScalarWhereInput | Prisma.ShopOrderScalarWhereInput[];
+};
+export type ShopOrderUpdateManyWithoutClosedByNestedInput = {
+    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutClosedByInput, Prisma.ShopOrderUncheckedCreateWithoutClosedByInput> | Prisma.ShopOrderCreateWithoutClosedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutClosedByInput[];
+    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutClosedByInput | Prisma.ShopOrderCreateOrConnectWithoutClosedByInput[];
+    upsert?: Prisma.ShopOrderUpsertWithWhereUniqueWithoutClosedByInput | Prisma.ShopOrderUpsertWithWhereUniqueWithoutClosedByInput[];
+    createMany?: Prisma.ShopOrderCreateManyClosedByInputEnvelope;
+    set?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+    disconnect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+    delete?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+    connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+    update?: Prisma.ShopOrderUpdateWithWhereUniqueWithoutClosedByInput | Prisma.ShopOrderUpdateWithWhereUniqueWithoutClosedByInput[];
+    updateMany?: Prisma.ShopOrderUpdateManyWithWhereWithoutClosedByInput | Prisma.ShopOrderUpdateManyWithWhereWithoutClosedByInput[];
+    deleteMany?: Prisma.ShopOrderScalarWhereInput | Prisma.ShopOrderScalarWhereInput[];
+};
+export type ShopOrderUpdateManyWithoutCustomerNestedInput = {
+    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutCustomerInput, Prisma.ShopOrderUncheckedCreateWithoutCustomerInput> | Prisma.ShopOrderCreateWithoutCustomerInput[] | Prisma.ShopOrderUncheckedCreateWithoutCustomerInput[];
+    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutCustomerInput | Prisma.ShopOrderCreateOrConnectWithoutCustomerInput[];
+    upsert?: Prisma.ShopOrderUpsertWithWhereUniqueWithoutCustomerInput | Prisma.ShopOrderUpsertWithWhereUniqueWithoutCustomerInput[];
+    createMany?: Prisma.ShopOrderCreateManyCustomerInputEnvelope;
+    set?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+    disconnect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+    delete?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+    connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+    update?: Prisma.ShopOrderUpdateWithWhereUniqueWithoutCustomerInput | Prisma.ShopOrderUpdateWithWhereUniqueWithoutCustomerInput[];
+    updateMany?: Prisma.ShopOrderUpdateManyWithWhereWithoutCustomerInput | Prisma.ShopOrderUpdateManyWithWhereWithoutCustomerInput[];
     deleteMany?: Prisma.ShopOrderScalarWhereInput | Prisma.ShopOrderScalarWhereInput[];
 };
 export type ShopOrderUpdateManyWithoutRejectedByNestedInput = {
@@ -772,7 +785,20 @@ export type ShopOrderUpdateManyWithoutRejectedByNestedInput = {
     updateMany?: Prisma.ShopOrderUpdateManyWithWhereWithoutRejectedByInput | Prisma.ShopOrderUpdateManyWithWhereWithoutRejectedByInput[];
     deleteMany?: Prisma.ShopOrderScalarWhereInput | Prisma.ShopOrderScalarWhereInput[];
 };
-export type ShopOrderUpdateManyWithoutClosedByNestedInput = {
+export type ShopOrderUncheckedUpdateManyWithoutAcceptedByNestedInput = {
+    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutAcceptedByInput, Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput> | Prisma.ShopOrderCreateWithoutAcceptedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput[];
+    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutAcceptedByInput | Prisma.ShopOrderCreateOrConnectWithoutAcceptedByInput[];
+    upsert?: Prisma.ShopOrderUpsertWithWhereUniqueWithoutAcceptedByInput | Prisma.ShopOrderUpsertWithWhereUniqueWithoutAcceptedByInput[];
+    createMany?: Prisma.ShopOrderCreateManyAcceptedByInputEnvelope;
+    set?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+    disconnect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+    delete?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+    connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
+    update?: Prisma.ShopOrderUpdateWithWhereUniqueWithoutAcceptedByInput | Prisma.ShopOrderUpdateWithWhereUniqueWithoutAcceptedByInput[];
+    updateMany?: Prisma.ShopOrderUpdateManyWithWhereWithoutAcceptedByInput | Prisma.ShopOrderUpdateManyWithWhereWithoutAcceptedByInput[];
+    deleteMany?: Prisma.ShopOrderScalarWhereInput | Prisma.ShopOrderScalarWhereInput[];
+};
+export type ShopOrderUncheckedUpdateManyWithoutClosedByNestedInput = {
     create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutClosedByInput, Prisma.ShopOrderUncheckedCreateWithoutClosedByInput> | Prisma.ShopOrderCreateWithoutClosedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutClosedByInput[];
     connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutClosedByInput | Prisma.ShopOrderCreateOrConnectWithoutClosedByInput[];
     upsert?: Prisma.ShopOrderUpsertWithWhereUniqueWithoutClosedByInput | Prisma.ShopOrderUpsertWithWhereUniqueWithoutClosedByInput[];
@@ -798,19 +824,6 @@ export type ShopOrderUncheckedUpdateManyWithoutCustomerNestedInput = {
     updateMany?: Prisma.ShopOrderUpdateManyWithWhereWithoutCustomerInput | Prisma.ShopOrderUpdateManyWithWhereWithoutCustomerInput[];
     deleteMany?: Prisma.ShopOrderScalarWhereInput | Prisma.ShopOrderScalarWhereInput[];
 };
-export type ShopOrderUncheckedUpdateManyWithoutAcceptedByNestedInput = {
-    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutAcceptedByInput, Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput> | Prisma.ShopOrderCreateWithoutAcceptedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput[];
-    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutAcceptedByInput | Prisma.ShopOrderCreateOrConnectWithoutAcceptedByInput[];
-    upsert?: Prisma.ShopOrderUpsertWithWhereUniqueWithoutAcceptedByInput | Prisma.ShopOrderUpsertWithWhereUniqueWithoutAcceptedByInput[];
-    createMany?: Prisma.ShopOrderCreateManyAcceptedByInputEnvelope;
-    set?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-    disconnect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-    delete?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-    connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-    update?: Prisma.ShopOrderUpdateWithWhereUniqueWithoutAcceptedByInput | Prisma.ShopOrderUpdateWithWhereUniqueWithoutAcceptedByInput[];
-    updateMany?: Prisma.ShopOrderUpdateManyWithWhereWithoutAcceptedByInput | Prisma.ShopOrderUpdateManyWithWhereWithoutAcceptedByInput[];
-    deleteMany?: Prisma.ShopOrderScalarWhereInput | Prisma.ShopOrderScalarWhereInput[];
-};
 export type ShopOrderUncheckedUpdateManyWithoutRejectedByNestedInput = {
     create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutRejectedByInput, Prisma.ShopOrderUncheckedCreateWithoutRejectedByInput> | Prisma.ShopOrderCreateWithoutRejectedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutRejectedByInput[];
     connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutRejectedByInput | Prisma.ShopOrderCreateOrConnectWithoutRejectedByInput[];
@@ -822,19 +835,6 @@ export type ShopOrderUncheckedUpdateManyWithoutRejectedByNestedInput = {
     connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
     update?: Prisma.ShopOrderUpdateWithWhereUniqueWithoutRejectedByInput | Prisma.ShopOrderUpdateWithWhereUniqueWithoutRejectedByInput[];
     updateMany?: Prisma.ShopOrderUpdateManyWithWhereWithoutRejectedByInput | Prisma.ShopOrderUpdateManyWithWhereWithoutRejectedByInput[];
-    deleteMany?: Prisma.ShopOrderScalarWhereInput | Prisma.ShopOrderScalarWhereInput[];
-};
-export type ShopOrderUncheckedUpdateManyWithoutClosedByNestedInput = {
-    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutClosedByInput, Prisma.ShopOrderUncheckedCreateWithoutClosedByInput> | Prisma.ShopOrderCreateWithoutClosedByInput[] | Prisma.ShopOrderUncheckedCreateWithoutClosedByInput[];
-    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutClosedByInput | Prisma.ShopOrderCreateOrConnectWithoutClosedByInput[];
-    upsert?: Prisma.ShopOrderUpsertWithWhereUniqueWithoutClosedByInput | Prisma.ShopOrderUpsertWithWhereUniqueWithoutClosedByInput[];
-    createMany?: Prisma.ShopOrderCreateManyClosedByInputEnvelope;
-    set?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-    disconnect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-    delete?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-    connect?: Prisma.ShopOrderWhereUniqueInput | Prisma.ShopOrderWhereUniqueInput[];
-    update?: Prisma.ShopOrderUpdateWithWhereUniqueWithoutClosedByInput | Prisma.ShopOrderUpdateWithWhereUniqueWithoutClosedByInput[];
-    updateMany?: Prisma.ShopOrderUpdateManyWithWhereWithoutClosedByInput | Prisma.ShopOrderUpdateManyWithWhereWithoutClosedByInput[];
     deleteMany?: Prisma.ShopOrderScalarWhereInput | Prisma.ShopOrderScalarWhereInput[];
 };
 export type ShopOrderCreateNestedOneWithoutItemsInput = {
@@ -901,66 +901,6 @@ export type ShopOrderUpdateOneRequiredWithoutEventsNestedInput = {
     connect?: Prisma.ShopOrderWhereUniqueInput;
     update?: Prisma.XOR<Prisma.XOR<Prisma.ShopOrderUpdateToOneWithWhereWithoutEventsInput, Prisma.ShopOrderUpdateWithoutEventsInput>, Prisma.ShopOrderUncheckedUpdateWithoutEventsInput>;
 };
-export type ShopOrderCreateWithoutCustomerInput = {
-    id?: string;
-    guildId: string;
-    orderCode: string;
-    status?: string;
-    ticketChannelId?: string | null;
-    staffChannelId?: string | null;
-    rejectionReason?: string | null;
-    cancelReason?: string | null;
-    subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    createdAt?: Date | string;
-    acceptedAt?: Date | string | null;
-    rejectedAt?: Date | string | null;
-    closedAt?: Date | string | null;
-    cancelledAt?: Date | string | null;
-    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
-    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
-    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
-    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
-    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
-    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
-};
-export type ShopOrderUncheckedCreateWithoutCustomerInput = {
-    id?: string;
-    guildId: string;
-    orderCode: string;
-    status?: string;
-    ticketChannelId?: string | null;
-    staffChannelId?: string | null;
-    acceptedByUserId?: string | null;
-    rejectedByUserId?: string | null;
-    closedByUserId?: string | null;
-    rejectionReason?: string | null;
-    cancelReason?: string | null;
-    subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    createdAt?: Date | string;
-    acceptedAt?: Date | string | null;
-    rejectedAt?: Date | string | null;
-    closedAt?: Date | string | null;
-    cancelledAt?: Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
-    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
-    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
-};
-export type ShopOrderCreateOrConnectWithoutCustomerInput = {
-    where: Prisma.ShopOrderWhereUniqueInput;
-    create: Prisma.XOR<Prisma.ShopOrderCreateWithoutCustomerInput, Prisma.ShopOrderUncheckedCreateWithoutCustomerInput>;
-};
-export type ShopOrderCreateManyCustomerInputEnvelope = {
-    data: Prisma.ShopOrderCreateManyCustomerInput | Prisma.ShopOrderCreateManyCustomerInput[];
-    skipDuplicates?: boolean;
-};
 export type ShopOrderCreateWithoutAcceptedByInput = {
     id?: string;
     guildId: string;
@@ -978,14 +918,14 @@ export type ShopOrderCreateWithoutAcceptedByInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
+    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
     customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
     rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
-    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
-    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
-    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
     events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutAcceptedByInput = {
     id?: string;
@@ -1007,11 +947,11 @@ export type ShopOrderUncheckedCreateWithoutAcceptedByInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
-    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
-    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
+    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutAcceptedByInput = {
     where: Prisma.ShopOrderWhereUniqueInput;
@@ -1019,66 +959,6 @@ export type ShopOrderCreateOrConnectWithoutAcceptedByInput = {
 };
 export type ShopOrderCreateManyAcceptedByInputEnvelope = {
     data: Prisma.ShopOrderCreateManyAcceptedByInput | Prisma.ShopOrderCreateManyAcceptedByInput[];
-    skipDuplicates?: boolean;
-};
-export type ShopOrderCreateWithoutRejectedByInput = {
-    id?: string;
-    guildId: string;
-    orderCode: string;
-    status?: string;
-    ticketChannelId?: string | null;
-    staffChannelId?: string | null;
-    rejectionReason?: string | null;
-    cancelReason?: string | null;
-    subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    createdAt?: Date | string;
-    acceptedAt?: Date | string | null;
-    rejectedAt?: Date | string | null;
-    closedAt?: Date | string | null;
-    cancelledAt?: Date | string | null;
-    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
-    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
-    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
-    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
-    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
-    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
-};
-export type ShopOrderUncheckedCreateWithoutRejectedByInput = {
-    id?: string;
-    guildId: string;
-    orderCode: string;
-    customerUserId: string;
-    status?: string;
-    ticketChannelId?: string | null;
-    staffChannelId?: string | null;
-    acceptedByUserId?: string | null;
-    closedByUserId?: string | null;
-    rejectionReason?: string | null;
-    cancelReason?: string | null;
-    subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    createdAt?: Date | string;
-    acceptedAt?: Date | string | null;
-    rejectedAt?: Date | string | null;
-    closedAt?: Date | string | null;
-    cancelledAt?: Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
-    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
-    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
-};
-export type ShopOrderCreateOrConnectWithoutRejectedByInput = {
-    where: Prisma.ShopOrderWhereUniqueInput;
-    create: Prisma.XOR<Prisma.ShopOrderCreateWithoutRejectedByInput, Prisma.ShopOrderUncheckedCreateWithoutRejectedByInput>;
-};
-export type ShopOrderCreateManyRejectedByInputEnvelope = {
-    data: Prisma.ShopOrderCreateManyRejectedByInput | Prisma.ShopOrderCreateManyRejectedByInput[];
     skipDuplicates?: boolean;
 };
 export type ShopOrderCreateWithoutClosedByInput = {
@@ -1098,14 +978,14 @@ export type ShopOrderCreateWithoutClosedByInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
-    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
-    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
-    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
-    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
-    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
+    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
+    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
+    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
+    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutClosedByInput = {
     id?: string;
@@ -1127,11 +1007,11 @@ export type ShopOrderUncheckedCreateWithoutClosedByInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
-    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
-    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
+    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutClosedByInput = {
     where: Prisma.ShopOrderWhereUniqueInput;
@@ -1141,18 +1021,138 @@ export type ShopOrderCreateManyClosedByInputEnvelope = {
     data: Prisma.ShopOrderCreateManyClosedByInput | Prisma.ShopOrderCreateManyClosedByInput[];
     skipDuplicates?: boolean;
 };
-export type ShopOrderUpsertWithWhereUniqueWithoutCustomerInput = {
+export type ShopOrderCreateWithoutCustomerInput = {
+    id?: string;
+    guildId: string;
+    orderCode: string;
+    status?: string;
+    ticketChannelId?: string | null;
+    staffChannelId?: string | null;
+    rejectionReason?: string | null;
+    cancelReason?: string | null;
+    subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Date | string;
+    acceptedAt?: Date | string | null;
+    rejectedAt?: Date | string | null;
+    closedAt?: Date | string | null;
+    cancelledAt?: Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
+    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
+    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
+    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
+    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
+};
+export type ShopOrderUncheckedCreateWithoutCustomerInput = {
+    id?: string;
+    guildId: string;
+    orderCode: string;
+    status?: string;
+    ticketChannelId?: string | null;
+    staffChannelId?: string | null;
+    acceptedByUserId?: string | null;
+    rejectedByUserId?: string | null;
+    closedByUserId?: string | null;
+    rejectionReason?: string | null;
+    cancelReason?: string | null;
+    subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Date | string;
+    acceptedAt?: Date | string | null;
+    rejectedAt?: Date | string | null;
+    closedAt?: Date | string | null;
+    cancelledAt?: Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
+    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
+};
+export type ShopOrderCreateOrConnectWithoutCustomerInput = {
     where: Prisma.ShopOrderWhereUniqueInput;
-    update: Prisma.XOR<Prisma.ShopOrderUpdateWithoutCustomerInput, Prisma.ShopOrderUncheckedUpdateWithoutCustomerInput>;
     create: Prisma.XOR<Prisma.ShopOrderCreateWithoutCustomerInput, Prisma.ShopOrderUncheckedCreateWithoutCustomerInput>;
 };
-export type ShopOrderUpdateWithWhereUniqueWithoutCustomerInput = {
-    where: Prisma.ShopOrderWhereUniqueInput;
-    data: Prisma.XOR<Prisma.ShopOrderUpdateWithoutCustomerInput, Prisma.ShopOrderUncheckedUpdateWithoutCustomerInput>;
+export type ShopOrderCreateManyCustomerInputEnvelope = {
+    data: Prisma.ShopOrderCreateManyCustomerInput | Prisma.ShopOrderCreateManyCustomerInput[];
+    skipDuplicates?: boolean;
 };
-export type ShopOrderUpdateManyWithWhereWithoutCustomerInput = {
+export type ShopOrderCreateWithoutRejectedByInput = {
+    id?: string;
+    guildId: string;
+    orderCode: string;
+    status?: string;
+    ticketChannelId?: string | null;
+    staffChannelId?: string | null;
+    rejectionReason?: string | null;
+    cancelReason?: string | null;
+    subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Date | string;
+    acceptedAt?: Date | string | null;
+    rejectedAt?: Date | string | null;
+    closedAt?: Date | string | null;
+    cancelledAt?: Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
+    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
+    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
+    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
+    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
+};
+export type ShopOrderUncheckedCreateWithoutRejectedByInput = {
+    id?: string;
+    guildId: string;
+    orderCode: string;
+    customerUserId: string;
+    status?: string;
+    ticketChannelId?: string | null;
+    staffChannelId?: string | null;
+    acceptedByUserId?: string | null;
+    closedByUserId?: string | null;
+    rejectionReason?: string | null;
+    cancelReason?: string | null;
+    subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Date | string;
+    acceptedAt?: Date | string | null;
+    rejectedAt?: Date | string | null;
+    closedAt?: Date | string | null;
+    cancelledAt?: Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
+    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
+};
+export type ShopOrderCreateOrConnectWithoutRejectedByInput = {
+    where: Prisma.ShopOrderWhereUniqueInput;
+    create: Prisma.XOR<Prisma.ShopOrderCreateWithoutRejectedByInput, Prisma.ShopOrderUncheckedCreateWithoutRejectedByInput>;
+};
+export type ShopOrderCreateManyRejectedByInputEnvelope = {
+    data: Prisma.ShopOrderCreateManyRejectedByInput | Prisma.ShopOrderCreateManyRejectedByInput[];
+    skipDuplicates?: boolean;
+};
+export type ShopOrderUpsertWithWhereUniqueWithoutAcceptedByInput = {
+    where: Prisma.ShopOrderWhereUniqueInput;
+    update: Prisma.XOR<Prisma.ShopOrderUpdateWithoutAcceptedByInput, Prisma.ShopOrderUncheckedUpdateWithoutAcceptedByInput>;
+    create: Prisma.XOR<Prisma.ShopOrderCreateWithoutAcceptedByInput, Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput>;
+};
+export type ShopOrderUpdateWithWhereUniqueWithoutAcceptedByInput = {
+    where: Prisma.ShopOrderWhereUniqueInput;
+    data: Prisma.XOR<Prisma.ShopOrderUpdateWithoutAcceptedByInput, Prisma.ShopOrderUncheckedUpdateWithoutAcceptedByInput>;
+};
+export type ShopOrderUpdateManyWithWhereWithoutAcceptedByInput = {
     where: Prisma.ShopOrderScalarWhereInput;
-    data: Prisma.XOR<Prisma.ShopOrderUpdateManyMutationInput, Prisma.ShopOrderUncheckedUpdateManyWithoutCustomerInput>;
+    data: Prisma.XOR<Prisma.ShopOrderUpdateManyMutationInput, Prisma.ShopOrderUncheckedUpdateManyWithoutAcceptedByInput>;
 };
 export type ShopOrderScalarWhereInput = {
     AND?: Prisma.ShopOrderScalarWhereInput | Prisma.ShopOrderScalarWhereInput[];
@@ -1179,18 +1179,31 @@ export type ShopOrderScalarWhereInput = {
     closedAt?: Prisma.DateTimeNullableFilter<"ShopOrder"> | Date | string | null;
     cancelledAt?: Prisma.DateTimeNullableFilter<"ShopOrder"> | Date | string | null;
 };
-export type ShopOrderUpsertWithWhereUniqueWithoutAcceptedByInput = {
+export type ShopOrderUpsertWithWhereUniqueWithoutClosedByInput = {
     where: Prisma.ShopOrderWhereUniqueInput;
-    update: Prisma.XOR<Prisma.ShopOrderUpdateWithoutAcceptedByInput, Prisma.ShopOrderUncheckedUpdateWithoutAcceptedByInput>;
-    create: Prisma.XOR<Prisma.ShopOrderCreateWithoutAcceptedByInput, Prisma.ShopOrderUncheckedCreateWithoutAcceptedByInput>;
+    update: Prisma.XOR<Prisma.ShopOrderUpdateWithoutClosedByInput, Prisma.ShopOrderUncheckedUpdateWithoutClosedByInput>;
+    create: Prisma.XOR<Prisma.ShopOrderCreateWithoutClosedByInput, Prisma.ShopOrderUncheckedCreateWithoutClosedByInput>;
 };
-export type ShopOrderUpdateWithWhereUniqueWithoutAcceptedByInput = {
+export type ShopOrderUpdateWithWhereUniqueWithoutClosedByInput = {
     where: Prisma.ShopOrderWhereUniqueInput;
-    data: Prisma.XOR<Prisma.ShopOrderUpdateWithoutAcceptedByInput, Prisma.ShopOrderUncheckedUpdateWithoutAcceptedByInput>;
+    data: Prisma.XOR<Prisma.ShopOrderUpdateWithoutClosedByInput, Prisma.ShopOrderUncheckedUpdateWithoutClosedByInput>;
 };
-export type ShopOrderUpdateManyWithWhereWithoutAcceptedByInput = {
+export type ShopOrderUpdateManyWithWhereWithoutClosedByInput = {
     where: Prisma.ShopOrderScalarWhereInput;
-    data: Prisma.XOR<Prisma.ShopOrderUpdateManyMutationInput, Prisma.ShopOrderUncheckedUpdateManyWithoutAcceptedByInput>;
+    data: Prisma.XOR<Prisma.ShopOrderUpdateManyMutationInput, Prisma.ShopOrderUncheckedUpdateManyWithoutClosedByInput>;
+};
+export type ShopOrderUpsertWithWhereUniqueWithoutCustomerInput = {
+    where: Prisma.ShopOrderWhereUniqueInput;
+    update: Prisma.XOR<Prisma.ShopOrderUpdateWithoutCustomerInput, Prisma.ShopOrderUncheckedUpdateWithoutCustomerInput>;
+    create: Prisma.XOR<Prisma.ShopOrderCreateWithoutCustomerInput, Prisma.ShopOrderUncheckedCreateWithoutCustomerInput>;
+};
+export type ShopOrderUpdateWithWhereUniqueWithoutCustomerInput = {
+    where: Prisma.ShopOrderWhereUniqueInput;
+    data: Prisma.XOR<Prisma.ShopOrderUpdateWithoutCustomerInput, Prisma.ShopOrderUncheckedUpdateWithoutCustomerInput>;
+};
+export type ShopOrderUpdateManyWithWhereWithoutCustomerInput = {
+    where: Prisma.ShopOrderScalarWhereInput;
+    data: Prisma.XOR<Prisma.ShopOrderUpdateManyMutationInput, Prisma.ShopOrderUncheckedUpdateManyWithoutCustomerInput>;
 };
 export type ShopOrderUpsertWithWhereUniqueWithoutRejectedByInput = {
     where: Prisma.ShopOrderWhereUniqueInput;
@@ -1204,19 +1217,6 @@ export type ShopOrderUpdateWithWhereUniqueWithoutRejectedByInput = {
 export type ShopOrderUpdateManyWithWhereWithoutRejectedByInput = {
     where: Prisma.ShopOrderScalarWhereInput;
     data: Prisma.XOR<Prisma.ShopOrderUpdateManyMutationInput, Prisma.ShopOrderUncheckedUpdateManyWithoutRejectedByInput>;
-};
-export type ShopOrderUpsertWithWhereUniqueWithoutClosedByInput = {
-    where: Prisma.ShopOrderWhereUniqueInput;
-    update: Prisma.XOR<Prisma.ShopOrderUpdateWithoutClosedByInput, Prisma.ShopOrderUncheckedUpdateWithoutClosedByInput>;
-    create: Prisma.XOR<Prisma.ShopOrderCreateWithoutClosedByInput, Prisma.ShopOrderUncheckedCreateWithoutClosedByInput>;
-};
-export type ShopOrderUpdateWithWhereUniqueWithoutClosedByInput = {
-    where: Prisma.ShopOrderWhereUniqueInput;
-    data: Prisma.XOR<Prisma.ShopOrderUpdateWithoutClosedByInput, Prisma.ShopOrderUncheckedUpdateWithoutClosedByInput>;
-};
-export type ShopOrderUpdateManyWithWhereWithoutClosedByInput = {
-    where: Prisma.ShopOrderScalarWhereInput;
-    data: Prisma.XOR<Prisma.ShopOrderUpdateManyMutationInput, Prisma.ShopOrderUncheckedUpdateManyWithoutClosedByInput>;
 };
 export type ShopOrderCreateWithoutItemsInput = {
     id?: string;
@@ -1235,14 +1235,14 @@ export type ShopOrderCreateWithoutItemsInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
-    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
-    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
-    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
-    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
-    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
+    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
+    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
+    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
+    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
+    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutItemsInput = {
     id?: string;
@@ -1265,10 +1265,10 @@ export type ShopOrderUncheckedCreateWithoutItemsInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
-    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
+    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutItemsInput = {
     where: Prisma.ShopOrderWhereUniqueInput;
@@ -1300,14 +1300,14 @@ export type ShopOrderUpdateWithoutItemsInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
-    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
-    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
-    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
-    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
-    events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
+    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
+    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
+    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
+    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
+    events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutItemsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1330,10 +1330,10 @@ export type ShopOrderUncheckedUpdateWithoutItemsInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
-    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
+    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderCreateWithoutMovementsInput = {
     id?: string;
@@ -1352,14 +1352,14 @@ export type ShopOrderCreateWithoutMovementsInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
     acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
-    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
     closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
+    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
+    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
+    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
-    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutMovementsInput = {
     id?: string;
@@ -1382,10 +1382,10 @@ export type ShopOrderUncheckedCreateWithoutMovementsInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
+    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
-    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutMovementsInput = {
     where: Prisma.ShopOrderWhereUniqueInput;
@@ -1417,14 +1417,14 @@ export type ShopOrderUpdateWithoutMovementsInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
     acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
-    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
     closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
+    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
+    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
+    events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
-    events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutMovementsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1447,10 +1447,10 @@ export type ShopOrderUncheckedUpdateWithoutMovementsInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
+    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
-    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type ShopOrderCreateWithoutSaleInput = {
     id?: string;
@@ -1469,14 +1469,14 @@ export type ShopOrderCreateWithoutSaleInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
-    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
-    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
-    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
-    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
-    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
-    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
+    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
+    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
+    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
+    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
+    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutSaleInput = {
     id?: string;
@@ -1499,10 +1499,10 @@ export type ShopOrderUncheckedCreateWithoutSaleInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
     events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutSaleInput = {
     where: Prisma.ShopOrderWhereUniqueInput;
@@ -1534,14 +1534,14 @@ export type ShopOrderUpdateWithoutSaleInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
-    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
-    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
-    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
-    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
-    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
-    events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
+    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
+    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
+    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
+    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
+    events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutSaleInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1564,10 +1564,10 @@ export type ShopOrderUncheckedUpdateWithoutSaleInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
     events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type ShopOrderCreateWithoutAppliedDiscountsInput = {
     id?: string;
@@ -1586,14 +1586,14 @@ export type ShopOrderCreateWithoutAppliedDiscountsInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
-    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
-    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
-    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
-    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
     movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
+    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
+    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
+    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
+    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
     events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutAppliedDiscountsInput = {
     id?: string;
@@ -1616,10 +1616,10 @@ export type ShopOrderUncheckedCreateWithoutAppliedDiscountsInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
     events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutAppliedDiscountsInput = {
     where: Prisma.ShopOrderWhereUniqueInput;
@@ -1651,14 +1651,14 @@ export type ShopOrderUpdateWithoutAppliedDiscountsInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
-    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
-    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
-    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
-    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
     movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
+    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
+    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
+    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
+    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
     events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutAppliedDiscountsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1681,10 +1681,10 @@ export type ShopOrderUncheckedUpdateWithoutAppliedDiscountsInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
     events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderCreateWithoutEventsInput = {
     id?: string;
@@ -1703,14 +1703,14 @@ export type ShopOrderCreateWithoutEventsInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
-    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
-    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
-    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
-    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
-    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
+    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
+    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
+    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
+    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
+    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutEventsInput = {
     id?: string;
@@ -1733,10 +1733,10 @@ export type ShopOrderUncheckedCreateWithoutEventsInput = {
     rejectedAt?: Date | string | null;
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
-    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
-    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
+    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutEventsInput = {
     where: Prisma.ShopOrderWhereUniqueInput;
@@ -1768,14 +1768,14 @@ export type ShopOrderUpdateWithoutEventsInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
-    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
-    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
-    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
-    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
-    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
+    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
+    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
+    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
+    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
+    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutEventsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1798,19 +1798,19 @@ export type ShopOrderUncheckedUpdateWithoutEventsInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
-    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
+    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
-export type ShopOrderCreateManyCustomerInput = {
+export type ShopOrderCreateManyAcceptedByInput = {
     id?: string;
     guildId: string;
     orderCode: string;
+    customerUserId: string;
     status?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
-    acceptedByUserId?: string | null;
     rejectedByUserId?: string | null;
     closedByUserId?: string | null;
     rejectionReason?: string | null;
@@ -1824,7 +1824,7 @@ export type ShopOrderCreateManyCustomerInput = {
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
 };
-export type ShopOrderCreateManyAcceptedByInput = {
+export type ShopOrderCreateManyClosedByInput = {
     id?: string;
     guildId: string;
     orderCode: string;
@@ -1832,6 +1832,27 @@ export type ShopOrderCreateManyAcceptedByInput = {
     status?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
+    acceptedByUserId?: string | null;
+    rejectedByUserId?: string | null;
+    rejectionReason?: string | null;
+    cancelReason?: string | null;
+    subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Date | string;
+    acceptedAt?: Date | string | null;
+    rejectedAt?: Date | string | null;
+    closedAt?: Date | string | null;
+    cancelledAt?: Date | string | null;
+};
+export type ShopOrderCreateManyCustomerInput = {
+    id?: string;
+    guildId: string;
+    orderCode: string;
+    status?: string;
+    ticketChannelId?: string | null;
+    staffChannelId?: string | null;
+    acceptedByUserId?: string | null;
     rejectedByUserId?: string | null;
     closedByUserId?: string | null;
     rejectionReason?: string | null;
@@ -1866,100 +1887,6 @@ export type ShopOrderCreateManyRejectedByInput = {
     closedAt?: Date | string | null;
     cancelledAt?: Date | string | null;
 };
-export type ShopOrderCreateManyClosedByInput = {
-    id?: string;
-    guildId: string;
-    orderCode: string;
-    customerUserId: string;
-    status?: string;
-    ticketChannelId?: string | null;
-    staffChannelId?: string | null;
-    acceptedByUserId?: string | null;
-    rejectedByUserId?: string | null;
-    rejectionReason?: string | null;
-    cancelReason?: string | null;
-    subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
-    createdAt?: Date | string;
-    acceptedAt?: Date | string | null;
-    rejectedAt?: Date | string | null;
-    closedAt?: Date | string | null;
-    cancelledAt?: Date | string | null;
-};
-export type ShopOrderUpdateWithoutCustomerInput = {
-    id?: Prisma.StringFieldUpdateOperationsInput | string;
-    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
-    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
-    status?: Prisma.StringFieldUpdateOperationsInput | string;
-    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
-    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
-    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
-    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
-    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
-    events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
-};
-export type ShopOrderUncheckedUpdateWithoutCustomerInput = {
-    id?: Prisma.StringFieldUpdateOperationsInput | string;
-    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
-    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
-    status?: Prisma.StringFieldUpdateOperationsInput | string;
-    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    rejectedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    closedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
-    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
-    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
-};
-export type ShopOrderUncheckedUpdateManyWithoutCustomerInput = {
-    id?: Prisma.StringFieldUpdateOperationsInput | string;
-    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
-    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
-    status?: Prisma.StringFieldUpdateOperationsInput | string;
-    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    rejectedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    closedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-};
 export type ShopOrderUpdateWithoutAcceptedByInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1977,14 +1904,14 @@ export type ShopOrderUpdateWithoutAcceptedByInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
+    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
     customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
     rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
-    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
-    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
-    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
     events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutAcceptedByInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -2006,11 +1933,11 @@ export type ShopOrderUncheckedUpdateWithoutAcceptedByInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
-    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
-    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
+    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateManyWithoutAcceptedByInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -2020,6 +1947,152 @@ export type ShopOrderUncheckedUpdateManyWithoutAcceptedByInput = {
     status?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    rejectedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    closedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+};
+export type ShopOrderUpdateWithoutClosedByInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
+    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
+    status?: Prisma.StringFieldUpdateOperationsInput | string;
+    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
+    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
+    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
+    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
+    events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
+};
+export type ShopOrderUncheckedUpdateWithoutClosedByInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
+    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
+    customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
+    status?: Prisma.StringFieldUpdateOperationsInput | string;
+    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    rejectedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
+    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
+};
+export type ShopOrderUncheckedUpdateManyWithoutClosedByInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
+    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
+    customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
+    status?: Prisma.StringFieldUpdateOperationsInput | string;
+    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    rejectedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+};
+export type ShopOrderUpdateWithoutCustomerInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
+    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
+    status?: Prisma.StringFieldUpdateOperationsInput | string;
+    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
+    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
+    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
+    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
+    events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
+};
+export type ShopOrderUncheckedUpdateWithoutCustomerInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
+    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
+    status?: Prisma.StringFieldUpdateOperationsInput | string;
+    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    rejectedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    closedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
+    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
+};
+export type ShopOrderUncheckedUpdateManyWithoutCustomerInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
+    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
+    status?: Prisma.StringFieldUpdateOperationsInput | string;
+    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     closedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2050,14 +2123,14 @@ export type ShopOrderUpdateWithoutRejectedByInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
     acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
     closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
-    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
-    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
+    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
     events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutRejectedByInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -2079,11 +2152,11 @@ export type ShopOrderUncheckedUpdateWithoutRejectedByInput = {
     rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
-    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
-    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
+    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateManyWithoutRejectedByInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -2106,93 +2179,20 @@ export type ShopOrderUncheckedUpdateManyWithoutRejectedByInput = {
     closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
-export type ShopOrderUpdateWithoutClosedByInput = {
-    id?: Prisma.StringFieldUpdateOperationsInput | string;
-    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
-    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
-    status?: Prisma.StringFieldUpdateOperationsInput | string;
-    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
-    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
-    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
-    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
-    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
-    events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
-};
-export type ShopOrderUncheckedUpdateWithoutClosedByInput = {
-    id?: Prisma.StringFieldUpdateOperationsInput | string;
-    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
-    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
-    customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
-    status?: Prisma.StringFieldUpdateOperationsInput | string;
-    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    rejectedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
-    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
-    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
-    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
-};
-export type ShopOrderUncheckedUpdateManyWithoutClosedByInput = {
-    id?: Prisma.StringFieldUpdateOperationsInput | string;
-    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
-    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
-    customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
-    status?: Prisma.StringFieldUpdateOperationsInput | string;
-    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    rejectedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
-    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-};
 /**
  * Count Type ShopOrderCountOutputType
  */
 export type ShopOrderCountOutputType = {
-    items: number;
+    appliedDiscounts: number;
     movements: number;
     events: number;
-    appliedDiscounts: number;
+    items: number;
 };
 export type ShopOrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    items?: boolean | ShopOrderCountOutputTypeCountItemsArgs;
+    appliedDiscounts?: boolean | ShopOrderCountOutputTypeCountAppliedDiscountsArgs;
     movements?: boolean | ShopOrderCountOutputTypeCountMovementsArgs;
     events?: boolean | ShopOrderCountOutputTypeCountEventsArgs;
-    appliedDiscounts?: boolean | ShopOrderCountOutputTypeCountAppliedDiscountsArgs;
+    items?: boolean | ShopOrderCountOutputTypeCountItemsArgs;
 };
 /**
  * ShopOrderCountOutputType without action
@@ -2206,8 +2206,8 @@ export type ShopOrderCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Ex
 /**
  * ShopOrderCountOutputType without action
  */
-export type ShopOrderCountOutputTypeCountItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    where?: Prisma.ShopOrderItemWhereInput;
+export type ShopOrderCountOutputTypeCountAppliedDiscountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.ShopAppliedDiscountWhereInput;
 };
 /**
  * ShopOrderCountOutputType without action
@@ -2224,8 +2224,8 @@ export type ShopOrderCountOutputTypeCountEventsArgs<ExtArgs extends runtime.Type
 /**
  * ShopOrderCountOutputType without action
  */
-export type ShopOrderCountOutputTypeCountAppliedDiscountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    where?: Prisma.ShopAppliedDiscountWhereInput;
+export type ShopOrderCountOutputTypeCountItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.ShopOrderItemWhereInput;
 };
 export type ShopOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -2248,15 +2248,15 @@ export type ShopOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
     rejectedAt?: boolean;
     closedAt?: boolean;
     cancelledAt?: boolean;
-    customer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
-    acceptedBy?: boolean | Prisma.ShopOrder$acceptedByArgs<ExtArgs>;
-    rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
-    closedBy?: boolean | Prisma.ShopOrder$closedByArgs<ExtArgs>;
-    items?: boolean | Prisma.ShopOrder$itemsArgs<ExtArgs>;
-    movements?: boolean | Prisma.ShopOrder$movementsArgs<ExtArgs>;
-    sale?: boolean | Prisma.ShopOrder$saleArgs<ExtArgs>;
-    events?: boolean | Prisma.ShopOrder$eventsArgs<ExtArgs>;
     appliedDiscounts?: boolean | Prisma.ShopOrder$appliedDiscountsArgs<ExtArgs>;
+    movements?: boolean | Prisma.ShopOrder$movementsArgs<ExtArgs>;
+    acceptedBy?: boolean | Prisma.ShopOrder$acceptedByArgs<ExtArgs>;
+    closedBy?: boolean | Prisma.ShopOrder$closedByArgs<ExtArgs>;
+    customer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
+    rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
+    events?: boolean | Prisma.ShopOrder$eventsArgs<ExtArgs>;
+    items?: boolean | Prisma.ShopOrder$itemsArgs<ExtArgs>;
+    sale?: boolean | Prisma.ShopOrder$saleArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopOrderCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopOrder"]>;
 export type ShopOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -2280,10 +2280,10 @@ export type ShopOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
     rejectedAt?: boolean;
     closedAt?: boolean;
     cancelledAt?: boolean;
-    customer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
     acceptedBy?: boolean | Prisma.ShopOrder$acceptedByArgs<ExtArgs>;
-    rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
     closedBy?: boolean | Prisma.ShopOrder$closedByArgs<ExtArgs>;
+    customer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
+    rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
 }, ExtArgs["result"]["shopOrder"]>;
 export type ShopOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -2306,10 +2306,10 @@ export type ShopOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
     rejectedAt?: boolean;
     closedAt?: boolean;
     cancelledAt?: boolean;
-    customer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
     acceptedBy?: boolean | Prisma.ShopOrder$acceptedByArgs<ExtArgs>;
-    rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
     closedBy?: boolean | Prisma.ShopOrder$closedByArgs<ExtArgs>;
+    customer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
+    rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
 }, ExtArgs["result"]["shopOrder"]>;
 export type ShopOrderSelectScalar = {
     id?: boolean;
@@ -2335,41 +2335,41 @@ export type ShopOrderSelectScalar = {
 };
 export type ShopOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "orderCode" | "customerUserId" | "status" | "ticketChannelId" | "staffChannelId" | "acceptedByUserId" | "rejectedByUserId" | "closedByUserId" | "rejectionReason" | "cancelReason" | "subtotalAmount" | "totalDiscountAmount" | "totalAmount" | "createdAt" | "acceptedAt" | "rejectedAt" | "closedAt" | "cancelledAt", ExtArgs["result"]["shopOrder"]>;
 export type ShopOrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    customer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
-    acceptedBy?: boolean | Prisma.ShopOrder$acceptedByArgs<ExtArgs>;
-    rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
-    closedBy?: boolean | Prisma.ShopOrder$closedByArgs<ExtArgs>;
-    items?: boolean | Prisma.ShopOrder$itemsArgs<ExtArgs>;
-    movements?: boolean | Prisma.ShopOrder$movementsArgs<ExtArgs>;
-    sale?: boolean | Prisma.ShopOrder$saleArgs<ExtArgs>;
-    events?: boolean | Prisma.ShopOrder$eventsArgs<ExtArgs>;
     appliedDiscounts?: boolean | Prisma.ShopOrder$appliedDiscountsArgs<ExtArgs>;
+    movements?: boolean | Prisma.ShopOrder$movementsArgs<ExtArgs>;
+    acceptedBy?: boolean | Prisma.ShopOrder$acceptedByArgs<ExtArgs>;
+    closedBy?: boolean | Prisma.ShopOrder$closedByArgs<ExtArgs>;
+    customer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
+    rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
+    events?: boolean | Prisma.ShopOrder$eventsArgs<ExtArgs>;
+    items?: boolean | Prisma.ShopOrder$itemsArgs<ExtArgs>;
+    sale?: boolean | Prisma.ShopOrder$saleArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopOrderCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type ShopOrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    customer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
     acceptedBy?: boolean | Prisma.ShopOrder$acceptedByArgs<ExtArgs>;
-    rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
     closedBy?: boolean | Prisma.ShopOrder$closedByArgs<ExtArgs>;
+    customer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
+    rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
 };
 export type ShopOrderIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    customer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
     acceptedBy?: boolean | Prisma.ShopOrder$acceptedByArgs<ExtArgs>;
-    rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
     closedBy?: boolean | Prisma.ShopOrder$closedByArgs<ExtArgs>;
+    customer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
+    rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
 };
 export type $ShopOrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "ShopOrder";
     objects: {
-        customer: Prisma.$ShopUserPayload<ExtArgs>;
-        acceptedBy: Prisma.$ShopUserPayload<ExtArgs> | null;
-        rejectedBy: Prisma.$ShopUserPayload<ExtArgs> | null;
-        closedBy: Prisma.$ShopUserPayload<ExtArgs> | null;
-        items: Prisma.$ShopOrderItemPayload<ExtArgs>[];
-        movements: Prisma.$ShopInventoryMovementPayload<ExtArgs>[];
-        sale: Prisma.$ShopSalePayload<ExtArgs> | null;
-        events: Prisma.$ShopOrderEventPayload<ExtArgs>[];
         appliedDiscounts: Prisma.$ShopAppliedDiscountPayload<ExtArgs>[];
+        movements: Prisma.$ShopInventoryMovementPayload<ExtArgs>[];
+        acceptedBy: Prisma.$ShopUserPayload<ExtArgs> | null;
+        closedBy: Prisma.$ShopUserPayload<ExtArgs> | null;
+        customer: Prisma.$ShopUserPayload<ExtArgs>;
+        rejectedBy: Prisma.$ShopUserPayload<ExtArgs> | null;
+        events: Prisma.$ShopOrderEventPayload<ExtArgs>[];
+        items: Prisma.$ShopOrderItemPayload<ExtArgs>[];
+        sale: Prisma.$ShopSalePayload<ExtArgs> | null;
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
@@ -2721,15 +2721,15 @@ export interface ShopOrderDelegate<ExtArgs extends runtime.Types.Extensions.Inte
  */
 export interface Prisma__ShopOrderClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise";
-    customer<T extends Prisma.ShopUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopUserDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
-    acceptedBy<T extends Prisma.ShopOrder$acceptedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$acceptedByArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
-    rejectedBy<T extends Prisma.ShopOrder$rejectedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$rejectedByArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
-    closedBy<T extends Prisma.ShopOrder$closedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$closedByArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
-    items<T extends Prisma.ShopOrder$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopOrderItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
-    movements<T extends Prisma.ShopOrder$movementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$movementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopInventoryMovementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
-    sale<T extends Prisma.ShopOrder$saleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$saleArgs<ExtArgs>>): Prisma.Prisma__ShopSaleClient<runtime.Types.Result.GetResult<Prisma.$ShopSalePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
-    events<T extends Prisma.ShopOrder$eventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$eventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopOrderEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     appliedDiscounts<T extends Prisma.ShopOrder$appliedDiscountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$appliedDiscountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopAppliedDiscountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    movements<T extends Prisma.ShopOrder$movementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$movementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopInventoryMovementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    acceptedBy<T extends Prisma.ShopOrder$acceptedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$acceptedByArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
+    closedBy<T extends Prisma.ShopOrder$closedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$closedByArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
+    customer<T extends Prisma.ShopUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopUserDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
+    rejectedBy<T extends Prisma.ShopOrder$rejectedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$rejectedByArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
+    events<T extends Prisma.ShopOrder$eventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$eventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopOrderEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    items<T extends Prisma.ShopOrder$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopOrderItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    sale<T extends Prisma.ShopOrder$saleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$saleArgs<ExtArgs>>): Prisma.Prisma__ShopSaleClient<runtime.Types.Result.GetResult<Prisma.$ShopSalePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3159,27 +3159,55 @@ export type ShopOrderDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Int
     limit?: number;
 };
 /**
- * ShopOrder.acceptedBy
+ * ShopOrder.appliedDiscounts
  */
-export type ShopOrder$acceptedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type ShopOrder$appliedDiscountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ShopUser
+     * Select specific fields to fetch from the ShopAppliedDiscount
      */
-    select?: Prisma.ShopUserSelect<ExtArgs> | null;
+    select?: Prisma.ShopAppliedDiscountSelect<ExtArgs> | null;
     /**
-     * Omit specific fields from the ShopUser
+     * Omit specific fields from the ShopAppliedDiscount
      */
-    omit?: Prisma.ShopUserOmit<ExtArgs> | null;
+    omit?: Prisma.ShopAppliedDiscountOmit<ExtArgs> | null;
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: Prisma.ShopUserInclude<ExtArgs> | null;
-    where?: Prisma.ShopUserWhereInput;
+    include?: Prisma.ShopAppliedDiscountInclude<ExtArgs> | null;
+    where?: Prisma.ShopAppliedDiscountWhereInput;
+    orderBy?: Prisma.ShopAppliedDiscountOrderByWithRelationInput | Prisma.ShopAppliedDiscountOrderByWithRelationInput[];
+    cursor?: Prisma.ShopAppliedDiscountWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: Prisma.ShopAppliedDiscountScalarFieldEnum | Prisma.ShopAppliedDiscountScalarFieldEnum[];
 };
 /**
- * ShopOrder.rejectedBy
+ * ShopOrder.movements
  */
-export type ShopOrder$rejectedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type ShopOrder$movementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ShopInventoryMovement
+     */
+    select?: Prisma.ShopInventoryMovementSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the ShopInventoryMovement
+     */
+    omit?: Prisma.ShopInventoryMovementOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.ShopInventoryMovementInclude<ExtArgs> | null;
+    where?: Prisma.ShopInventoryMovementWhereInput;
+    orderBy?: Prisma.ShopInventoryMovementOrderByWithRelationInput | Prisma.ShopInventoryMovementOrderByWithRelationInput[];
+    cursor?: Prisma.ShopInventoryMovementWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: Prisma.ShopInventoryMovementScalarFieldEnum | Prisma.ShopInventoryMovementScalarFieldEnum[];
+};
+/**
+ * ShopOrder.acceptedBy
+ */
+export type ShopOrder$acceptedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the ShopUser
      */
@@ -3213,68 +3241,22 @@ export type ShopOrder$closedByArgs<ExtArgs extends runtime.Types.Extensions.Inte
     where?: Prisma.ShopUserWhereInput;
 };
 /**
- * ShopOrder.items
+ * ShopOrder.rejectedBy
  */
-export type ShopOrder$itemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type ShopOrder$rejectedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ShopOrderItem
+     * Select specific fields to fetch from the ShopUser
      */
-    select?: Prisma.ShopOrderItemSelect<ExtArgs> | null;
+    select?: Prisma.ShopUserSelect<ExtArgs> | null;
     /**
-     * Omit specific fields from the ShopOrderItem
+     * Omit specific fields from the ShopUser
      */
-    omit?: Prisma.ShopOrderItemOmit<ExtArgs> | null;
+    omit?: Prisma.ShopUserOmit<ExtArgs> | null;
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: Prisma.ShopOrderItemInclude<ExtArgs> | null;
-    where?: Prisma.ShopOrderItemWhereInput;
-    orderBy?: Prisma.ShopOrderItemOrderByWithRelationInput | Prisma.ShopOrderItemOrderByWithRelationInput[];
-    cursor?: Prisma.ShopOrderItemWhereUniqueInput;
-    take?: number;
-    skip?: number;
-    distinct?: Prisma.ShopOrderItemScalarFieldEnum | Prisma.ShopOrderItemScalarFieldEnum[];
-};
-/**
- * ShopOrder.movements
- */
-export type ShopOrder$movementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the ShopInventoryMovement
-     */
-    select?: Prisma.ShopInventoryMovementSelect<ExtArgs> | null;
-    /**
-     * Omit specific fields from the ShopInventoryMovement
-     */
-    omit?: Prisma.ShopInventoryMovementOmit<ExtArgs> | null;
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: Prisma.ShopInventoryMovementInclude<ExtArgs> | null;
-    where?: Prisma.ShopInventoryMovementWhereInput;
-    orderBy?: Prisma.ShopInventoryMovementOrderByWithRelationInput | Prisma.ShopInventoryMovementOrderByWithRelationInput[];
-    cursor?: Prisma.ShopInventoryMovementWhereUniqueInput;
-    take?: number;
-    skip?: number;
-    distinct?: Prisma.ShopInventoryMovementScalarFieldEnum | Prisma.ShopInventoryMovementScalarFieldEnum[];
-};
-/**
- * ShopOrder.sale
- */
-export type ShopOrder$saleArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the ShopSale
-     */
-    select?: Prisma.ShopSaleSelect<ExtArgs> | null;
-    /**
-     * Omit specific fields from the ShopSale
-     */
-    omit?: Prisma.ShopSaleOmit<ExtArgs> | null;
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: Prisma.ShopSaleInclude<ExtArgs> | null;
-    where?: Prisma.ShopSaleWhereInput;
+    include?: Prisma.ShopUserInclude<ExtArgs> | null;
+    where?: Prisma.ShopUserWhereInput;
 };
 /**
  * ShopOrder.events
@@ -3300,27 +3282,45 @@ export type ShopOrder$eventsArgs<ExtArgs extends runtime.Types.Extensions.Intern
     distinct?: Prisma.ShopOrderEventScalarFieldEnum | Prisma.ShopOrderEventScalarFieldEnum[];
 };
 /**
- * ShopOrder.appliedDiscounts
+ * ShopOrder.items
  */
-export type ShopOrder$appliedDiscountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type ShopOrder$itemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ShopAppliedDiscount
+     * Select specific fields to fetch from the ShopOrderItem
      */
-    select?: Prisma.ShopAppliedDiscountSelect<ExtArgs> | null;
+    select?: Prisma.ShopOrderItemSelect<ExtArgs> | null;
     /**
-     * Omit specific fields from the ShopAppliedDiscount
+     * Omit specific fields from the ShopOrderItem
      */
-    omit?: Prisma.ShopAppliedDiscountOmit<ExtArgs> | null;
+    omit?: Prisma.ShopOrderItemOmit<ExtArgs> | null;
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: Prisma.ShopAppliedDiscountInclude<ExtArgs> | null;
-    where?: Prisma.ShopAppliedDiscountWhereInput;
-    orderBy?: Prisma.ShopAppliedDiscountOrderByWithRelationInput | Prisma.ShopAppliedDiscountOrderByWithRelationInput[];
-    cursor?: Prisma.ShopAppliedDiscountWhereUniqueInput;
+    include?: Prisma.ShopOrderItemInclude<ExtArgs> | null;
+    where?: Prisma.ShopOrderItemWhereInput;
+    orderBy?: Prisma.ShopOrderItemOrderByWithRelationInput | Prisma.ShopOrderItemOrderByWithRelationInput[];
+    cursor?: Prisma.ShopOrderItemWhereUniqueInput;
     take?: number;
     skip?: number;
-    distinct?: Prisma.ShopAppliedDiscountScalarFieldEnum | Prisma.ShopAppliedDiscountScalarFieldEnum[];
+    distinct?: Prisma.ShopOrderItemScalarFieldEnum | Prisma.ShopOrderItemScalarFieldEnum[];
+};
+/**
+ * ShopOrder.sale
+ */
+export type ShopOrder$saleArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ShopSale
+     */
+    select?: Prisma.ShopSaleSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the ShopSale
+     */
+    omit?: Prisma.ShopSaleOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.ShopSaleInclude<ExtArgs> | null;
+    where?: Prisma.ShopSaleWhereInput;
 };
 /**
  * ShopOrder without action

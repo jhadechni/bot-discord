@@ -412,6 +412,39 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
     get shopOrderEvent(): Prisma.ShopOrderEventDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
+    /**
+     * `prisma.mapBackground`: Exposes CRUD operations for the **MapBackground** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more MapBackgrounds
+      * const mapBackgrounds = await prisma.mapBackground.findMany()
+      * ```
+      */
+    get mapBackground(): Prisma.MapBackgroundDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
+    /**
+     * `prisma.protectionMember`: Exposes CRUD operations for the **ProtectionMember** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more ProtectionMembers
+      * const protectionMembers = await prisma.protectionMember.findMany()
+      * ```
+      */
+    get protectionMember(): Prisma.ProtectionMemberDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
+    /**
+     * `prisma.worldProtection`: Exposes CRUD operations for the **WorldProtection** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more WorldProtections
+      * const worldProtections = await prisma.worldProtection.findMany()
+      * ```
+      */
+    get worldProtection(): Prisma.WorldProtectionDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
 }
 export declare function getPrismaClientClass(): PrismaClientConstructor;
 //# sourceMappingURL=class.d.ts.map

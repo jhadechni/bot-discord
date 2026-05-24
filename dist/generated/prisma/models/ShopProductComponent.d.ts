@@ -160,16 +160,16 @@ export type ShopProductComponentWhereInput = {
     productId?: Prisma.StringFilter<"ShopProductComponent"> | string;
     materialId?: Prisma.StringFilter<"ShopProductComponent"> | string;
     quantityRequired?: Prisma.IntFilter<"ShopProductComponent"> | number;
-    product?: Prisma.XOR<Prisma.ShopProductScalarRelationFilter, Prisma.ShopProductWhereInput>;
     material?: Prisma.XOR<Prisma.ShopMaterialScalarRelationFilter, Prisma.ShopMaterialWhereInput>;
+    product?: Prisma.XOR<Prisma.ShopProductScalarRelationFilter, Prisma.ShopProductWhereInput>;
 };
 export type ShopProductComponentOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
     productId?: Prisma.SortOrder;
     materialId?: Prisma.SortOrder;
     quantityRequired?: Prisma.SortOrder;
-    product?: Prisma.ShopProductOrderByWithRelationInput;
     material?: Prisma.ShopMaterialOrderByWithRelationInput;
+    product?: Prisma.ShopProductOrderByWithRelationInput;
 };
 export type ShopProductComponentWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -180,8 +180,8 @@ export type ShopProductComponentWhereUniqueInput = Prisma.AtLeast<{
     productId?: Prisma.StringFilter<"ShopProductComponent"> | string;
     materialId?: Prisma.StringFilter<"ShopProductComponent"> | string;
     quantityRequired?: Prisma.IntFilter<"ShopProductComponent"> | number;
-    product?: Prisma.XOR<Prisma.ShopProductScalarRelationFilter, Prisma.ShopProductWhereInput>;
     material?: Prisma.XOR<Prisma.ShopMaterialScalarRelationFilter, Prisma.ShopMaterialWhereInput>;
+    product?: Prisma.XOR<Prisma.ShopProductScalarRelationFilter, Prisma.ShopProductWhereInput>;
 }, "id" | "productId_materialId">;
 export type ShopProductComponentOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -206,8 +206,8 @@ export type ShopProductComponentScalarWhereWithAggregatesInput = {
 export type ShopProductComponentCreateInput = {
     id?: string;
     quantityRequired: number;
-    product: Prisma.ShopProductCreateNestedOneWithoutComponentsInput;
     material: Prisma.ShopMaterialCreateNestedOneWithoutComponentsInput;
+    product: Prisma.ShopProductCreateNestedOneWithoutComponentsInput;
 };
 export type ShopProductComponentUncheckedCreateInput = {
     id?: string;
@@ -218,8 +218,8 @@ export type ShopProductComponentUncheckedCreateInput = {
 export type ShopProductComponentUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     quantityRequired?: Prisma.IntFieldUpdateOperationsInput | number;
-    product?: Prisma.ShopProductUpdateOneRequiredWithoutComponentsNestedInput;
     material?: Prisma.ShopMaterialUpdateOneRequiredWithoutComponentsNestedInput;
+    product?: Prisma.ShopProductUpdateOneRequiredWithoutComponentsNestedInput;
 };
 export type ShopProductComponentUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -471,24 +471,24 @@ export type ShopProductComponentSelect<ExtArgs extends runtime.Types.Extensions.
     productId?: boolean;
     materialId?: boolean;
     quantityRequired?: boolean;
-    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
     material?: boolean | Prisma.ShopMaterialDefaultArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopProductComponent"]>;
 export type ShopProductComponentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     productId?: boolean;
     materialId?: boolean;
     quantityRequired?: boolean;
-    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
     material?: boolean | Prisma.ShopMaterialDefaultArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopProductComponent"]>;
 export type ShopProductComponentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     productId?: boolean;
     materialId?: boolean;
     quantityRequired?: boolean;
-    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
     material?: boolean | Prisma.ShopMaterialDefaultArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopProductComponent"]>;
 export type ShopProductComponentSelectScalar = {
     id?: boolean;
@@ -498,22 +498,22 @@ export type ShopProductComponentSelectScalar = {
 };
 export type ShopProductComponentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productId" | "materialId" | "quantityRequired", ExtArgs["result"]["shopProductComponent"]>;
 export type ShopProductComponentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
     material?: boolean | Prisma.ShopMaterialDefaultArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
 };
 export type ShopProductComponentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
     material?: boolean | Prisma.ShopMaterialDefaultArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
 };
 export type ShopProductComponentIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
     material?: boolean | Prisma.ShopMaterialDefaultArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
 };
 export type $ShopProductComponentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "ShopProductComponent";
     objects: {
-        product: Prisma.$ShopProductPayload<ExtArgs>;
         material: Prisma.$ShopMaterialPayload<ExtArgs>;
+        product: Prisma.$ShopProductPayload<ExtArgs>;
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
@@ -849,8 +849,8 @@ export interface ShopProductComponentDelegate<ExtArgs extends runtime.Types.Exte
  */
 export interface Prisma__ShopProductComponentClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise";
-    product<T extends Prisma.ShopProductDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopProductDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopProductClient<runtime.Types.Result.GetResult<Prisma.$ShopProductPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
     material<T extends Prisma.ShopMaterialDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopMaterialDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopMaterialClient<runtime.Types.Result.GetResult<Prisma.$ShopMaterialPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
+    product<T extends Prisma.ShopProductDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopProductDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopProductClient<runtime.Types.Result.GetResult<Prisma.$ShopProductPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.

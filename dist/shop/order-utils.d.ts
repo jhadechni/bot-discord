@@ -68,13 +68,13 @@ export declare function getOrderFull(orderCode: string): Promise<({
             isActive: boolean;
             category: string;
             productType: string;
-            additionalCategories: string[];
-            additionalCategoryAssignments: import("@prisma/client/runtime/client").JsonValue;
             subcategory: string;
             baseMaterialId: string | null;
             presentationType: string;
             presentationQuantity: number;
             presentationLabel: string | null;
+            additionalCategories: string[];
+            additionalCategoryAssignments: import("@prisma/client/runtime/client").JsonValue;
         };
         appliedDiscounts: {
             id: string;

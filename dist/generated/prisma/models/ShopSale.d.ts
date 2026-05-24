@@ -184,8 +184,8 @@ export type ShopSaleWhereInput = {
     registeredById?: Prisma.StringFilter<"ShopSale"> | string;
     totalAmount?: Prisma.DecimalFilter<"ShopSale"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     soldAt?: Prisma.DateTimeFilter<"ShopSale"> | Date | string;
-    order?: Prisma.XOR<Prisma.ShopOrderScalarRelationFilter, Prisma.ShopOrderWhereInput>;
     buyer?: Prisma.XOR<Prisma.ShopUserScalarRelationFilter, Prisma.ShopUserWhereInput>;
+    order?: Prisma.XOR<Prisma.ShopOrderScalarRelationFilter, Prisma.ShopOrderWhereInput>;
     registeredBy?: Prisma.XOR<Prisma.ShopUserScalarRelationFilter, Prisma.ShopUserWhereInput>;
 };
 export type ShopSaleOrderByWithRelationInput = {
@@ -196,8 +196,8 @@ export type ShopSaleOrderByWithRelationInput = {
     registeredById?: Prisma.SortOrder;
     totalAmount?: Prisma.SortOrder;
     soldAt?: Prisma.SortOrder;
-    order?: Prisma.ShopOrderOrderByWithRelationInput;
     buyer?: Prisma.ShopUserOrderByWithRelationInput;
+    order?: Prisma.ShopOrderOrderByWithRelationInput;
     registeredBy?: Prisma.ShopUserOrderByWithRelationInput;
 };
 export type ShopSaleWhereUniqueInput = Prisma.AtLeast<{
@@ -211,8 +211,8 @@ export type ShopSaleWhereUniqueInput = Prisma.AtLeast<{
     registeredById?: Prisma.StringFilter<"ShopSale"> | string;
     totalAmount?: Prisma.DecimalFilter<"ShopSale"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     soldAt?: Prisma.DateTimeFilter<"ShopSale"> | Date | string;
-    order?: Prisma.XOR<Prisma.ShopOrderScalarRelationFilter, Prisma.ShopOrderWhereInput>;
     buyer?: Prisma.XOR<Prisma.ShopUserScalarRelationFilter, Prisma.ShopUserWhereInput>;
+    order?: Prisma.XOR<Prisma.ShopOrderScalarRelationFilter, Prisma.ShopOrderWhereInput>;
     registeredBy?: Prisma.XOR<Prisma.ShopUserScalarRelationFilter, Prisma.ShopUserWhereInput>;
 }, "id" | "orderId">;
 export type ShopSaleOrderByWithAggregationInput = {
@@ -246,8 +246,8 @@ export type ShopSaleCreateInput = {
     guildId: string;
     totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string;
     soldAt?: Date | string;
-    order: Prisma.ShopOrderCreateNestedOneWithoutSaleInput;
     buyer: Prisma.ShopUserCreateNestedOneWithoutSalesAsBuyerInput;
+    order: Prisma.ShopOrderCreateNestedOneWithoutSaleInput;
     registeredBy: Prisma.ShopUserCreateNestedOneWithoutSalesRegisteredInput;
 };
 export type ShopSaleUncheckedCreateInput = {
@@ -264,8 +264,8 @@ export type ShopSaleUpdateInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     soldAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    order?: Prisma.ShopOrderUpdateOneRequiredWithoutSaleNestedInput;
     buyer?: Prisma.ShopUserUpdateOneRequiredWithoutSalesAsBuyerNestedInput;
+    order?: Prisma.ShopOrderUpdateOneRequiredWithoutSaleNestedInput;
     registeredBy?: Prisma.ShopUserUpdateOneRequiredWithoutSalesRegisteredNestedInput;
 };
 export type ShopSaleUncheckedUpdateInput = {
@@ -479,8 +479,8 @@ export type ShopSaleCreateWithoutRegisteredByInput = {
     guildId: string;
     totalAmount: runtime.Decimal | runtime.DecimalJsLike | number | string;
     soldAt?: Date | string;
-    order: Prisma.ShopOrderCreateNestedOneWithoutSaleInput;
     buyer: Prisma.ShopUserCreateNestedOneWithoutSalesAsBuyerInput;
+    order: Prisma.ShopOrderCreateNestedOneWithoutSaleInput;
 };
 export type ShopSaleUncheckedCreateWithoutRegisteredByInput = {
     id?: string;
@@ -626,8 +626,8 @@ export type ShopSaleUpdateWithoutRegisteredByInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     soldAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    order?: Prisma.ShopOrderUpdateOneRequiredWithoutSaleNestedInput;
     buyer?: Prisma.ShopUserUpdateOneRequiredWithoutSalesAsBuyerNestedInput;
+    order?: Prisma.ShopOrderUpdateOneRequiredWithoutSaleNestedInput;
 };
 export type ShopSaleUncheckedUpdateWithoutRegisteredByInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -653,8 +653,8 @@ export type ShopSaleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
     registeredById?: boolean;
     totalAmount?: boolean;
     soldAt?: boolean;
-    order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     buyer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
+    order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     registeredBy?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopSale"]>;
 export type ShopSaleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -665,8 +665,8 @@ export type ShopSaleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
     registeredById?: boolean;
     totalAmount?: boolean;
     soldAt?: boolean;
-    order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     buyer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
+    order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     registeredBy?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopSale"]>;
 export type ShopSaleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -677,8 +677,8 @@ export type ShopSaleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
     registeredById?: boolean;
     totalAmount?: boolean;
     soldAt?: boolean;
-    order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     buyer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
+    order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     registeredBy?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopSale"]>;
 export type ShopSaleSelectScalar = {
@@ -692,25 +692,25 @@ export type ShopSaleSelectScalar = {
 };
 export type ShopSaleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "orderId" | "buyerUserId" | "registeredById" | "totalAmount" | "soldAt", ExtArgs["result"]["shopSale"]>;
 export type ShopSaleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     buyer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
+    order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     registeredBy?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
 };
 export type ShopSaleIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     buyer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
+    order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     registeredBy?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
 };
 export type ShopSaleIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     buyer?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
+    order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     registeredBy?: boolean | Prisma.ShopUserDefaultArgs<ExtArgs>;
 };
 export type $ShopSalePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "ShopSale";
     objects: {
-        order: Prisma.$ShopOrderPayload<ExtArgs>;
         buyer: Prisma.$ShopUserPayload<ExtArgs>;
+        order: Prisma.$ShopOrderPayload<ExtArgs>;
         registeredBy: Prisma.$ShopUserPayload<ExtArgs>;
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1050,8 +1050,8 @@ export interface ShopSaleDelegate<ExtArgs extends runtime.Types.Extensions.Inter
  */
 export interface Prisma__ShopSaleClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise";
-    order<T extends Prisma.ShopOrderDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrderDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopOrderClient<runtime.Types.Result.GetResult<Prisma.$ShopOrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
     buyer<T extends Prisma.ShopUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopUserDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
+    order<T extends Prisma.ShopOrderDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrderDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopOrderClient<runtime.Types.Result.GetResult<Prisma.$ShopOrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
     registeredBy<T extends Prisma.ShopUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopUserDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.

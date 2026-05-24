@@ -56,8 +56,6 @@ export type ShopProductCountAggregateOutputType = {
     name: number;
     productType: number;
     category: number;
-    additionalCategories: number;
-    additionalCategoryAssignments: number;
     subcategory: number;
     description: number;
     baseMaterialId: number;
@@ -67,6 +65,8 @@ export type ShopProductCountAggregateOutputType = {
     isActive: number;
     createdAt: number;
     updatedAt: number;
+    additionalCategories: number;
+    additionalCategoryAssignments: number;
     _all: number;
 };
 export type ShopProductAvgAggregateInputType = {
@@ -113,8 +113,6 @@ export type ShopProductCountAggregateInputType = {
     name?: true;
     productType?: true;
     category?: true;
-    additionalCategories?: true;
-    additionalCategoryAssignments?: true;
     subcategory?: true;
     description?: true;
     baseMaterialId?: true;
@@ -124,6 +122,8 @@ export type ShopProductCountAggregateInputType = {
     isActive?: true;
     createdAt?: true;
     updatedAt?: true;
+    additionalCategories?: true;
+    additionalCategoryAssignments?: true;
     _all?: true;
 };
 export type ShopProductAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -208,8 +208,6 @@ export type ShopProductGroupByOutputType = {
     name: string;
     productType: string;
     category: string;
-    additionalCategories: string[];
-    additionalCategoryAssignments: runtime.JsonValue;
     subcategory: string;
     description: string | null;
     baseMaterialId: string | null;
@@ -219,6 +217,8 @@ export type ShopProductGroupByOutputType = {
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
+    additionalCategories: string[];
+    additionalCategoryAssignments: runtime.JsonValue;
     _count: ShopProductCountAggregateOutputType | null;
     _avg: ShopProductAvgAggregateOutputType | null;
     _sum: ShopProductSumAggregateOutputType | null;
@@ -237,8 +237,6 @@ export type ShopProductWhereInput = {
     name?: Prisma.StringFilter<"ShopProduct"> | string;
     productType?: Prisma.StringFilter<"ShopProduct"> | string;
     category?: Prisma.StringFilter<"ShopProduct"> | string;
-    additionalCategories?: Prisma.StringNullableListFilter<"ShopProduct">;
-    additionalCategoryAssignments?: Prisma.JsonFilter<"ShopProduct">;
     subcategory?: Prisma.StringFilter<"ShopProduct"> | string;
     description?: Prisma.StringNullableFilter<"ShopProduct"> | string | null;
     baseMaterialId?: Prisma.StringNullableFilter<"ShopProduct"> | string | null;
@@ -248,11 +246,13 @@ export type ShopProductWhereInput = {
     isActive?: Prisma.BoolFilter<"ShopProduct"> | boolean;
     createdAt?: Prisma.DateTimeFilter<"ShopProduct"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"ShopProduct"> | Date | string;
+    additionalCategories?: Prisma.StringNullableListFilter<"ShopProduct">;
+    additionalCategoryAssignments?: Prisma.JsonFilter<"ShopProduct">;
+    discountPolicies?: Prisma.ShopDiscountPolicyListRelationFilter;
+    orderItems?: Prisma.ShopOrderItemListRelationFilter;
     baseMaterial?: Prisma.XOR<Prisma.ShopMaterialNullableScalarRelationFilter, Prisma.ShopMaterialWhereInput> | null;
     components?: Prisma.ShopProductComponentListRelationFilter;
     prices?: Prisma.ShopProductPriceListRelationFilter;
-    orderItems?: Prisma.ShopOrderItemListRelationFilter;
-    discountPolicies?: Prisma.ShopDiscountPolicyListRelationFilter;
 };
 export type ShopProductOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -260,8 +260,6 @@ export type ShopProductOrderByWithRelationInput = {
     name?: Prisma.SortOrder;
     productType?: Prisma.SortOrder;
     category?: Prisma.SortOrder;
-    additionalCategories?: Prisma.SortOrder;
-    additionalCategoryAssignments?: Prisma.SortOrder;
     subcategory?: Prisma.SortOrder;
     description?: Prisma.SortOrderInput | Prisma.SortOrder;
     baseMaterialId?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -271,15 +269,16 @@ export type ShopProductOrderByWithRelationInput = {
     isActive?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    additionalCategories?: Prisma.SortOrder;
+    additionalCategoryAssignments?: Prisma.SortOrder;
+    discountPolicies?: Prisma.ShopDiscountPolicyOrderByRelationAggregateInput;
+    orderItems?: Prisma.ShopOrderItemOrderByRelationAggregateInput;
     baseMaterial?: Prisma.ShopMaterialOrderByWithRelationInput;
     components?: Prisma.ShopProductComponentOrderByRelationAggregateInput;
     prices?: Prisma.ShopProductPriceOrderByRelationAggregateInput;
-    orderItems?: Prisma.ShopOrderItemOrderByRelationAggregateInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyOrderByRelationAggregateInput;
 };
 export type ShopProductWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
-    guildId_name?: Prisma.ShopProductGuildIdNameCompoundUniqueInput;
     AND?: Prisma.ShopProductWhereInput | Prisma.ShopProductWhereInput[];
     OR?: Prisma.ShopProductWhereInput[];
     NOT?: Prisma.ShopProductWhereInput | Prisma.ShopProductWhereInput[];
@@ -287,8 +286,6 @@ export type ShopProductWhereUniqueInput = Prisma.AtLeast<{
     name?: Prisma.StringFilter<"ShopProduct"> | string;
     productType?: Prisma.StringFilter<"ShopProduct"> | string;
     category?: Prisma.StringFilter<"ShopProduct"> | string;
-    additionalCategories?: Prisma.StringNullableListFilter<"ShopProduct">;
-    additionalCategoryAssignments?: Prisma.JsonFilter<"ShopProduct">;
     subcategory?: Prisma.StringFilter<"ShopProduct"> | string;
     description?: Prisma.StringNullableFilter<"ShopProduct"> | string | null;
     baseMaterialId?: Prisma.StringNullableFilter<"ShopProduct"> | string | null;
@@ -298,20 +295,20 @@ export type ShopProductWhereUniqueInput = Prisma.AtLeast<{
     isActive?: Prisma.BoolFilter<"ShopProduct"> | boolean;
     createdAt?: Prisma.DateTimeFilter<"ShopProduct"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"ShopProduct"> | Date | string;
+    additionalCategories?: Prisma.StringNullableListFilter<"ShopProduct">;
+    additionalCategoryAssignments?: Prisma.JsonFilter<"ShopProduct">;
+    discountPolicies?: Prisma.ShopDiscountPolicyListRelationFilter;
+    orderItems?: Prisma.ShopOrderItemListRelationFilter;
     baseMaterial?: Prisma.XOR<Prisma.ShopMaterialNullableScalarRelationFilter, Prisma.ShopMaterialWhereInput> | null;
     components?: Prisma.ShopProductComponentListRelationFilter;
     prices?: Prisma.ShopProductPriceListRelationFilter;
-    orderItems?: Prisma.ShopOrderItemListRelationFilter;
-    discountPolicies?: Prisma.ShopDiscountPolicyListRelationFilter;
-}, "id" | "guildId_name">;
+}, "id">;
 export type ShopProductOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
     guildId?: Prisma.SortOrder;
     name?: Prisma.SortOrder;
     productType?: Prisma.SortOrder;
     category?: Prisma.SortOrder;
-    additionalCategories?: Prisma.SortOrder;
-    additionalCategoryAssignments?: Prisma.SortOrder;
     subcategory?: Prisma.SortOrder;
     description?: Prisma.SortOrderInput | Prisma.SortOrder;
     baseMaterialId?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -321,6 +318,8 @@ export type ShopProductOrderByWithAggregationInput = {
     isActive?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    additionalCategories?: Prisma.SortOrder;
+    additionalCategoryAssignments?: Prisma.SortOrder;
     _count?: Prisma.ShopProductCountOrderByAggregateInput;
     _avg?: Prisma.ShopProductAvgOrderByAggregateInput;
     _max?: Prisma.ShopProductMaxOrderByAggregateInput;
@@ -336,8 +335,6 @@ export type ShopProductScalarWhereWithAggregatesInput = {
     name?: Prisma.StringWithAggregatesFilter<"ShopProduct"> | string;
     productType?: Prisma.StringWithAggregatesFilter<"ShopProduct"> | string;
     category?: Prisma.StringWithAggregatesFilter<"ShopProduct"> | string;
-    additionalCategories?: Prisma.StringNullableListFilter<"ShopProduct">;
-    additionalCategoryAssignments?: Prisma.JsonWithAggregatesFilter<"ShopProduct">;
     subcategory?: Prisma.StringWithAggregatesFilter<"ShopProduct"> | string;
     description?: Prisma.StringNullableWithAggregatesFilter<"ShopProduct"> | string | null;
     baseMaterialId?: Prisma.StringNullableWithAggregatesFilter<"ShopProduct"> | string | null;
@@ -347,6 +344,8 @@ export type ShopProductScalarWhereWithAggregatesInput = {
     isActive?: Prisma.BoolWithAggregatesFilter<"ShopProduct"> | boolean;
     createdAt?: Prisma.DateTimeWithAggregatesFilter<"ShopProduct"> | Date | string;
     updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ShopProduct"> | Date | string;
+    additionalCategories?: Prisma.StringNullableListFilter<"ShopProduct">;
+    additionalCategoryAssignments?: Prisma.JsonWithAggregatesFilter<"ShopProduct">;
 };
 export type ShopProductCreateInput = {
     id?: string;
@@ -354,8 +353,6 @@ export type ShopProductCreateInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     presentationType?: string;
@@ -364,11 +361,13 @@ export type ShopProductCreateInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyCreateNestedManyWithoutProductInput;
+    orderItems?: Prisma.ShopOrderItemCreateNestedManyWithoutProductInput;
     baseMaterial?: Prisma.ShopMaterialCreateNestedOneWithoutDirectProductsInput;
     components?: Prisma.ShopProductComponentCreateNestedManyWithoutProductInput;
     prices?: Prisma.ShopProductPriceCreateNestedManyWithoutProductInput;
-    orderItems?: Prisma.ShopOrderItemCreateNestedManyWithoutProductInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyCreateNestedManyWithoutProductInput;
 };
 export type ShopProductUncheckedCreateInput = {
     id?: string;
@@ -376,8 +375,6 @@ export type ShopProductUncheckedCreateInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     baseMaterialId?: string | null;
@@ -387,10 +384,12 @@ export type ShopProductUncheckedCreateInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedCreateNestedManyWithoutProductInput;
+    orderItems?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutProductInput;
     components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutProductInput;
     prices?: Prisma.ShopProductPriceUncheckedCreateNestedManyWithoutProductInput;
-    orderItems?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutProductInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedCreateNestedManyWithoutProductInput;
 };
 export type ShopProductUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -398,8 +397,6 @@ export type ShopProductUpdateInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     presentationType?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -408,11 +405,13 @@ export type ShopProductUpdateInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyUpdateManyWithoutProductNestedInput;
+    orderItems?: Prisma.ShopOrderItemUpdateManyWithoutProductNestedInput;
     baseMaterial?: Prisma.ShopMaterialUpdateOneWithoutDirectProductsNestedInput;
     components?: Prisma.ShopProductComponentUpdateManyWithoutProductNestedInput;
     prices?: Prisma.ShopProductPriceUpdateManyWithoutProductNestedInput;
-    orderItems?: Prisma.ShopOrderItemUpdateManyWithoutProductNestedInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyUpdateManyWithoutProductNestedInput;
 };
 export type ShopProductUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -420,8 +419,6 @@ export type ShopProductUncheckedUpdateInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     baseMaterialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -431,10 +428,12 @@ export type ShopProductUncheckedUpdateInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedUpdateManyWithoutProductNestedInput;
+    orderItems?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutProductNestedInput;
     components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutProductNestedInput;
     prices?: Prisma.ShopProductPriceUncheckedUpdateManyWithoutProductNestedInput;
-    orderItems?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutProductNestedInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedUpdateManyWithoutProductNestedInput;
 };
 export type ShopProductCreateManyInput = {
     id?: string;
@@ -442,8 +441,6 @@ export type ShopProductCreateManyInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     baseMaterialId?: string | null;
@@ -453,6 +450,8 @@ export type ShopProductCreateManyInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
 };
 export type ShopProductUpdateManyMutationInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -460,8 +459,6 @@ export type ShopProductUpdateManyMutationInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     presentationType?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -470,6 +467,8 @@ export type ShopProductUpdateManyMutationInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
 };
 export type ShopProductUncheckedUpdateManyInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -477,8 +476,6 @@ export type ShopProductUncheckedUpdateManyInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     baseMaterialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -488,6 +485,8 @@ export type ShopProductUncheckedUpdateManyInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
 };
 export type ShopProductListRelationFilter = {
     every?: Prisma.ShopProductWhereInput;
@@ -504,18 +503,12 @@ export type StringNullableListFilter<$PrismaModel = never> = {
     hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>;
     isEmpty?: boolean;
 };
-export type ShopProductGuildIdNameCompoundUniqueInput = {
-    guildId: string;
-    name: string;
-};
 export type ShopProductCountOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     guildId?: Prisma.SortOrder;
     name?: Prisma.SortOrder;
     productType?: Prisma.SortOrder;
     category?: Prisma.SortOrder;
-    additionalCategories?: Prisma.SortOrder;
-    additionalCategoryAssignments?: Prisma.SortOrder;
     subcategory?: Prisma.SortOrder;
     description?: Prisma.SortOrder;
     baseMaterialId?: Prisma.SortOrder;
@@ -525,6 +518,8 @@ export type ShopProductCountOrderByAggregateInput = {
     isActive?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    additionalCategories?: Prisma.SortOrder;
+    additionalCategoryAssignments?: Prisma.SortOrder;
 };
 export type ShopProductAvgOrderByAggregateInput = {
     presentationQuantity?: Prisma.SortOrder;
@@ -673,8 +668,6 @@ export type ShopProductCreateWithoutBaseMaterialInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     presentationType?: string;
@@ -683,10 +676,12 @@ export type ShopProductCreateWithoutBaseMaterialInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyCreateNestedManyWithoutProductInput;
+    orderItems?: Prisma.ShopOrderItemCreateNestedManyWithoutProductInput;
     components?: Prisma.ShopProductComponentCreateNestedManyWithoutProductInput;
     prices?: Prisma.ShopProductPriceCreateNestedManyWithoutProductInput;
-    orderItems?: Prisma.ShopOrderItemCreateNestedManyWithoutProductInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyCreateNestedManyWithoutProductInput;
 };
 export type ShopProductUncheckedCreateWithoutBaseMaterialInput = {
     id?: string;
@@ -694,8 +689,6 @@ export type ShopProductUncheckedCreateWithoutBaseMaterialInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     presentationType?: string;
@@ -704,10 +697,12 @@ export type ShopProductUncheckedCreateWithoutBaseMaterialInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedCreateNestedManyWithoutProductInput;
+    orderItems?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutProductInput;
     components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutProductInput;
     prices?: Prisma.ShopProductPriceUncheckedCreateNestedManyWithoutProductInput;
-    orderItems?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutProductInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedCreateNestedManyWithoutProductInput;
 };
 export type ShopProductCreateOrConnectWithoutBaseMaterialInput = {
     where: Prisma.ShopProductWhereUniqueInput;
@@ -739,8 +734,6 @@ export type ShopProductScalarWhereInput = {
     name?: Prisma.StringFilter<"ShopProduct"> | string;
     productType?: Prisma.StringFilter<"ShopProduct"> | string;
     category?: Prisma.StringFilter<"ShopProduct"> | string;
-    additionalCategories?: Prisma.StringNullableListFilter<"ShopProduct">;
-    additionalCategoryAssignments?: Prisma.JsonFilter<"ShopProduct">;
     subcategory?: Prisma.StringFilter<"ShopProduct"> | string;
     description?: Prisma.StringNullableFilter<"ShopProduct"> | string | null;
     baseMaterialId?: Prisma.StringNullableFilter<"ShopProduct"> | string | null;
@@ -750,6 +743,8 @@ export type ShopProductScalarWhereInput = {
     isActive?: Prisma.BoolFilter<"ShopProduct"> | boolean;
     createdAt?: Prisma.DateTimeFilter<"ShopProduct"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"ShopProduct"> | Date | string;
+    additionalCategories?: Prisma.StringNullableListFilter<"ShopProduct">;
+    additionalCategoryAssignments?: Prisma.JsonFilter<"ShopProduct">;
 };
 export type ShopProductCreateWithoutComponentsInput = {
     id?: string;
@@ -757,8 +752,6 @@ export type ShopProductCreateWithoutComponentsInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     presentationType?: string;
@@ -767,10 +760,12 @@ export type ShopProductCreateWithoutComponentsInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyCreateNestedManyWithoutProductInput;
+    orderItems?: Prisma.ShopOrderItemCreateNestedManyWithoutProductInput;
     baseMaterial?: Prisma.ShopMaterialCreateNestedOneWithoutDirectProductsInput;
     prices?: Prisma.ShopProductPriceCreateNestedManyWithoutProductInput;
-    orderItems?: Prisma.ShopOrderItemCreateNestedManyWithoutProductInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyCreateNestedManyWithoutProductInput;
 };
 export type ShopProductUncheckedCreateWithoutComponentsInput = {
     id?: string;
@@ -778,8 +773,6 @@ export type ShopProductUncheckedCreateWithoutComponentsInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     baseMaterialId?: string | null;
@@ -789,9 +782,11 @@ export type ShopProductUncheckedCreateWithoutComponentsInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
-    prices?: Prisma.ShopProductPriceUncheckedCreateNestedManyWithoutProductInput;
-    orderItems?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutProductInput;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     discountPolicies?: Prisma.ShopDiscountPolicyUncheckedCreateNestedManyWithoutProductInput;
+    orderItems?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutProductInput;
+    prices?: Prisma.ShopProductPriceUncheckedCreateNestedManyWithoutProductInput;
 };
 export type ShopProductCreateOrConnectWithoutComponentsInput = {
     where: Prisma.ShopProductWhereUniqueInput;
@@ -812,8 +807,6 @@ export type ShopProductUpdateWithoutComponentsInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     presentationType?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -822,10 +815,12 @@ export type ShopProductUpdateWithoutComponentsInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyUpdateManyWithoutProductNestedInput;
+    orderItems?: Prisma.ShopOrderItemUpdateManyWithoutProductNestedInput;
     baseMaterial?: Prisma.ShopMaterialUpdateOneWithoutDirectProductsNestedInput;
     prices?: Prisma.ShopProductPriceUpdateManyWithoutProductNestedInput;
-    orderItems?: Prisma.ShopOrderItemUpdateManyWithoutProductNestedInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyUpdateManyWithoutProductNestedInput;
 };
 export type ShopProductUncheckedUpdateWithoutComponentsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -833,8 +828,6 @@ export type ShopProductUncheckedUpdateWithoutComponentsInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     baseMaterialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -844,9 +837,11 @@ export type ShopProductUncheckedUpdateWithoutComponentsInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    prices?: Prisma.ShopProductPriceUncheckedUpdateManyWithoutProductNestedInput;
-    orderItems?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutProductNestedInput;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     discountPolicies?: Prisma.ShopDiscountPolicyUncheckedUpdateManyWithoutProductNestedInput;
+    orderItems?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutProductNestedInput;
+    prices?: Prisma.ShopProductPriceUncheckedUpdateManyWithoutProductNestedInput;
 };
 export type ShopProductCreateWithoutPricesInput = {
     id?: string;
@@ -854,8 +849,6 @@ export type ShopProductCreateWithoutPricesInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     presentationType?: string;
@@ -864,10 +857,12 @@ export type ShopProductCreateWithoutPricesInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyCreateNestedManyWithoutProductInput;
+    orderItems?: Prisma.ShopOrderItemCreateNestedManyWithoutProductInput;
     baseMaterial?: Prisma.ShopMaterialCreateNestedOneWithoutDirectProductsInput;
     components?: Prisma.ShopProductComponentCreateNestedManyWithoutProductInput;
-    orderItems?: Prisma.ShopOrderItemCreateNestedManyWithoutProductInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyCreateNestedManyWithoutProductInput;
 };
 export type ShopProductUncheckedCreateWithoutPricesInput = {
     id?: string;
@@ -875,8 +870,6 @@ export type ShopProductUncheckedCreateWithoutPricesInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     baseMaterialId?: string | null;
@@ -886,9 +879,11 @@ export type ShopProductUncheckedCreateWithoutPricesInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
-    components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutProductInput;
-    orderItems?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutProductInput;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     discountPolicies?: Prisma.ShopDiscountPolicyUncheckedCreateNestedManyWithoutProductInput;
+    orderItems?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutProductInput;
+    components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutProductInput;
 };
 export type ShopProductCreateOrConnectWithoutPricesInput = {
     where: Prisma.ShopProductWhereUniqueInput;
@@ -909,8 +904,6 @@ export type ShopProductUpdateWithoutPricesInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     presentationType?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -919,10 +912,12 @@ export type ShopProductUpdateWithoutPricesInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyUpdateManyWithoutProductNestedInput;
+    orderItems?: Prisma.ShopOrderItemUpdateManyWithoutProductNestedInput;
     baseMaterial?: Prisma.ShopMaterialUpdateOneWithoutDirectProductsNestedInput;
     components?: Prisma.ShopProductComponentUpdateManyWithoutProductNestedInput;
-    orderItems?: Prisma.ShopOrderItemUpdateManyWithoutProductNestedInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyUpdateManyWithoutProductNestedInput;
 };
 export type ShopProductUncheckedUpdateWithoutPricesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -930,8 +925,6 @@ export type ShopProductUncheckedUpdateWithoutPricesInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     baseMaterialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -941,9 +934,11 @@ export type ShopProductUncheckedUpdateWithoutPricesInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutProductNestedInput;
-    orderItems?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutProductNestedInput;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     discountPolicies?: Prisma.ShopDiscountPolicyUncheckedUpdateManyWithoutProductNestedInput;
+    orderItems?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutProductNestedInput;
+    components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutProductNestedInput;
 };
 export type ShopProductCreateWithoutOrderItemsInput = {
     id?: string;
@@ -951,8 +946,6 @@ export type ShopProductCreateWithoutOrderItemsInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     presentationType?: string;
@@ -961,10 +954,12 @@ export type ShopProductCreateWithoutOrderItemsInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyCreateNestedManyWithoutProductInput;
     baseMaterial?: Prisma.ShopMaterialCreateNestedOneWithoutDirectProductsInput;
     components?: Prisma.ShopProductComponentCreateNestedManyWithoutProductInput;
     prices?: Prisma.ShopProductPriceCreateNestedManyWithoutProductInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyCreateNestedManyWithoutProductInput;
 };
 export type ShopProductUncheckedCreateWithoutOrderItemsInput = {
     id?: string;
@@ -972,8 +967,6 @@ export type ShopProductUncheckedCreateWithoutOrderItemsInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     baseMaterialId?: string | null;
@@ -983,9 +976,11 @@ export type ShopProductUncheckedCreateWithoutOrderItemsInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedCreateNestedManyWithoutProductInput;
     components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutProductInput;
     prices?: Prisma.ShopProductPriceUncheckedCreateNestedManyWithoutProductInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedCreateNestedManyWithoutProductInput;
 };
 export type ShopProductCreateOrConnectWithoutOrderItemsInput = {
     where: Prisma.ShopProductWhereUniqueInput;
@@ -1006,8 +1001,6 @@ export type ShopProductUpdateWithoutOrderItemsInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     presentationType?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1016,10 +1009,12 @@ export type ShopProductUpdateWithoutOrderItemsInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyUpdateManyWithoutProductNestedInput;
     baseMaterial?: Prisma.ShopMaterialUpdateOneWithoutDirectProductsNestedInput;
     components?: Prisma.ShopProductComponentUpdateManyWithoutProductNestedInput;
     prices?: Prisma.ShopProductPriceUpdateManyWithoutProductNestedInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyUpdateManyWithoutProductNestedInput;
 };
 export type ShopProductUncheckedUpdateWithoutOrderItemsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1027,8 +1022,6 @@ export type ShopProductUncheckedUpdateWithoutOrderItemsInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     baseMaterialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1038,9 +1031,11 @@ export type ShopProductUncheckedUpdateWithoutOrderItemsInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedUpdateManyWithoutProductNestedInput;
     components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutProductNestedInput;
     prices?: Prisma.ShopProductPriceUncheckedUpdateManyWithoutProductNestedInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedUpdateManyWithoutProductNestedInput;
 };
 export type ShopProductCreateWithoutDiscountPoliciesInput = {
     id?: string;
@@ -1048,8 +1043,6 @@ export type ShopProductCreateWithoutDiscountPoliciesInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     presentationType?: string;
@@ -1058,10 +1051,12 @@ export type ShopProductCreateWithoutDiscountPoliciesInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    orderItems?: Prisma.ShopOrderItemCreateNestedManyWithoutProductInput;
     baseMaterial?: Prisma.ShopMaterialCreateNestedOneWithoutDirectProductsInput;
     components?: Prisma.ShopProductComponentCreateNestedManyWithoutProductInput;
     prices?: Prisma.ShopProductPriceCreateNestedManyWithoutProductInput;
-    orderItems?: Prisma.ShopOrderItemCreateNestedManyWithoutProductInput;
 };
 export type ShopProductUncheckedCreateWithoutDiscountPoliciesInput = {
     id?: string;
@@ -1069,8 +1064,6 @@ export type ShopProductUncheckedCreateWithoutDiscountPoliciesInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     baseMaterialId?: string | null;
@@ -1080,9 +1073,11 @@ export type ShopProductUncheckedCreateWithoutDiscountPoliciesInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    orderItems?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutProductInput;
     components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutProductInput;
     prices?: Prisma.ShopProductPriceUncheckedCreateNestedManyWithoutProductInput;
-    orderItems?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutProductInput;
 };
 export type ShopProductCreateOrConnectWithoutDiscountPoliciesInput = {
     where: Prisma.ShopProductWhereUniqueInput;
@@ -1103,8 +1098,6 @@ export type ShopProductUpdateWithoutDiscountPoliciesInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     presentationType?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1113,10 +1106,12 @@ export type ShopProductUpdateWithoutDiscountPoliciesInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    orderItems?: Prisma.ShopOrderItemUpdateManyWithoutProductNestedInput;
     baseMaterial?: Prisma.ShopMaterialUpdateOneWithoutDirectProductsNestedInput;
     components?: Prisma.ShopProductComponentUpdateManyWithoutProductNestedInput;
     prices?: Prisma.ShopProductPriceUpdateManyWithoutProductNestedInput;
-    orderItems?: Prisma.ShopOrderItemUpdateManyWithoutProductNestedInput;
 };
 export type ShopProductUncheckedUpdateWithoutDiscountPoliciesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1124,8 +1119,6 @@ export type ShopProductUncheckedUpdateWithoutDiscountPoliciesInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     baseMaterialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1135,9 +1128,11 @@ export type ShopProductUncheckedUpdateWithoutDiscountPoliciesInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    orderItems?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutProductNestedInput;
     components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutProductNestedInput;
     prices?: Prisma.ShopProductPriceUncheckedUpdateManyWithoutProductNestedInput;
-    orderItems?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutProductNestedInput;
 };
 export type ShopProductCreateManyBaseMaterialInput = {
     id?: string;
@@ -1145,8 +1140,6 @@ export type ShopProductCreateManyBaseMaterialInput = {
     name: string;
     productType: string;
     category?: string;
-    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: string;
     description?: string | null;
     presentationType?: string;
@@ -1155,6 +1148,8 @@ export type ShopProductCreateManyBaseMaterialInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    additionalCategories?: Prisma.ShopProductCreateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
 };
 export type ShopProductUpdateWithoutBaseMaterialInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1162,8 +1157,6 @@ export type ShopProductUpdateWithoutBaseMaterialInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     presentationType?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1172,10 +1165,12 @@ export type ShopProductUpdateWithoutBaseMaterialInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyUpdateManyWithoutProductNestedInput;
+    orderItems?: Prisma.ShopOrderItemUpdateManyWithoutProductNestedInput;
     components?: Prisma.ShopProductComponentUpdateManyWithoutProductNestedInput;
     prices?: Prisma.ShopProductPriceUpdateManyWithoutProductNestedInput;
-    orderItems?: Prisma.ShopOrderItemUpdateManyWithoutProductNestedInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyUpdateManyWithoutProductNestedInput;
 };
 export type ShopProductUncheckedUpdateWithoutBaseMaterialInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1183,8 +1178,6 @@ export type ShopProductUncheckedUpdateWithoutBaseMaterialInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     presentationType?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1193,10 +1186,12 @@ export type ShopProductUncheckedUpdateWithoutBaseMaterialInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedUpdateManyWithoutProductNestedInput;
+    orderItems?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutProductNestedInput;
     components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutProductNestedInput;
     prices?: Prisma.ShopProductPriceUncheckedUpdateManyWithoutProductNestedInput;
-    orderItems?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutProductNestedInput;
-    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedUpdateManyWithoutProductNestedInput;
 };
 export type ShopProductUncheckedUpdateManyWithoutBaseMaterialInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1204,8 +1199,6 @@ export type ShopProductUncheckedUpdateManyWithoutBaseMaterialInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     productType?: Prisma.StringFieldUpdateOperationsInput | string;
     category?: Prisma.StringFieldUpdateOperationsInput | string;
-    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
-    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     subcategory?: Prisma.StringFieldUpdateOperationsInput | string;
     description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     presentationType?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1214,21 +1207,23 @@ export type ShopProductUncheckedUpdateManyWithoutBaseMaterialInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    additionalCategories?: Prisma.ShopProductUpdateadditionalCategoriesInput | string[];
+    additionalCategoryAssignments?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
 };
 /**
  * Count Type ShopProductCountOutputType
  */
 export type ShopProductCountOutputType = {
+    discountPolicies: number;
+    orderItems: number;
     components: number;
     prices: number;
-    orderItems: number;
-    discountPolicies: number;
 };
 export type ShopProductCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    discountPolicies?: boolean | ShopProductCountOutputTypeCountDiscountPoliciesArgs;
+    orderItems?: boolean | ShopProductCountOutputTypeCountOrderItemsArgs;
     components?: boolean | ShopProductCountOutputTypeCountComponentsArgs;
     prices?: boolean | ShopProductCountOutputTypeCountPricesArgs;
-    orderItems?: boolean | ShopProductCountOutputTypeCountOrderItemsArgs;
-    discountPolicies?: boolean | ShopProductCountOutputTypeCountDiscountPoliciesArgs;
 };
 /**
  * ShopProductCountOutputType without action
@@ -1242,14 +1237,8 @@ export type ShopProductCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.
 /**
  * ShopProductCountOutputType without action
  */
-export type ShopProductCountOutputTypeCountComponentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    where?: Prisma.ShopProductComponentWhereInput;
-};
-/**
- * ShopProductCountOutputType without action
- */
-export type ShopProductCountOutputTypeCountPricesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    where?: Prisma.ShopProductPriceWhereInput;
+export type ShopProductCountOutputTypeCountDiscountPoliciesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.ShopDiscountPolicyWhereInput;
 };
 /**
  * ShopProductCountOutputType without action
@@ -1260,8 +1249,14 @@ export type ShopProductCountOutputTypeCountOrderItemsArgs<ExtArgs extends runtim
 /**
  * ShopProductCountOutputType without action
  */
-export type ShopProductCountOutputTypeCountDiscountPoliciesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    where?: Prisma.ShopDiscountPolicyWhereInput;
+export type ShopProductCountOutputTypeCountComponentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.ShopProductComponentWhereInput;
+};
+/**
+ * ShopProductCountOutputType without action
+ */
+export type ShopProductCountOutputTypeCountPricesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.ShopProductPriceWhereInput;
 };
 export type ShopProductSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -1269,8 +1264,6 @@ export type ShopProductSelect<ExtArgs extends runtime.Types.Extensions.InternalA
     name?: boolean;
     productType?: boolean;
     category?: boolean;
-    additionalCategories?: boolean;
-    additionalCategoryAssignments?: boolean;
     subcategory?: boolean;
     description?: boolean;
     baseMaterialId?: boolean;
@@ -1280,11 +1273,13 @@ export type ShopProductSelect<ExtArgs extends runtime.Types.Extensions.InternalA
     isActive?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
+    additionalCategories?: boolean;
+    additionalCategoryAssignments?: boolean;
+    discountPolicies?: boolean | Prisma.ShopProduct$discountPoliciesArgs<ExtArgs>;
+    orderItems?: boolean | Prisma.ShopProduct$orderItemsArgs<ExtArgs>;
     baseMaterial?: boolean | Prisma.ShopProduct$baseMaterialArgs<ExtArgs>;
     components?: boolean | Prisma.ShopProduct$componentsArgs<ExtArgs>;
     prices?: boolean | Prisma.ShopProduct$pricesArgs<ExtArgs>;
-    orderItems?: boolean | Prisma.ShopProduct$orderItemsArgs<ExtArgs>;
-    discountPolicies?: boolean | Prisma.ShopProduct$discountPoliciesArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopProductCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopProduct"]>;
 export type ShopProductSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1293,8 +1288,6 @@ export type ShopProductSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
     name?: boolean;
     productType?: boolean;
     category?: boolean;
-    additionalCategories?: boolean;
-    additionalCategoryAssignments?: boolean;
     subcategory?: boolean;
     description?: boolean;
     baseMaterialId?: boolean;
@@ -1304,6 +1297,8 @@ export type ShopProductSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
     isActive?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
+    additionalCategories?: boolean;
+    additionalCategoryAssignments?: boolean;
     baseMaterial?: boolean | Prisma.ShopProduct$baseMaterialArgs<ExtArgs>;
 }, ExtArgs["result"]["shopProduct"]>;
 export type ShopProductSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1312,8 +1307,6 @@ export type ShopProductSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
     name?: boolean;
     productType?: boolean;
     category?: boolean;
-    additionalCategories?: boolean;
-    additionalCategoryAssignments?: boolean;
     subcategory?: boolean;
     description?: boolean;
     baseMaterialId?: boolean;
@@ -1323,6 +1316,8 @@ export type ShopProductSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
     isActive?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
+    additionalCategories?: boolean;
+    additionalCategoryAssignments?: boolean;
     baseMaterial?: boolean | Prisma.ShopProduct$baseMaterialArgs<ExtArgs>;
 }, ExtArgs["result"]["shopProduct"]>;
 export type ShopProductSelectScalar = {
@@ -1331,8 +1326,6 @@ export type ShopProductSelectScalar = {
     name?: boolean;
     productType?: boolean;
     category?: boolean;
-    additionalCategories?: boolean;
-    additionalCategoryAssignments?: boolean;
     subcategory?: boolean;
     description?: boolean;
     baseMaterialId?: boolean;
@@ -1342,14 +1335,16 @@ export type ShopProductSelectScalar = {
     isActive?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
+    additionalCategories?: boolean;
+    additionalCategoryAssignments?: boolean;
 };
-export type ShopProductOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "name" | "productType" | "category" | "additionalCategories" | "additionalCategoryAssignments" | "subcategory" | "description" | "baseMaterialId" | "presentationType" | "presentationQuantity" | "presentationLabel" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["shopProduct"]>;
+export type ShopProductOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "name" | "productType" | "category" | "subcategory" | "description" | "baseMaterialId" | "presentationType" | "presentationQuantity" | "presentationLabel" | "isActive" | "createdAt" | "updatedAt" | "additionalCategories" | "additionalCategoryAssignments", ExtArgs["result"]["shopProduct"]>;
 export type ShopProductInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    discountPolicies?: boolean | Prisma.ShopProduct$discountPoliciesArgs<ExtArgs>;
+    orderItems?: boolean | Prisma.ShopProduct$orderItemsArgs<ExtArgs>;
     baseMaterial?: boolean | Prisma.ShopProduct$baseMaterialArgs<ExtArgs>;
     components?: boolean | Prisma.ShopProduct$componentsArgs<ExtArgs>;
     prices?: boolean | Prisma.ShopProduct$pricesArgs<ExtArgs>;
-    orderItems?: boolean | Prisma.ShopProduct$orderItemsArgs<ExtArgs>;
-    discountPolicies?: boolean | Prisma.ShopProduct$discountPoliciesArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopProductCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type ShopProductIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1361,11 +1356,11 @@ export type ShopProductIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.
 export type $ShopProductPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "ShopProduct";
     objects: {
+        discountPolicies: Prisma.$ShopDiscountPolicyPayload<ExtArgs>[];
+        orderItems: Prisma.$ShopOrderItemPayload<ExtArgs>[];
         baseMaterial: Prisma.$ShopMaterialPayload<ExtArgs> | null;
         components: Prisma.$ShopProductComponentPayload<ExtArgs>[];
         prices: Prisma.$ShopProductPricePayload<ExtArgs>[];
-        orderItems: Prisma.$ShopOrderItemPayload<ExtArgs>[];
-        discountPolicies: Prisma.$ShopDiscountPolicyPayload<ExtArgs>[];
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
@@ -1373,8 +1368,6 @@ export type $ShopProductPayload<ExtArgs extends runtime.Types.Extensions.Interna
         name: string;
         productType: string;
         category: string;
-        additionalCategories: string[];
-        additionalCategoryAssignments: runtime.JsonValue;
         subcategory: string;
         description: string | null;
         baseMaterialId: string | null;
@@ -1384,6 +1377,8 @@ export type $ShopProductPayload<ExtArgs extends runtime.Types.Extensions.Interna
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
+        additionalCategories: string[];
+        additionalCategoryAssignments: runtime.JsonValue;
     }, ExtArgs["result"]["shopProduct"]>;
     composites: {};
 };
@@ -1713,11 +1708,11 @@ export interface ShopProductDelegate<ExtArgs extends runtime.Types.Extensions.In
  */
 export interface Prisma__ShopProductClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise";
+    discountPolicies<T extends Prisma.ShopProduct$discountPoliciesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopProduct$discountPoliciesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopDiscountPolicyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    orderItems<T extends Prisma.ShopProduct$orderItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopProduct$orderItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopOrderItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     baseMaterial<T extends Prisma.ShopProduct$baseMaterialArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopProduct$baseMaterialArgs<ExtArgs>>): Prisma.Prisma__ShopMaterialClient<runtime.Types.Result.GetResult<Prisma.$ShopMaterialPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
     components<T extends Prisma.ShopProduct$componentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopProduct$componentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopProductComponentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     prices<T extends Prisma.ShopProduct$pricesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopProduct$pricesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopProductPricePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
-    orderItems<T extends Prisma.ShopProduct$orderItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopProduct$orderItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopOrderItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
-    discountPolicies<T extends Prisma.ShopProduct$discountPoliciesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopProduct$discountPoliciesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopDiscountPolicyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1748,8 +1743,6 @@ export interface ShopProductFieldRefs {
     readonly name: Prisma.FieldRef<"ShopProduct", 'String'>;
     readonly productType: Prisma.FieldRef<"ShopProduct", 'String'>;
     readonly category: Prisma.FieldRef<"ShopProduct", 'String'>;
-    readonly additionalCategories: Prisma.FieldRef<"ShopProduct", 'String[]'>;
-    readonly additionalCategoryAssignments: Prisma.FieldRef<"ShopProduct", 'Json'>;
     readonly subcategory: Prisma.FieldRef<"ShopProduct", 'String'>;
     readonly description: Prisma.FieldRef<"ShopProduct", 'String'>;
     readonly baseMaterialId: Prisma.FieldRef<"ShopProduct", 'String'>;
@@ -1759,6 +1752,8 @@ export interface ShopProductFieldRefs {
     readonly isActive: Prisma.FieldRef<"ShopProduct", 'Boolean'>;
     readonly createdAt: Prisma.FieldRef<"ShopProduct", 'DateTime'>;
     readonly updatedAt: Prisma.FieldRef<"ShopProduct", 'DateTime'>;
+    readonly additionalCategories: Prisma.FieldRef<"ShopProduct", 'String[]'>;
+    readonly additionalCategoryAssignments: Prisma.FieldRef<"ShopProduct", 'Json'>;
 }
 /**
  * ShopProduct findUnique
@@ -2143,6 +2138,52 @@ export type ShopProductDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
     limit?: number;
 };
 /**
+ * ShopProduct.discountPolicies
+ */
+export type ShopProduct$discountPoliciesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ShopDiscountPolicy
+     */
+    select?: Prisma.ShopDiscountPolicySelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the ShopDiscountPolicy
+     */
+    omit?: Prisma.ShopDiscountPolicyOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.ShopDiscountPolicyInclude<ExtArgs> | null;
+    where?: Prisma.ShopDiscountPolicyWhereInput;
+    orderBy?: Prisma.ShopDiscountPolicyOrderByWithRelationInput | Prisma.ShopDiscountPolicyOrderByWithRelationInput[];
+    cursor?: Prisma.ShopDiscountPolicyWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: Prisma.ShopDiscountPolicyScalarFieldEnum | Prisma.ShopDiscountPolicyScalarFieldEnum[];
+};
+/**
+ * ShopProduct.orderItems
+ */
+export type ShopProduct$orderItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ShopOrderItem
+     */
+    select?: Prisma.ShopOrderItemSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the ShopOrderItem
+     */
+    omit?: Prisma.ShopOrderItemOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.ShopOrderItemInclude<ExtArgs> | null;
+    where?: Prisma.ShopOrderItemWhereInput;
+    orderBy?: Prisma.ShopOrderItemOrderByWithRelationInput | Prisma.ShopOrderItemOrderByWithRelationInput[];
+    cursor?: Prisma.ShopOrderItemWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: Prisma.ShopOrderItemScalarFieldEnum | Prisma.ShopOrderItemScalarFieldEnum[];
+};
+/**
  * ShopProduct.baseMaterial
  */
 export type ShopProduct$baseMaterialArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2205,52 +2246,6 @@ export type ShopProduct$pricesArgs<ExtArgs extends runtime.Types.Extensions.Inte
     take?: number;
     skip?: number;
     distinct?: Prisma.ShopProductPriceScalarFieldEnum | Prisma.ShopProductPriceScalarFieldEnum[];
-};
-/**
- * ShopProduct.orderItems
- */
-export type ShopProduct$orderItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the ShopOrderItem
-     */
-    select?: Prisma.ShopOrderItemSelect<ExtArgs> | null;
-    /**
-     * Omit specific fields from the ShopOrderItem
-     */
-    omit?: Prisma.ShopOrderItemOmit<ExtArgs> | null;
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: Prisma.ShopOrderItemInclude<ExtArgs> | null;
-    where?: Prisma.ShopOrderItemWhereInput;
-    orderBy?: Prisma.ShopOrderItemOrderByWithRelationInput | Prisma.ShopOrderItemOrderByWithRelationInput[];
-    cursor?: Prisma.ShopOrderItemWhereUniqueInput;
-    take?: number;
-    skip?: number;
-    distinct?: Prisma.ShopOrderItemScalarFieldEnum | Prisma.ShopOrderItemScalarFieldEnum[];
-};
-/**
- * ShopProduct.discountPolicies
- */
-export type ShopProduct$discountPoliciesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the ShopDiscountPolicy
-     */
-    select?: Prisma.ShopDiscountPolicySelect<ExtArgs> | null;
-    /**
-     * Omit specific fields from the ShopDiscountPolicy
-     */
-    omit?: Prisma.ShopDiscountPolicyOmit<ExtArgs> | null;
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: Prisma.ShopDiscountPolicyInclude<ExtArgs> | null;
-    where?: Prisma.ShopDiscountPolicyWhereInput;
-    orderBy?: Prisma.ShopDiscountPolicyOrderByWithRelationInput | Prisma.ShopDiscountPolicyOrderByWithRelationInput[];
-    cursor?: Prisma.ShopDiscountPolicyWhereUniqueInput;
-    take?: number;
-    skip?: number;
-    distinct?: Prisma.ShopDiscountPolicyScalarFieldEnum | Prisma.ShopDiscountPolicyScalarFieldEnum[];
 };
 /**
  * ShopProduct without action

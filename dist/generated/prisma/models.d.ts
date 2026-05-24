@@ -25,5 +25,8 @@ export type * from './models/ShopAppliedDiscount.js';
 export type * from './models/ShopCategory.js';
 export type * from './models/ShopSubcategory.js';
 export type * from './models/ShopOrderEvent.js';
+export type * from './models/MapBackground.js';
+export type * from './models/ProtectionMember.js';
+export type * from './models/WorldProtection.js';
 export type * from './commonInputTypes.js';
 //# sourceMappingURL=models.d.ts.map

@@ -127,8 +127,8 @@ export const pedidoCommand: Command = {
       const notas          = interaction.options.getString('notas') ?? null;
 
       const product = await findFirstInShopScopes(guildId, scope =>
-        prisma.shopProduct.findUnique({
-          where: { guildId_name: { guildId: scope, name: nombreProducto } },
+        prisma.shopProduct.findFirst({
+          where: { guildId: scope, name: nombreProducto },
         }),
       );
 

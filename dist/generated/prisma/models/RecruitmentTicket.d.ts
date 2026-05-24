@@ -17,9 +17,9 @@ export type RecruitmentTicketMinAggregateOutputType = {
     channelId: string | null;
     minecraftRole: string | null;
     status: string | null;
-    staleAlertedAt: Date | null;
     createdAt: Date | null;
     updatedAt: Date | null;
+    staleAlertedAt: Date | null;
 };
 export type RecruitmentTicketMaxAggregateOutputType = {
     id: string | null;
@@ -28,9 +28,9 @@ export type RecruitmentTicketMaxAggregateOutputType = {
     channelId: string | null;
     minecraftRole: string | null;
     status: string | null;
-    staleAlertedAt: Date | null;
     createdAt: Date | null;
     updatedAt: Date | null;
+    staleAlertedAt: Date | null;
 };
 export type RecruitmentTicketCountAggregateOutputType = {
     id: number;
@@ -40,9 +40,9 @@ export type RecruitmentTicketCountAggregateOutputType = {
     minecraftRole: number;
     answers: number;
     status: number;
-    staleAlertedAt: number;
     createdAt: number;
     updatedAt: number;
+    staleAlertedAt: number;
     _all: number;
 };
 export type RecruitmentTicketMinAggregateInputType = {
@@ -52,9 +52,9 @@ export type RecruitmentTicketMinAggregateInputType = {
     channelId?: true;
     minecraftRole?: true;
     status?: true;
-    staleAlertedAt?: true;
     createdAt?: true;
     updatedAt?: true;
+    staleAlertedAt?: true;
 };
 export type RecruitmentTicketMaxAggregateInputType = {
     id?: true;
@@ -63,9 +63,9 @@ export type RecruitmentTicketMaxAggregateInputType = {
     channelId?: true;
     minecraftRole?: true;
     status?: true;
-    staleAlertedAt?: true;
     createdAt?: true;
     updatedAt?: true;
+    staleAlertedAt?: true;
 };
 export type RecruitmentTicketCountAggregateInputType = {
     id?: true;
@@ -75,9 +75,9 @@ export type RecruitmentTicketCountAggregateInputType = {
     minecraftRole?: true;
     answers?: true;
     status?: true;
-    staleAlertedAt?: true;
     createdAt?: true;
     updatedAt?: true;
+    staleAlertedAt?: true;
     _all?: true;
 };
 export type RecruitmentTicketAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -150,9 +150,9 @@ export type RecruitmentTicketGroupByOutputType = {
     minecraftRole: string | null;
     answers: runtime.JsonValue | null;
     status: string;
-    staleAlertedAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
+    staleAlertedAt: Date | null;
     _count: RecruitmentTicketCountAggregateOutputType | null;
     _min: RecruitmentTicketMinAggregateOutputType | null;
     _max: RecruitmentTicketMaxAggregateOutputType | null;
@@ -171,9 +171,9 @@ export type RecruitmentTicketWhereInput = {
     minecraftRole?: Prisma.StringNullableFilter<"RecruitmentTicket"> | string | null;
     answers?: Prisma.JsonNullableFilter<"RecruitmentTicket">;
     status?: Prisma.StringFilter<"RecruitmentTicket"> | string;
-    staleAlertedAt?: Prisma.DateTimeNullableFilter<"RecruitmentTicket"> | Date | string | null;
     createdAt?: Prisma.DateTimeFilter<"RecruitmentTicket"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"RecruitmentTicket"> | Date | string;
+    staleAlertedAt?: Prisma.DateTimeNullableFilter<"RecruitmentTicket"> | Date | string | null;
 };
 export type RecruitmentTicketOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -183,9 +183,9 @@ export type RecruitmentTicketOrderByWithRelationInput = {
     minecraftRole?: Prisma.SortOrderInput | Prisma.SortOrder;
     answers?: Prisma.SortOrderInput | Prisma.SortOrder;
     status?: Prisma.SortOrder;
-    staleAlertedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    staleAlertedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
 };
 export type RecruitmentTicketWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -198,9 +198,9 @@ export type RecruitmentTicketWhereUniqueInput = Prisma.AtLeast<{
     minecraftRole?: Prisma.StringNullableFilter<"RecruitmentTicket"> | string | null;
     answers?: Prisma.JsonNullableFilter<"RecruitmentTicket">;
     status?: Prisma.StringFilter<"RecruitmentTicket"> | string;
-    staleAlertedAt?: Prisma.DateTimeNullableFilter<"RecruitmentTicket"> | Date | string | null;
     createdAt?: Prisma.DateTimeFilter<"RecruitmentTicket"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"RecruitmentTicket"> | Date | string;
+    staleAlertedAt?: Prisma.DateTimeNullableFilter<"RecruitmentTicket"> | Date | string | null;
 }, "id">;
 export type RecruitmentTicketOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -210,9 +210,9 @@ export type RecruitmentTicketOrderByWithAggregationInput = {
     minecraftRole?: Prisma.SortOrderInput | Prisma.SortOrder;
     answers?: Prisma.SortOrderInput | Prisma.SortOrder;
     status?: Prisma.SortOrder;
-    staleAlertedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    staleAlertedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
     _count?: Prisma.RecruitmentTicketCountOrderByAggregateInput;
     _max?: Prisma.RecruitmentTicketMaxOrderByAggregateInput;
     _min?: Prisma.RecruitmentTicketMinOrderByAggregateInput;
@@ -228,9 +228,9 @@ export type RecruitmentTicketScalarWhereWithAggregatesInput = {
     minecraftRole?: Prisma.StringNullableWithAggregatesFilter<"RecruitmentTicket"> | string | null;
     answers?: Prisma.JsonNullableWithAggregatesFilter<"RecruitmentTicket">;
     status?: Prisma.StringWithAggregatesFilter<"RecruitmentTicket"> | string;
-    staleAlertedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"RecruitmentTicket"> | Date | string | null;
     createdAt?: Prisma.DateTimeWithAggregatesFilter<"RecruitmentTicket"> | Date | string;
     updatedAt?: Prisma.DateTimeWithAggregatesFilter<"RecruitmentTicket"> | Date | string;
+    staleAlertedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"RecruitmentTicket"> | Date | string | null;
 };
 export type RecruitmentTicketCreateInput = {
     id?: string;
@@ -240,9 +240,9 @@ export type RecruitmentTicketCreateInput = {
     minecraftRole?: string | null;
     answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
     status?: string;
-    staleAlertedAt?: Date | string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    staleAlertedAt?: Date | string | null;
 };
 export type RecruitmentTicketUncheckedCreateInput = {
     id?: string;
@@ -252,9 +252,9 @@ export type RecruitmentTicketUncheckedCreateInput = {
     minecraftRole?: string | null;
     answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
     status?: string;
-    staleAlertedAt?: Date | string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    staleAlertedAt?: Date | string | null;
 };
 export type RecruitmentTicketUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -264,9 +264,9 @@ export type RecruitmentTicketUpdateInput = {
     minecraftRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
-    staleAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    staleAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
 export type RecruitmentTicketUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -276,9 +276,9 @@ export type RecruitmentTicketUncheckedUpdateInput = {
     minecraftRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
-    staleAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    staleAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
 export type RecruitmentTicketCreateManyInput = {
     id?: string;
@@ -288,9 +288,9 @@ export type RecruitmentTicketCreateManyInput = {
     minecraftRole?: string | null;
     answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
     status?: string;
-    staleAlertedAt?: Date | string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    staleAlertedAt?: Date | string | null;
 };
 export type RecruitmentTicketUpdateManyMutationInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -300,9 +300,9 @@ export type RecruitmentTicketUpdateManyMutationInput = {
     minecraftRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
-    staleAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    staleAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
 export type RecruitmentTicketUncheckedUpdateManyInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -312,9 +312,9 @@ export type RecruitmentTicketUncheckedUpdateManyInput = {
     minecraftRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
-    staleAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    staleAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
 };
 export type RecruitmentTicketCountOrderByAggregateInput = {
     id?: Prisma.SortOrder;
@@ -324,9 +324,9 @@ export type RecruitmentTicketCountOrderByAggregateInput = {
     minecraftRole?: Prisma.SortOrder;
     answers?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
-    staleAlertedAt?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    staleAlertedAt?: Prisma.SortOrder;
 };
 export type RecruitmentTicketMaxOrderByAggregateInput = {
     id?: Prisma.SortOrder;
@@ -335,9 +335,9 @@ export type RecruitmentTicketMaxOrderByAggregateInput = {
     channelId?: Prisma.SortOrder;
     minecraftRole?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
-    staleAlertedAt?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    staleAlertedAt?: Prisma.SortOrder;
 };
 export type RecruitmentTicketMinOrderByAggregateInput = {
     id?: Prisma.SortOrder;
@@ -346,9 +346,9 @@ export type RecruitmentTicketMinOrderByAggregateInput = {
     channelId?: Prisma.SortOrder;
     minecraftRole?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
-    staleAlertedAt?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    staleAlertedAt?: Prisma.SortOrder;
 };
 export type NullableDateTimeFieldUpdateOperationsInput = {
     set?: Date | string | null;
@@ -361,9 +361,9 @@ export type RecruitmentTicketSelect<ExtArgs extends runtime.Types.Extensions.Int
     minecraftRole?: boolean;
     answers?: boolean;
     status?: boolean;
-    staleAlertedAt?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
+    staleAlertedAt?: boolean;
 }, ExtArgs["result"]["recruitmentTicket"]>;
 export type RecruitmentTicketSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -373,9 +373,9 @@ export type RecruitmentTicketSelectCreateManyAndReturn<ExtArgs extends runtime.T
     minecraftRole?: boolean;
     answers?: boolean;
     status?: boolean;
-    staleAlertedAt?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
+    staleAlertedAt?: boolean;
 }, ExtArgs["result"]["recruitmentTicket"]>;
 export type RecruitmentTicketSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -385,9 +385,9 @@ export type RecruitmentTicketSelectUpdateManyAndReturn<ExtArgs extends runtime.T
     minecraftRole?: boolean;
     answers?: boolean;
     status?: boolean;
-    staleAlertedAt?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
+    staleAlertedAt?: boolean;
 }, ExtArgs["result"]["recruitmentTicket"]>;
 export type RecruitmentTicketSelectScalar = {
     id?: boolean;
@@ -397,11 +397,11 @@ export type RecruitmentTicketSelectScalar = {
     minecraftRole?: boolean;
     answers?: boolean;
     status?: boolean;
-    staleAlertedAt?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
+    staleAlertedAt?: boolean;
 };
-export type RecruitmentTicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "userId" | "channelId" | "minecraftRole" | "answers" | "status" | "staleAlertedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["recruitmentTicket"]>;
+export type RecruitmentTicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "userId" | "channelId" | "minecraftRole" | "answers" | "status" | "createdAt" | "updatedAt" | "staleAlertedAt", ExtArgs["result"]["recruitmentTicket"]>;
 export type $RecruitmentTicketPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "RecruitmentTicket";
     objects: {};
@@ -413,9 +413,9 @@ export type $RecruitmentTicketPayload<ExtArgs extends runtime.Types.Extensions.I
         minecraftRole: string | null;
         answers: runtime.JsonValue | null;
         status: string;
-        staleAlertedAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
+        staleAlertedAt: Date | null;
     }, ExtArgs["result"]["recruitmentTicket"]>;
     composites: {};
 };
@@ -777,9 +777,9 @@ export interface RecruitmentTicketFieldRefs {
     readonly minecraftRole: Prisma.FieldRef<"RecruitmentTicket", 'String'>;
     readonly answers: Prisma.FieldRef<"RecruitmentTicket", 'Json'>;
     readonly status: Prisma.FieldRef<"RecruitmentTicket", 'String'>;
-    readonly staleAlertedAt: Prisma.FieldRef<"RecruitmentTicket", 'DateTime'>;
     readonly createdAt: Prisma.FieldRef<"RecruitmentTicket", 'DateTime'>;
     readonly updatedAt: Prisma.FieldRef<"RecruitmentTicket", 'DateTime'>;
+    readonly staleAlertedAt: Prisma.FieldRef<"RecruitmentTicket", 'DateTime'>;
 }
 /**
  * RecruitmentTicket findUnique

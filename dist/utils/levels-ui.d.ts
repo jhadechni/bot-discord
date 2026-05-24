@@ -20,7 +20,7 @@ type LevelProfileOptions = {
     messageCount: number;
     voiceTime: string;
 };
-type TopEntry = {
+export type TopEntry = {
     rank: number;
     name: string;
     avatarUrl: string | null;

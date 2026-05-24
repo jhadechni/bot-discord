@@ -184,8 +184,8 @@ export type ShopProductPriceWhereInput = {
     validFrom?: Prisma.DateTimeFilter<"ShopProductPrice"> | Date | string;
     validTo?: Prisma.DateTimeNullableFilter<"ShopProductPrice"> | Date | string | null;
     changedByUserId?: Prisma.StringNullableFilter<"ShopProductPrice"> | string | null;
-    product?: Prisma.XOR<Prisma.ShopProductScalarRelationFilter, Prisma.ShopProductWhereInput>;
     changedByUser?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
+    product?: Prisma.XOR<Prisma.ShopProductScalarRelationFilter, Prisma.ShopProductWhereInput>;
 };
 export type ShopProductPriceOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -195,8 +195,8 @@ export type ShopProductPriceOrderByWithRelationInput = {
     validFrom?: Prisma.SortOrder;
     validTo?: Prisma.SortOrderInput | Prisma.SortOrder;
     changedByUserId?: Prisma.SortOrderInput | Prisma.SortOrder;
-    product?: Prisma.ShopProductOrderByWithRelationInput;
     changedByUser?: Prisma.ShopUserOrderByWithRelationInput;
+    product?: Prisma.ShopProductOrderByWithRelationInput;
 };
 export type ShopProductPriceWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -209,8 +209,8 @@ export type ShopProductPriceWhereUniqueInput = Prisma.AtLeast<{
     validFrom?: Prisma.DateTimeFilter<"ShopProductPrice"> | Date | string;
     validTo?: Prisma.DateTimeNullableFilter<"ShopProductPrice"> | Date | string | null;
     changedByUserId?: Prisma.StringNullableFilter<"ShopProductPrice"> | string | null;
-    product?: Prisma.XOR<Prisma.ShopProductScalarRelationFilter, Prisma.ShopProductWhereInput>;
     changedByUser?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
+    product?: Prisma.XOR<Prisma.ShopProductScalarRelationFilter, Prisma.ShopProductWhereInput>;
 }, "id">;
 export type ShopProductPriceOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -244,8 +244,8 @@ export type ShopProductPriceCreateInput = {
     currency?: string;
     validFrom?: Date | string;
     validTo?: Date | string | null;
-    product: Prisma.ShopProductCreateNestedOneWithoutPricesInput;
     changedByUser?: Prisma.ShopUserCreateNestedOneWithoutPriceChangesInput;
+    product: Prisma.ShopProductCreateNestedOneWithoutPricesInput;
 };
 export type ShopProductPriceUncheckedCreateInput = {
     id?: string;
@@ -262,8 +262,8 @@ export type ShopProductPriceUpdateInput = {
     currency?: Prisma.StringFieldUpdateOperationsInput | string;
     validFrom?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     validTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    product?: Prisma.ShopProductUpdateOneRequiredWithoutPricesNestedInput;
     changedByUser?: Prisma.ShopUserUpdateOneWithoutPriceChangesNestedInput;
+    product?: Prisma.ShopProductUpdateOneRequiredWithoutPricesNestedInput;
 };
 export type ShopProductPriceUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -581,8 +581,8 @@ export type ShopProductPriceSelect<ExtArgs extends runtime.Types.Extensions.Inte
     validFrom?: boolean;
     validTo?: boolean;
     changedByUserId?: boolean;
-    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
     changedByUser?: boolean | Prisma.ShopProductPrice$changedByUserArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopProductPrice"]>;
 export type ShopProductPriceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -592,8 +592,8 @@ export type ShopProductPriceSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
     validFrom?: boolean;
     validTo?: boolean;
     changedByUserId?: boolean;
-    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
     changedByUser?: boolean | Prisma.ShopProductPrice$changedByUserArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopProductPrice"]>;
 export type ShopProductPriceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -603,8 +603,8 @@ export type ShopProductPriceSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
     validFrom?: boolean;
     validTo?: boolean;
     changedByUserId?: boolean;
-    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
     changedByUser?: boolean | Prisma.ShopProductPrice$changedByUserArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopProductPrice"]>;
 export type ShopProductPriceSelectScalar = {
     id?: boolean;
@@ -617,22 +617,22 @@ export type ShopProductPriceSelectScalar = {
 };
 export type ShopProductPriceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productId" | "price" | "currency" | "validFrom" | "validTo" | "changedByUserId", ExtArgs["result"]["shopProductPrice"]>;
 export type ShopProductPriceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
     changedByUser?: boolean | Prisma.ShopProductPrice$changedByUserArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
 };
 export type ShopProductPriceIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
     changedByUser?: boolean | Prisma.ShopProductPrice$changedByUserArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
 };
 export type ShopProductPriceIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
     changedByUser?: boolean | Prisma.ShopProductPrice$changedByUserArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
 };
 export type $ShopProductPricePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "ShopProductPrice";
     objects: {
-        product: Prisma.$ShopProductPayload<ExtArgs>;
         changedByUser: Prisma.$ShopUserPayload<ExtArgs> | null;
+        product: Prisma.$ShopProductPayload<ExtArgs>;
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
@@ -971,8 +971,8 @@ export interface ShopProductPriceDelegate<ExtArgs extends runtime.Types.Extensio
  */
 export interface Prisma__ShopProductPriceClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise";
-    product<T extends Prisma.ShopProductDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopProductDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopProductClient<runtime.Types.Result.GetResult<Prisma.$ShopProductPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
     changedByUser<T extends Prisma.ShopProductPrice$changedByUserArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopProductPrice$changedByUserArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
+    product<T extends Prisma.ShopProductDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopProductDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopProductClient<runtime.Types.Result.GetResult<Prisma.$ShopProductPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.

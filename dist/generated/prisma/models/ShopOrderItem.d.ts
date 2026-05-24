@@ -228,9 +228,9 @@ export type ShopOrderItemWhereInput = {
     reservedQuantity?: Prisma.IntFilter<"ShopOrderItem"> | number;
     deliveredQuantity?: Prisma.IntFilter<"ShopOrderItem"> | number;
     notes?: Prisma.StringNullableFilter<"ShopOrderItem"> | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountListRelationFilter;
     order?: Prisma.XOR<Prisma.ShopOrderScalarRelationFilter, Prisma.ShopOrderWhereInput>;
     product?: Prisma.XOR<Prisma.ShopProductScalarRelationFilter, Prisma.ShopProductWhereInput>;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountListRelationFilter;
 };
 export type ShopOrderItemOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -243,9 +243,9 @@ export type ShopOrderItemOrderByWithRelationInput = {
     reservedQuantity?: Prisma.SortOrder;
     deliveredQuantity?: Prisma.SortOrder;
     notes?: Prisma.SortOrderInput | Prisma.SortOrder;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountOrderByRelationAggregateInput;
     order?: Prisma.ShopOrderOrderByWithRelationInput;
     product?: Prisma.ShopProductOrderByWithRelationInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountOrderByRelationAggregateInput;
 };
 export type ShopOrderItemWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -261,9 +261,9 @@ export type ShopOrderItemWhereUniqueInput = Prisma.AtLeast<{
     reservedQuantity?: Prisma.IntFilter<"ShopOrderItem"> | number;
     deliveredQuantity?: Prisma.IntFilter<"ShopOrderItem"> | number;
     notes?: Prisma.StringNullableFilter<"ShopOrderItem"> | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountListRelationFilter;
     order?: Prisma.XOR<Prisma.ShopOrderScalarRelationFilter, Prisma.ShopOrderWhereInput>;
     product?: Prisma.XOR<Prisma.ShopProductScalarRelationFilter, Prisma.ShopProductWhereInput>;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountListRelationFilter;
 }, "id">;
 export type ShopOrderItemOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -306,9 +306,9 @@ export type ShopOrderItemCreateInput = {
     reservedQuantity?: number;
     deliveredQuantity?: number;
     notes?: string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderItemInput;
     order: Prisma.ShopOrderCreateNestedOneWithoutItemsInput;
     product: Prisma.ShopProductCreateNestedOneWithoutOrderItemsInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderItemInput;
 };
 export type ShopOrderItemUncheckedCreateInput = {
     id?: string;
@@ -332,9 +332,9 @@ export type ShopOrderItemUpdateInput = {
     reservedQuantity?: Prisma.IntFieldUpdateOperationsInput | number;
     deliveredQuantity?: Prisma.IntFieldUpdateOperationsInput | number;
     notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderItemNestedInput;
     order?: Prisma.ShopOrderUpdateOneRequiredWithoutItemsNestedInput;
     product?: Prisma.ShopProductUpdateOneRequiredWithoutOrderItemsNestedInput;
-    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderItemNestedInput;
 };
 export type ShopOrderItemUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -546,8 +546,8 @@ export type ShopOrderItemCreateWithoutProductInput = {
     reservedQuantity?: number;
     deliveredQuantity?: number;
     notes?: string | null;
-    order: Prisma.ShopOrderCreateNestedOneWithoutItemsInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderItemInput;
+    order: Prisma.ShopOrderCreateNestedOneWithoutItemsInput;
 };
 export type ShopOrderItemUncheckedCreateWithoutProductInput = {
     id?: string;
@@ -606,8 +606,8 @@ export type ShopOrderItemCreateWithoutOrderInput = {
     reservedQuantity?: number;
     deliveredQuantity?: number;
     notes?: string | null;
-    product: Prisma.ShopProductCreateNestedOneWithoutOrderItemsInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderItemInput;
+    product: Prisma.ShopProductCreateNestedOneWithoutOrderItemsInput;
 };
 export type ShopOrderItemUncheckedCreateWithoutOrderInput = {
     id?: string;
@@ -723,8 +723,8 @@ export type ShopOrderItemUpdateWithoutProductInput = {
     reservedQuantity?: Prisma.IntFieldUpdateOperationsInput | number;
     deliveredQuantity?: Prisma.IntFieldUpdateOperationsInput | number;
     notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    order?: Prisma.ShopOrderUpdateOneRequiredWithoutItemsNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderItemNestedInput;
+    order?: Prisma.ShopOrderUpdateOneRequiredWithoutItemsNestedInput;
 };
 export type ShopOrderItemUncheckedUpdateWithoutProductInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -769,8 +769,8 @@ export type ShopOrderItemUpdateWithoutOrderInput = {
     reservedQuantity?: Prisma.IntFieldUpdateOperationsInput | number;
     deliveredQuantity?: Prisma.IntFieldUpdateOperationsInput | number;
     notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    product?: Prisma.ShopProductUpdateOneRequiredWithoutOrderItemsNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderItemNestedInput;
+    product?: Prisma.ShopProductUpdateOneRequiredWithoutOrderItemsNestedInput;
 };
 export type ShopOrderItemUncheckedUpdateWithoutOrderInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -830,9 +830,9 @@ export type ShopOrderItemSelect<ExtArgs extends runtime.Types.Extensions.Interna
     reservedQuantity?: boolean;
     deliveredQuantity?: boolean;
     notes?: boolean;
+    appliedDiscounts?: boolean | Prisma.ShopOrderItem$appliedDiscountsArgs<ExtArgs>;
     order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
-    appliedDiscounts?: boolean | Prisma.ShopOrderItem$appliedDiscountsArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopOrderItemCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopOrderItem"]>;
 export type ShopOrderItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -877,9 +877,9 @@ export type ShopOrderItemSelectScalar = {
 };
 export type ShopOrderItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "productId" | "quantity" | "unitPrice" | "grossLineTotal" | "netLineTotal" | "reservedQuantity" | "deliveredQuantity" | "notes", ExtArgs["result"]["shopOrderItem"]>;
 export type ShopOrderItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    appliedDiscounts?: boolean | Prisma.ShopOrderItem$appliedDiscountsArgs<ExtArgs>;
     order?: boolean | Prisma.ShopOrderDefaultArgs<ExtArgs>;
     product?: boolean | Prisma.ShopProductDefaultArgs<ExtArgs>;
-    appliedDiscounts?: boolean | Prisma.ShopOrderItem$appliedDiscountsArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopOrderItemCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type ShopOrderItemIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -893,9 +893,9 @@ export type ShopOrderItemIncludeUpdateManyAndReturn<ExtArgs extends runtime.Type
 export type $ShopOrderItemPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "ShopOrderItem";
     objects: {
+        appliedDiscounts: Prisma.$ShopAppliedDiscountPayload<ExtArgs>[];
         order: Prisma.$ShopOrderPayload<ExtArgs>;
         product: Prisma.$ShopProductPayload<ExtArgs>;
-        appliedDiscounts: Prisma.$ShopAppliedDiscountPayload<ExtArgs>[];
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
@@ -1237,9 +1237,9 @@ export interface ShopOrderItemDelegate<ExtArgs extends runtime.Types.Extensions.
  */
 export interface Prisma__ShopOrderItemClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise";
+    appliedDiscounts<T extends Prisma.ShopOrderItem$appliedDiscountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrderItem$appliedDiscountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopAppliedDiscountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     order<T extends Prisma.ShopOrderDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrderDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopOrderClient<runtime.Types.Result.GetResult<Prisma.$ShopOrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
     product<T extends Prisma.ShopProductDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopProductDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopProductClient<runtime.Types.Result.GetResult<Prisma.$ShopProductPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
-    appliedDiscounts<T extends Prisma.ShopOrderItem$appliedDiscountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrderItem$appliedDiscountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopAppliedDiscountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.

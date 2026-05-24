@@ -53,6 +53,9 @@ export declare const ModelName: {
     readonly ShopCategory: "ShopCategory";
     readonly ShopSubcategory: "ShopSubcategory";
     readonly ShopOrderEvent: "ShopOrderEvent";
+    readonly MapBackground: "MapBackground";
+    readonly ProtectionMember: "ProtectionMember";
+    readonly WorldProtection: "WorldProtection";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
 export declare const TransactionIsolationLevel: {
@@ -66,7 +69,6 @@ export declare const GuildConfigScalarFieldEnum: {
     readonly id: "id";
     readonly guildId: "guildId";
     readonly welcomeChannelId: "welcomeChannelId";
-    readonly farewellChannelId: "farewellChannelId";
     readonly logsChannelId: "logsChannelId";
     readonly logsModChannelId: "logsModChannelId";
     readonly logsAutomodChannelId: "logsAutomodChannelId";
@@ -87,6 +89,11 @@ export declare const GuildConfigScalarFieldEnum: {
     readonly shopCategoryId: "shopCategoryId";
     readonly createdAt: "createdAt";
     readonly updatedAt: "updatedAt";
+    readonly farewellChannelId: "farewellChannelId";
+    readonly notifRoles: "notifRoles";
+    readonly expulsionReasons: "expulsionReasons";
+    readonly notifPanelChannelId: "notifPanelChannelId";
+    readonly notifPanelMessageId: "notifPanelMessageId";
 };
 export type GuildConfigScalarFieldEnum = (typeof GuildConfigScalarFieldEnum)[keyof typeof GuildConfigScalarFieldEnum];
 export declare const SuggestionScalarFieldEnum: {
@@ -115,9 +122,9 @@ export declare const RecruitmentTicketScalarFieldEnum: {
     readonly minecraftRole: "minecraftRole";
     readonly answers: "answers";
     readonly status: "status";
-    readonly staleAlertedAt: "staleAlertedAt";
     readonly createdAt: "createdAt";
     readonly updatedAt: "updatedAt";
+    readonly staleAlertedAt: "staleAlertedAt";
 };
 export type RecruitmentTicketScalarFieldEnum = (typeof RecruitmentTicketScalarFieldEnum)[keyof typeof RecruitmentTicketScalarFieldEnum];
 export declare const ModerationLogScalarFieldEnum: {
@@ -128,8 +135,8 @@ export declare const ModerationLogScalarFieldEnum: {
     readonly type: "type";
     readonly reason: "reason";
     readonly duration: "duration";
-    readonly active: "active";
     readonly createdAt: "createdAt";
+    readonly active: "active";
 };
 export type ModerationLogScalarFieldEnum = (typeof ModerationLogScalarFieldEnum)[keyof typeof ModerationLogScalarFieldEnum];
 export declare const UserActivityScalarFieldEnum: {
@@ -178,8 +185,8 @@ export declare const NicknameRoleScalarFieldEnum: {
     readonly id: "id";
     readonly guildId: "guildId";
     readonly roleId: "roleId";
-    readonly emoji: "emoji";
     readonly createdAt: "createdAt";
+    readonly emoji: "emoji";
 };
 export type NicknameRoleScalarFieldEnum = (typeof NicknameRoleScalarFieldEnum)[keyof typeof NicknameRoleScalarFieldEnum];
 export declare const ClanPlayerScalarFieldEnum: {
@@ -188,14 +195,14 @@ export declare const ClanPlayerScalarFieldEnum: {
     readonly fullName: "fullName";
     readonly minecraftNick: "minecraftNick";
     readonly rank: "rank";
-    readonly minecraftRank: "minecraftRank";
     readonly joinedAt: "joinedAt";
     readonly country: "country";
     readonly utcOffset: "utcOffset";
     readonly status: "status";
-    readonly notes: "notes";
     readonly createdAt: "createdAt";
     readonly updatedAt: "updatedAt";
+    readonly notes: "notes";
+    readonly minecraftRank: "minecraftRank";
 };
 export type ClanPlayerScalarFieldEnum = (typeof ClanPlayerScalarFieldEnum)[keyof typeof ClanPlayerScalarFieldEnum];
 export declare const ShopUserScalarFieldEnum: {
@@ -236,8 +243,6 @@ export declare const ShopProductScalarFieldEnum: {
     readonly name: "name";
     readonly productType: "productType";
     readonly category: "category";
-    readonly additionalCategories: "additionalCategories";
-    readonly additionalCategoryAssignments: "additionalCategoryAssignments";
     readonly subcategory: "subcategory";
     readonly description: "description";
     readonly baseMaterialId: "baseMaterialId";
@@ -247,6 +252,8 @@ export declare const ShopProductScalarFieldEnum: {
     readonly isActive: "isActive";
     readonly createdAt: "createdAt";
     readonly updatedAt: "updatedAt";
+    readonly additionalCategories: "additionalCategories";
+    readonly additionalCategoryAssignments: "additionalCategoryAssignments";
 };
 export type ShopProductScalarFieldEnum = (typeof ShopProductScalarFieldEnum)[keyof typeof ShopProductScalarFieldEnum];
 export declare const ShopProductComponentScalarFieldEnum: {
@@ -404,34 +411,65 @@ export declare const ShopOrderEventScalarFieldEnum: {
     readonly createdAt: "createdAt";
 };
 export type ShopOrderEventScalarFieldEnum = (typeof ShopOrderEventScalarFieldEnum)[keyof typeof ShopOrderEventScalarFieldEnum];
+export declare const MapBackgroundScalarFieldEnum: {
+    readonly id: "id";
+    readonly imageUrl: "imageUrl";
+    readonly x1: "x1";
+    readonly z1: "z1";
+    readonly x2: "x2";
+    readonly z2: "z2";
+};
+export type MapBackgroundScalarFieldEnum = (typeof MapBackgroundScalarFieldEnum)[keyof typeof MapBackgroundScalarFieldEnum];
+export declare const ProtectionMemberScalarFieldEnum: {
+    readonly id: "id";
+    readonly protectionId: "protectionId";
+    readonly playerName: "playerName";
+    readonly level: "level";
+    readonly addedAt: "addedAt";
+};
+export type ProtectionMemberScalarFieldEnum = (typeof ProtectionMemberScalarFieldEnum)[keyof typeof ProtectionMemberScalarFieldEnum];
+export declare const WorldProtectionScalarFieldEnum: {
+    readonly id: "id";
+    readonly alias: "alias";
+    readonly startX: "startX";
+    readonly startZ: "startZ";
+    readonly endX: "endX";
+    readonly endZ: "endZ";
+    readonly isOwned: "isOwned";
+    readonly color: "color";
+    readonly description: "description";
+    readonly createdAt: "createdAt";
+    readonly updatedAt: "updatedAt";
+};
+export type WorldProtectionScalarFieldEnum = (typeof WorldProtectionScalarFieldEnum)[keyof typeof WorldProtectionScalarFieldEnum];
 export declare const SortOrder: {
     readonly asc: "asc";
     readonly desc: "desc";
 };
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
+export declare const JsonNullValueInput: {
+    readonly JsonNull: import("@prisma/client-runtime-utils").JsonNullClass;
+};
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
 export declare const NullableJsonNullValueInput: {
     readonly DbNull: import("@prisma/client-runtime-utils").DbNullClass;
     readonly JsonNull: import("@prisma/client-runtime-utils").JsonNullClass;
 };
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput];
-export declare const JsonNullValueInput: {
-    readonly JsonNull: import("@prisma/client-runtime-utils").JsonNullClass;
-};
-export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
 export declare const QueryMode: {
     readonly default: "default";
     readonly insensitive: "insensitive";
 };
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode];
-export declare const NullsOrder: {
-    readonly first: "first";
-    readonly last: "last";
-};
-export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder];
 export declare const JsonNullValueFilter: {
     readonly DbNull: import("@prisma/client-runtime-utils").DbNullClass;
     readonly JsonNull: import("@prisma/client-runtime-utils").JsonNullClass;
     readonly AnyNull: import("@prisma/client-runtime-utils").AnyNullClass;
 };
 export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter];
+export declare const NullsOrder: {
+    readonly first: "first";
+    readonly last: "last";
+};
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder];
 //# sourceMappingURL=prismaNamespaceBrowser.d.ts.map

@@ -17,6 +17,8 @@ import { tiendaCommand } from "../commands/shop/tienda.command.js";
 import { pedidoCommand, pedidosCommand } from "../commands/shop/pedido.command.js";
 import { jugadoresCommand } from "../commands/players/jugadores.command.js";
 import { kitCommand } from "../commands/kit/kit.command.js";
+import { notifCommand } from "../commands/notif/notif.command.js";
+import { expulsionCommand } from "../commands/expulsion/expulsion.command.js";
 const commands = [
     pingCommand,
     suggestCommand,
@@ -35,6 +37,8 @@ const commands = [
     pedidosCommand,
     jugadoresCommand,
     kitCommand,
+    notifCommand,
+    expulsionCommand,
 ].map((cmd) => cmd.data.toJSON());
 const rest = new REST().setToken(env.discordToken);
 try {

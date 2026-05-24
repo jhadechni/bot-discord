@@ -1,4 +1,5 @@
-import { AQUARIS_COLORS, buildAquarisEmbed } from './message-ui.js';
+import { EmbedBuilder } from 'discord.js';
+import { AQUARIS_COLORS, AQUARIS_FOOTERS, buildAquarisEmbed } from './message-ui.js';
 export const COMMUNITY_COLORS = {
     welcome: AQUARIS_COLORS.success,
     leave: AQUARIS_COLORS.neutral,
@@ -60,11 +61,17 @@ export function buildLeaveLogEmbed(options) {
     }).setThumbnail(options.avatarUrl);
 }
 export function buildBoostPublicEmbed(options) {
-    return buildAquarisEmbed({
-        title: 'Nuevo boost del servidor',
-        description: `<@${options.userId}> ha boosteado **${options.guildName}**. Gracias por apoyar a la comunidad.`,
-        color: COMMUNITY_COLORS.boost,
-        footer: 'community',
-    }).setThumbnail(options.avatarUrl);
+    return new EmbedBuilder()
+        .setColor(0xf47fff)
+        .setTitle('<:boostcohete:1507488331888333034>  Nuevo boost del servidor')
+        .setDescription(`<@${options.userId}> ha boosteado **${options.guildName}**.\n` +
+        `\n` +
+        `> <:boostfuego:1507488346346356828>  **Boost**\n` +
+        `> Gracias por apoyar el crecimiento de la comunidad y ayudar a mejorar el servidor.\n` +
+        `\n` +
+        `-# Aquaris cuenta ahora con **${options.boostCount}** boosts. Gracias por formar parte del proyecto. <:LogoDiscord:1506671086425608373>`)
+        .setThumbnail(options.avatarUrl)
+        .setFooter(AQUARIS_FOOTERS.community)
+        .setTimestamp();
 }
 //# sourceMappingURL=community-ui.js.map

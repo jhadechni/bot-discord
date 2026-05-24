@@ -90,13 +90,13 @@ export declare function queryCatalogProducts(guildId: string): Promise<({
     isActive: boolean;
     category: string;
     productType: string;
-    additionalCategories: string[];
-    additionalCategoryAssignments: import("@prisma/client/runtime/client").JsonValue;
     subcategory: string;
     baseMaterialId: string | null;
     presentationType: string;
     presentationQuantity: number;
     presentationLabel: string | null;
+    additionalCategories: string[];
+    additionalCategoryAssignments: import("@prisma/client/runtime/client").JsonValue;
 })[]>;
 export declare function resolveCatalogViewState(products: CatalogProduct[], mode: CatalogMode, categoryKey?: string | null, subcategoryKey?: string | null, requestedPage?: number, pageSize?: number): CatalogViewState;
 export declare function buildProductGridEmbed(state: CatalogViewState, options?: ProductGridEmbedOptions): EmbedBuilder;

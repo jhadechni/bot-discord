@@ -13,6 +13,7 @@ import {
   ThreadAutoArchiveDuration,
   type Guild,
   type Message,
+  type ButtonInteraction,
 } from 'discord.js';
 import type { BotEvent } from '../types/event.js';
 import type { AquarisClient } from '../core/client.js';
@@ -107,11 +108,39 @@ import {
   buildShopNoticeEmbed,
 } from '../utils/shop-ui.js';
 import { buildSystemErrorEmbed } from '../utils/system-ui.js';
+import { parseNotifRoles, buildNotifEphemeral } from '../commands/notif/notif.command.js';
+import {
+  parseExpulsionReasons,
+  pendingExpulsions,
+  buildExpulsionConfirmEmbed,
+  buildReasonSelectMenu,
+  buildConfirmRow,
+  executeExpulsion,
+} from '../commands/expulsion/expulsion.command.js';
 
 // ── Cooldowns (en memoria para sugerencias, DB para apply) ───────────────────
 const SUGGEST_COOLDOWN_MS = 5 * 60 * 1000;  // 5 minutos
 const APPLY_COOLDOWN_MS   = 48 * 60 * 60 * 1000; // 48 horas
 const suggestCooldown = new Map<string, number>(); // key: guildId-userId → last timestamp
+
+// ── Sesiones de notif (en RAM) ────────────────────────────────────────────────
+const activeNotifSessions = new Map<string, { interaction: ButtonInteraction; createdAt: number; timeoutId: ReturnType<typeof setTimeout> }>();
+const NOTIF_SESSION_TTL = 14 * 60 * 1000; // 14 min (Discord tokens expiran a los 15)
+
+async function expireNotifSession(sessionInteraction: ButtonInteraction, userId: string): Promise<void> {
+  activeNotifSessions.delete(userId);
+  try {
+    await sessionInteraction.editReply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x99aab5)
+          .setDescription('⏱️ Esta sesión ha expirado. Pulsa el botón del panel para abrir una nueva.')
+          .setFooter({ text: 'Aquaris • Notificaciones  ·  💙 by jhadechni' }),
+      ],
+      components: [],
+    });
+  } catch { /* token ya expirado */ }
+}
 
 // Cache de selección pendiente en /remind kit (userId → templateId[])
 const kitSelectionCache = new Map<string, string[]>();
@@ -3481,6 +3510,218 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       });
       return;
     }
+
+    // ── notif:open — abre el selector ephemeral por usuario ──────────────────
+    if (interaction.isButton() && interaction.customId === 'notif:open') {
+      const guild = interaction.guild;
+      if (!guild) return;
+
+      const session = activeNotifSessions.get(interaction.user.id);
+      const sessionValid = !!session && (Date.now() - session.createdAt) < NOTIF_SESSION_TTL;
+
+      const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+      if (!member) return;
+
+      const config = await getOrCreateGuildConfig(guild.id);
+      const notifRoles = parseNotifRoles(config.notifRoles);
+      const currentRoleIds = new Set(notifRoles.map(r => r.roleId).filter(id => member.roles.cache.has(id)));
+
+      const ephemeral = buildNotifEphemeral(notifRoles, currentRoleIds);
+
+      if (sessionValid) {
+        // Ya hay un ephemeral abierto — actualizar en lugar de crear uno nuevo
+        await interaction.deferUpdate();
+        await session.interaction.editReply(ephemeral);
+      } else {
+        // Primera vez o sesión expirada — crear nuevo ephemeral y programar cierre
+        await interaction.reply({ ...ephemeral, ephemeral: true });
+        const timeoutId = setTimeout(
+          () => { void expireNotifSession(interaction, interaction.user.id); },
+          NOTIF_SESSION_TTL,
+        );
+        activeNotifSessions.set(interaction.user.id, { interaction, createdAt: Date.now(), timeoutId });
+      }
+      return;
+    }
+
+    // ── notif:select — aplica roles al instante ───────────────────────────────
+    if (interaction.isStringSelectMenu() && interaction.customId === 'notif:select') {
+      await interaction.deferUpdate();
+      const guild = interaction.guild;
+      if (!guild) return;
+
+      const config = await getOrCreateGuildConfig(guild.id);
+      const notifRoles = parseNotifRoles(config.notifRoles);
+      const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+      if (!member) return;
+
+      const selected = new Set(interaction.values);
+
+      for (const nr of notifRoles) {
+        const shouldHave = selected.has(nr.roleId);
+        const hasIt = member.roles.cache.has(nr.roleId);
+        if (shouldHave === hasIt) continue;
+        const role = guild.roles.cache.get(nr.roleId) ?? await guild.roles.fetch(nr.roleId).catch(() => null);
+        if (!role) continue;
+        if (shouldHave) await member.roles.add(role);
+        else await member.roles.remove(role);
+      }
+
+      const ephemeral = buildNotifEphemeral(notifRoles, selected);
+      await interaction.editReply(ephemeral);
+      return;
+    }
+
+    // ── expulsion:select:{targetId} ───────────────────────────────────────────
+    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('expulsion:select:')) {
+      const targetId = interaction.customId.slice('expulsion:select:'.length);
+      const selected = interaction.values[0];
+      const guild = interaction.guild;
+      if (!guild) return;
+
+      if (selected === '__custom__') {
+        const modal = new ModalBuilder()
+          .setCustomId(`expulsion:custom_modal:${targetId}`)
+          .setTitle('Motivo de expulsión')
+          .addComponents(
+            new ActionRowBuilder<TextInputBuilder>().addComponents(
+              new TextInputBuilder()
+                .setCustomId('reason_text')
+                .setLabel('Escribe el motivo')
+                .setStyle(TextInputStyle.Paragraph)
+                .setRequired(true)
+                .setMinLength(5)
+                .setMaxLength(500),
+            ),
+          );
+        await interaction.showModal(modal);
+        return;
+      }
+
+      const config = await getOrCreateGuildConfig(guild.id);
+      const reasons = parseExpulsionReasons(config.expulsionReasons);
+      const found = reasons.find(r => r.id === selected);
+      if (!found) return;
+
+      const target = await interaction.client.users.fetch(targetId).catch(() => null);
+      if (!target) return;
+
+      pendingExpulsions.set(interaction.user.id, {
+        targetId,
+        targetTag: target.tag,
+        reason: found.text,
+      });
+
+      await interaction.deferUpdate();
+      await interaction.editReply({
+        embeds: [buildExpulsionConfirmEmbed({ id: targetId, username: target.username }, found.text)],
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            buildReasonSelectMenu(reasons, targetId),
+          ),
+          buildConfirmRow(targetId, false),
+        ],
+      });
+      return;
+    }
+
+    // ── expulsion:custom_modal:{targetId} — motivo libre ─────────────────────
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('expulsion:custom_modal:')) {
+      const targetId = interaction.customId.slice('expulsion:custom_modal:'.length);
+      const reason = interaction.fields.getTextInputValue('reason_text').trim();
+      const guild = interaction.guild;
+      if (!guild) return;
+
+      const target = await interaction.client.users.fetch(targetId).catch(() => null);
+      if (!target) return;
+
+      pendingExpulsions.set(interaction.user.id, {
+        targetId,
+        targetTag: target.tag,
+        reason,
+      });
+
+      const config = await getOrCreateGuildConfig(guild.id);
+      const reasons = parseExpulsionReasons(config.expulsionReasons);
+
+      await interaction.deferUpdate();
+      await interaction.editReply({
+        embeds: [buildExpulsionConfirmEmbed({ id: targetId, username: target.username }, reason)],
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            buildReasonSelectMenu(reasons, targetId),
+          ),
+          buildConfirmRow(targetId, false),
+        ],
+      });
+      return;
+    }
+
+    // ── expulsion:confirm:{targetId} ─────────────────────────────────────────
+    if (interaction.isButton() && interaction.customId.startsWith('expulsion:confirm:')) {
+      await interaction.deferUpdate();
+      const targetId = interaction.customId.slice('expulsion:confirm:'.length);
+      const guild = interaction.guild;
+      if (!guild) return;
+
+      const pending = pendingExpulsions.get(interaction.user.id);
+      if (!pending || pending.targetId !== targetId) {
+        await interaction.editReply({
+          embeds: [new EmbedBuilder().setColor(0xed4245).setDescription('❌ Sesión expirada. Inicia el proceso de nuevo con `/expulsion ejecutar`.')],
+          components: [],
+        });
+        return;
+      }
+
+      pendingExpulsions.delete(interaction.user.id);
+
+      const results = await executeExpulsion({
+        guildId: guild.id,
+        targetId: pending.targetId,
+        targetTag: pending.targetTag,
+        reason: pending.reason,
+        moderatorId: interaction.user.id,
+        guild,
+      });
+
+      await interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0x57f287)
+            .setTitle('✅ Expulsión ejecutada')
+            .setDescription(`<@${pending.targetId}> ha sido expulsado del clan.`)
+            .addFields(
+              { name: 'Motivo', value: pending.reason, inline: false },
+              { name: 'Roles', value: results.rolesReset ? `✅ Quitados${results.visitorAssigned ? ' · Visitante asignado' : ''}` : '⚠️ No se pudo', inline: true },
+              { name: 'Estado clan', value: results.clanPlayerFound ? (results.clanPlayerUpdated ? '✅ Marcado retirado' : '⚠️ Error') : '⚠️ No encontrado', inline: true },
+              { name: 'Protecciones', value: results.clanPlayerFound ? `🗑️ ${results.protectionsRemoved} eliminadas` : '—', inline: true },
+            )
+            .setFooter({ text: 'Aquaris • Moderación  ·  💙 by jhadechni' })
+            .setTimestamp(),
+        ],
+        components: [],
+      });
+      return;
+    }
+
+    // ── expulsion:cancel:{targetId} ───────────────────────────────────────────
+    if (interaction.isButton() && interaction.customId.startsWith('expulsion:cancel:')) {
+      await interaction.deferUpdate();
+      pendingExpulsions.delete(interaction.user.id);
+      await interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0x99aab5)
+            .setTitle('Expulsión cancelada')
+            .setDescription('El proceso fue cancelado. No se realizaron cambios.')
+            .setFooter({ text: 'Aquaris • Moderación  ·  💙 by jhadechni' })
+            .setTimestamp(),
+        ],
+        components: [],
+      });
+      return;
+    }
+
     } catch (err) {
       const context: Record<string, unknown> = {
         err,

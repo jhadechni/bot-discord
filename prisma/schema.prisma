@@ -8,30 +8,35 @@ datasource db {
 }
 
 model GuildConfig {
-  id                     String   @id @default(cuid())
-  guildId                String   @unique
-  welcomeChannelId       String?
-  farewellChannelId      String?
-  logsChannelId          String?  // fallback general
-  logsModChannelId       String?  // moderación manual
-  logsAutomodChannelId   String?  // auto-moderación (filtro, spam)
-  logsRecruitChannelId   String?  // reclutamiento
-  logsJoinsChannelId     String?  // entradas al servidor
-  logsLeavesChannelId    String?  // salidas del servidor
-  suggestionsChannelId   String?
-  recruitmentCategoryId  String?
-  visitorRoleId          String?
-  aspirantRoleId         String?
-  liderRoleId            String?
-  coLiderRoleId          String?
-  aquarisRoleId          String?
-  staffRoleId            String?
-  levelUpChannelId       String?  // notificaciones de subida de nivel
-  boostChannelId         String?  // anuncios de boost del servidor
-  shopStaffChannelId     String?  // canal donde el bot notifica pedidos pendientes al staff
-  shopCategoryId         String?  // categoría donde se crean los canales temporales de pedido
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  guildId               String   @unique
+  welcomeChannelId      String?
+  logsChannelId         String?
+  logsModChannelId      String?
+  logsAutomodChannelId  String?
+  logsRecruitChannelId  String?
+  logsJoinsChannelId    String?
+  logsLeavesChannelId   String?
+  suggestionsChannelId  String?
+  recruitmentCategoryId String?
+  visitorRoleId         String?
+  aspirantRoleId        String?
+  liderRoleId           String?
+  coLiderRoleId         String?
+  aquarisRoleId         String?
+  staffRoleId           String?
+  levelUpChannelId      String?
+  boostChannelId        String?
+  shopStaffChannelId    String?
+  shopCategoryId        String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  farewellChannelId     String?
+  notifRoles          Json    @default("[]")
+  expulsionReasons    Json    @default("[]")
+  notifPanelChannelId String?
+  notifPanelMessageId String?
+
 }
 
 model Suggestion {
@@ -43,13 +48,16 @@ model Suggestion {
   status    String           @default("PENDING")
   createdAt DateTime         @default(now())
   votes     SuggestionVote[]
+
+  @@index([guildId, status, createdAt])
+  @@index([userId, createdAt])
 }
 
 model SuggestionVote {
   id           String     @id @default(cuid())
   suggestionId String
   userId       String
-  vote         String     // 'UP' | 'DOWN'
+  vote         String
   createdAt    DateTime   @default(now())
   suggestion   Suggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
 
@@ -57,16 +65,19 @@ model SuggestionVote {
 }
 
 model RecruitmentTicket {
-  id              String    @id @default(cuid())
-  guildId         String
-  userId          String
-  channelId       String?
-  minecraftRole   String?
-  answers         Json?
-  status          String    @default("OPEN")
-  staleAlertedAt  DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  guildId        String
+  userId         String
+  channelId      String?
+  minecraftRole  String?
+  answers        Json?
+  status         String    @default("OPEN")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  staleAlertedAt DateTime?
+
+  @@index([guildId, status, createdAt])
+  @@index([guildId, userId])
 }
 
 model ModerationLog {
@@ -77,8 +88,12 @@ model ModerationLog {
   type        String
   reason      String?
   duration    Int?
-  active      Boolean  @default(true)
   createdAt   DateTime @default(now())
+  active      Boolean  @default(true)
+
+  @@index([guildId, createdAt])
+  @@index([guildId, moderatorId, createdAt])
+  @@index([guildId, targetId, createdAt])
 }
 
 model UserActivity {
@@ -103,7 +118,6 @@ model ReminderTemplate {
   cooldownMin Int
   isActive    Boolean    @default(true)
   createdAt   DateTime   @default(now())
-
   reminders   Reminder[]
 
   @@unique([guildId, name])
@@ -115,11 +129,14 @@ model Reminder {
   guildId     String
   message     String
   triggerAt   DateTime
-  intervalMin Int?              // null = único, >0 = recurrente (minutos)
+  intervalMin Int?
   active      Boolean           @default(true)
   createdAt   DateTime          @default(now())
   templateId  String?
   template    ReminderTemplate? @relation(fields: [templateId], references: [id])
+
+  @@index([active, triggerAt])
+  @@index([guildId, userId])
 }
 
 model FilterWord {
@@ -136,8 +153,8 @@ model NicknameRole {
   id        String   @id @default(cuid())
   guildId   String
   roleId    String
-  emoji     String?
   createdAt DateTime @default(now())
+  emoji     String?
 
   @@unique([guildId, roleId])
 }
@@ -148,14 +165,14 @@ model ClanPlayer {
   fullName      String
   minecraftNick String   @unique
   rank          String
-  minecraftRank String   @default("miembro")
   joinedAt      DateTime @db.Date
   country       String
   utcOffset     String
   status        String   @default("activo")
-  notes         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @default(now())
+  notes         String?
+  minecraftRank String   @default("miembro")
 
   @@index([status])
   @@index([joinedAt])
@@ -163,236 +180,259 @@ model ClanPlayer {
   @@index([minecraftRank])
 }
 
-// ─── Tienda del clan ──────────────────────────────────────────────────────────
-
 model ShopUser {
-  id            String   @id @default(cuid())
-  guildId       String
-  discordUserId String
-  username      String
-  displayName   String
-  isStaff       Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  ordersAsCustomer       ShopOrder[]             @relation("ShopOrderCustomer")
-  ordersAccepted         ShopOrder[]             @relation("ShopOrderAcceptedBy")
-  ordersRejected         ShopOrder[]             @relation("ShopOrderRejectedBy")
-  ordersClosed           ShopOrder[]             @relation("ShopOrderClosedBy")
-  movements              ShopInventoryMovement[]
-  salesAsBuyer           ShopSale[]              @relation("ShopSaleBuyer")
-  salesRegistered        ShopSale[]              @relation("ShopSaleRegisteredBy")
-  withdrawals            ShopWithdrawal[]
-  orderEvents            ShopOrderEvent[]
-  priceChanges           ShopProductPrice[]
-  discountPolicies       ShopDiscountPolicy[]    @relation("ShopDiscountPolicyCreatedBy")
-  appliedDiscounts       ShopAppliedDiscount[]   @relation("ShopAppliedDiscountAppliedBy")
+  id               String                  @id @default(cuid())
+  guildId          String
+  discordUserId    String
+  username         String
+  displayName      String
+  isStaff          Boolean                 @default(false)
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  appliedDiscounts ShopAppliedDiscount[]   @relation("ShopAppliedDiscountAppliedBy")
+  discountPolicies ShopDiscountPolicy[]    @relation("ShopDiscountPolicyCreatedBy")
+  movements        ShopInventoryMovement[]
+  ordersAccepted   ShopOrder[]             @relation("ShopOrderAcceptedBy")
+  ordersClosed     ShopOrder[]             @relation("ShopOrderClosedBy")
+  ordersAsCustomer ShopOrder[]             @relation("ShopOrderCustomer")
+  ordersRejected   ShopOrder[]             @relation("ShopOrderRejectedBy")
+  orderEvents      ShopOrderEvent[]
+  priceChanges     ShopProductPrice[]
+  salesAsBuyer     ShopSale[]              @relation("ShopSaleBuyer")
+  salesRegistered  ShopSale[]              @relation("ShopSaleRegisteredBy")
+  withdrawals      ShopWithdrawal[]
 
   @@unique([guildId, discordUserId])
 }
 
 model ShopMaterial {
-  id        String   @id @default(cuid())
-  guildId   String
-  name      String
-  baseUnit  String   @default("item")
-  stackSize Int      @default(64)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id             String                  @id @default(cuid())
+  guildId        String
+  name           String
+  baseUnit       String                  @default("item")
+  stackSize      Int                     @default(64)
+  isActive       Boolean                 @default(true)
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
   inventory      ShopInventory?
-  components     ShopProductComponent[]
-  directProducts ShopProduct[]          @relation("ShopProductBaseMaterial")
   movements      ShopInventoryMovement[]
+  directProducts ShopProduct[]           @relation("ShopProductBaseMaterial")
+  components     ShopProductComponent[]
   withdrawals    ShopWithdrawal[]
 
   @@unique([guildId, name])
+  @@index([isActive, name])
+  @@index([name])
 }
 
 model ShopInventory {
-  id            String   @id @default(cuid())
+  id            String       @id @default(cuid())
   guildId       String
-  materialId    String   @unique
-  currentStock  Int      @default(0)
-  reservedStock Int      @default(0)
-  minStockAlert Int      @default(0)
-  updatedAt     DateTime @updatedAt
-
-  material ShopMaterial @relation(fields: [materialId], references: [id])
+  materialId    String       @unique
+  currentStock  Int          @default(0)
+  reservedStock Int          @default(0)
+  minStockAlert Int          @default(0)
+  updatedAt     DateTime     @updatedAt
+  material      ShopMaterial @relation(fields: [materialId], references: [id])
 }
 
 model ShopProduct {
-  id                   String   @id @default(cuid())
-  guildId              String
-  name                 String
-  productType          String   // single | bulk | kit | service
-  category             String   @default("general")
-  additionalCategories String[] @default([])
-  additionalCategoryAssignments Json @default("[]")
-  subcategory          String   @default("otros")
-  description          String?
-  baseMaterialId       String?
-  presentationType     String   @default("custom") // unit | stack | chest | double_chest | custom
-  presentationQuantity Int      @default(1)
-  presentationLabel    String?
-  isActive             Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                            String                 @id @default(cuid())
+  guildId                       String
+  name                          String
+  productType                   String
+  category                      String                 @default("general")
+  subcategory                   String                 @default("otros")
+  description                   String?
+  baseMaterialId                String?
+  presentationType              String                 @default("custom")
+  presentationQuantity          Int                    @default(1)
+  presentationLabel             String?
+  isActive                      Boolean                @default(true)
+  createdAt                     DateTime               @default(now())
+  updatedAt                     DateTime               @updatedAt
+  additionalCategories          String[]               @default([])
+  additionalCategoryAssignments Json                   @default("[]")
+  discountPolicies              ShopDiscountPolicy[]
+  orderItems                    ShopOrderItem[]
+  baseMaterial                  ShopMaterial?          @relation("ShopProductBaseMaterial", fields: [baseMaterialId], references: [id])
+  components                    ShopProductComponent[]
+  prices                        ShopProductPrice[]
 
-  baseMaterial ShopMaterial?           @relation("ShopProductBaseMaterial", fields: [baseMaterialId], references: [id])
-  components   ShopProductComponent[]
-  prices       ShopProductPrice[]
-  orderItems   ShopOrderItem[]
-  discountPolicies ShopDiscountPolicy[]
-
-  @@unique([guildId, name])
+  @@index([baseMaterialId])
+  @@index([isActive, name])
+  @@index([productType, category, name])
+  @@index([productType, isActive])
 }
 
 model ShopProductComponent {
-  id               String @id @default(cuid())
+  id               String       @id @default(cuid())
   productId        String
   materialId       String
   quantityRequired Int
-
-  product  ShopProduct  @relation(fields: [productId], references: [id])
-  material ShopMaterial @relation(fields: [materialId], references: [id])
+  material         ShopMaterial @relation(fields: [materialId], references: [id])
+  product          ShopProduct  @relation(fields: [productId], references: [id])
 
   @@unique([productId, materialId])
+  @@index([materialId])
 }
 
 model ShopProductPrice {
-  id              String    @id @default(cuid())
+  id              String      @id @default(cuid())
   productId       String
   price           Decimal
-  currency        String    @default("$")
-  validFrom       DateTime  @default(now())
+  currency        String      @default("$")
+  validFrom       DateTime    @default(now())
   validTo         DateTime?
   changedByUserId String?
+  changedByUser   ShopUser?   @relation(fields: [changedByUserId], references: [id])
+  product         ShopProduct @relation(fields: [productId], references: [id])
 
-  product       ShopProduct @relation(fields: [productId], references: [id])
-  changedByUser ShopUser?   @relation(fields: [changedByUserId], references: [id])
+  @@index([changedByUserId])
+  @@index([productId, validTo, validFrom])
 }
 
 model ShopOrder {
-  id               String    @id @default(cuid())
-  guildId          String
-  orderCode        String    @unique
-  customerUserId   String
-  status           String    @default("pending")
-  ticketChannelId  String?
-  staffChannelId   String?
-  acceptedByUserId String?
-  rejectedByUserId String?
-  closedByUserId   String?
-  rejectionReason  String?
-  cancelReason     String?
-  subtotalAmount   Decimal   @default(0)
-  totalDiscountAmount Decimal @default(0)
-  totalAmount      Decimal   @default(0)
-  createdAt        DateTime  @default(now())
-  acceptedAt       DateTime?
-  rejectedAt       DateTime?
-  closedAt         DateTime?
-  cancelledAt      DateTime?
+  id                  String                  @id @default(cuid())
+  guildId             String
+  orderCode           String                  @unique
+  customerUserId      String
+  status              String                  @default("pending")
+  ticketChannelId     String?
+  staffChannelId      String?
+  acceptedByUserId    String?
+  rejectedByUserId    String?
+  closedByUserId      String?
+  rejectionReason     String?
+  cancelReason        String?
+  subtotalAmount      Decimal                 @default(0)
+  totalDiscountAmount Decimal                 @default(0)
+  totalAmount         Decimal                 @default(0)
+  createdAt           DateTime                @default(now())
+  acceptedAt          DateTime?
+  rejectedAt          DateTime?
+  closedAt            DateTime?
+  cancelledAt         DateTime?
+  appliedDiscounts    ShopAppliedDiscount[]
+  movements           ShopInventoryMovement[]
+  acceptedBy          ShopUser?               @relation("ShopOrderAcceptedBy", fields: [acceptedByUserId], references: [id])
+  closedBy            ShopUser?               @relation("ShopOrderClosedBy", fields: [closedByUserId], references: [id])
+  customer            ShopUser                @relation("ShopOrderCustomer", fields: [customerUserId], references: [id])
+  rejectedBy          ShopUser?               @relation("ShopOrderRejectedBy", fields: [rejectedByUserId], references: [id])
+  events              ShopOrderEvent[]
+  items               ShopOrderItem[]
+  sale                ShopSale?
 
-  customer   ShopUser  @relation("ShopOrderCustomer",   fields: [customerUserId],   references: [id])
-  acceptedBy ShopUser? @relation("ShopOrderAcceptedBy", fields: [acceptedByUserId], references: [id])
-  rejectedBy ShopUser? @relation("ShopOrderRejectedBy", fields: [rejectedByUserId], references: [id])
-  closedBy   ShopUser? @relation("ShopOrderClosedBy",   fields: [closedByUserId],   references: [id])
-
-  items     ShopOrderItem[]
-  movements ShopInventoryMovement[]
-  sale      ShopSale?
-  events    ShopOrderEvent[]
-  appliedDiscounts ShopAppliedDiscount[]
+  @@index([acceptedByUserId])
+  @@index([closedByUserId])
+  @@index([customerUserId])
+  @@index([rejectedByUserId])
+  @@index([status, createdAt])
 }
 
 model ShopOrderItem {
-  id                String  @id @default(cuid())
+  id                String                @id @default(cuid())
   orderId           String
   productId         String
   quantity          Int
   unitPrice         Decimal
   grossLineTotal    Decimal
-  netLineTotal      Decimal  @default(0)
-  reservedQuantity  Int     @default(0)
-  deliveredQuantity Int     @default(0)
+  netLineTotal      Decimal               @default(0)
+  reservedQuantity  Int                   @default(0)
+  deliveredQuantity Int                   @default(0)
   notes             String?
+  appliedDiscounts  ShopAppliedDiscount[]
+  order             ShopOrder             @relation(fields: [orderId], references: [id])
+  product           ShopProduct           @relation(fields: [productId], references: [id])
 
-  order   ShopOrder   @relation(fields: [orderId], references: [id])
-  product ShopProduct @relation(fields: [productId], references: [id])
-  appliedDiscounts ShopAppliedDiscount[]
+  @@index([orderId])
+  @@index([productId])
 }
 
 model ShopInventoryMovement {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   guildId        String
   materialId     String
-  movementType   String   // stock_add | stock_remove | reserve | release | sale | manual_adjustment | withdrawal | reversal
+  movementType   String
   quantity       Int
   reason         String?
   relatedOrderId String?
   performedById  String?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime     @default(now())
+  material       ShopMaterial @relation(fields: [materialId], references: [id])
+  performedBy    ShopUser?    @relation(fields: [performedById], references: [id])
+  relatedOrder   ShopOrder?   @relation(fields: [relatedOrderId], references: [id])
 
-  material     ShopMaterial @relation(fields: [materialId], references: [id])
-  relatedOrder ShopOrder?   @relation(fields: [relatedOrderId], references: [id])
-  performedBy  ShopUser?    @relation(fields: [performedById], references: [id])
+  @@index([createdAt])
+  @@index([materialId])
+  @@index([movementType, createdAt])
+  @@index([performedById])
+  @@index([relatedOrderId])
 }
 
 model ShopSale {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   guildId        String
-  orderId        String   @unique
+  orderId        String    @unique
   buyerUserId    String
   registeredById String
   totalAmount    Decimal
-  soldAt         DateTime @default(now())
+  soldAt         DateTime  @default(now())
+  buyer          ShopUser  @relation("ShopSaleBuyer", fields: [buyerUserId], references: [id])
+  order          ShopOrder @relation(fields: [orderId], references: [id])
+  registeredBy   ShopUser  @relation("ShopSaleRegisteredBy", fields: [registeredById], references: [id])
 
-  order        ShopOrder @relation(fields: [orderId],        references: [id])
-  buyer        ShopUser  @relation("ShopSaleBuyer",        fields: [buyerUserId],      references: [id])
-  registeredBy ShopUser  @relation("ShopSaleRegisteredBy", fields: [registeredById],   references: [id])
+  @@index([buyerUserId])
+  @@index([guildId, soldAt])
+  @@index([registeredById])
 }
 
 model ShopWithdrawal {
-  id            String   @id @default(cuid())
+  id            String       @id @default(cuid())
   guildId       String
   materialId    String
   quantity      Int
   reason        String
   performedById String
-  createdAt     DateTime @default(now())
+  createdAt     DateTime     @default(now())
+  material      ShopMaterial @relation(fields: [materialId], references: [id])
+  performedBy   ShopUser     @relation(fields: [performedById], references: [id])
 
-  material    ShopMaterial @relation(fields: [materialId],    references: [id])
-  performedBy ShopUser     @relation(fields: [performedById], references: [id])
+  @@index([guildId, createdAt])
+  @@index([materialId])
+  @@index([performedById])
 }
 
 model ShopDiscountPolicy {
-  id              String   @id @default(cuid())
-  guildId         String
-  productId       String?
-  minQuantity     Int?
-  name            String
-  description     String?
-  policyType      String
-  scope           String
-  discountType    String
-  discountValue   Decimal
-  isActive        Boolean  @default(true)
-  priority        Int      @default(0)
-  startsAt        DateTime?
-  endsAt          DateTime?
-  createdByUserId String?
-  createdAt       DateTime @default(now())
-
-  product          ShopProduct?           @relation(fields: [productId], references: [id])
-  createdBy        ShopUser?              @relation("ShopDiscountPolicyCreatedBy", fields: [createdByUserId], references: [id])
+  id               String                @id @default(cuid())
+  guildId          String
+  productId        String?
+  minQuantity      Int?
+  name             String
+  description      String?
+  policyType       String
+  scope            String
+  discountType     String
+  discountValue    Decimal
+  isActive         Boolean               @default(true)
+  priority         Int                   @default(0)
+  startsAt         DateTime?
+  endsAt           DateTime?
+  createdByUserId  String?
+  createdAt        DateTime              @default(now())
   appliedDiscounts ShopAppliedDiscount[]
+  createdBy        ShopUser?             @relation("ShopDiscountPolicyCreatedBy", fields: [createdByUserId], references: [id])
+  product          ShopProduct?          @relation(fields: [productId], references: [id])
+
+  @@index([createdByUserId])
+  @@index([endsAt])
+  @@index([isActive, priority, createdAt])
+  @@index([productId])
+  @@index([startsAt])
 }
 
 model ShopAppliedDiscount {
-  id               String   @id @default(cuid())
+  id               String              @id @default(cuid())
   discountPolicyId String?
   orderId          String?
   orderItemId      String?
@@ -402,58 +442,107 @@ model ShopAppliedDiscount {
   discountAmount   Decimal
   reason           String?
   appliedByUserId  String?
-  appliedAt        DateTime @default(now())
+  appliedAt        DateTime            @default(now())
+  appliedBy        ShopUser?           @relation("ShopAppliedDiscountAppliedBy", fields: [appliedByUserId], references: [id])
+  discountPolicy   ShopDiscountPolicy? @relation(fields: [discountPolicyId], references: [id])
+  order            ShopOrder?          @relation(fields: [orderId], references: [id])
+  orderItem        ShopOrderItem?      @relation(fields: [orderItemId], references: [id])
 
-  discountPolicy ShopDiscountPolicy? @relation(fields: [discountPolicyId], references: [id])
-  order          ShopOrder?          @relation(fields: [orderId], references: [id])
-  orderItem      ShopOrderItem?      @relation(fields: [orderItemId], references: [id])
-  appliedBy      ShopUser?           @relation("ShopAppliedDiscountAppliedBy", fields: [appliedByUserId], references: [id])
+  @@index([appliedByUserId])
+  @@index([discountPolicyId])
+  @@index([orderId])
+  @@index([orderItemId])
 }
 
 model ShopCategory {
-  id          String   @id @default(cuid())
-  guildId     String
-  name        String
-  slug        String
-  description String?
-  imageUrl    String?
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  id            String            @id @default(cuid())
+  guildId       String
+  name          String
+  slug          String
+  description   String?
+  imageUrl      String?
+  isActive      Boolean           @default(true)
+  sortOrder     Int               @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
   subcategories ShopSubcategory[]
 
   @@unique([guildId, slug])
+  @@index([isActive, sortOrder])
 }
 
 model ShopSubcategory {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   categoryId  String
   name        String
   slug        String
   description String?
   imageUrl    String?
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  category ShopCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  isActive    Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  category    ShopCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([categoryId, slug])
+  @@index([categoryId, isActive, sortOrder])
+  @@index([categoryId, sortOrder])
 }
 
 model ShopOrderEvent {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   orderId       String
   eventType     String
   oldStatus     String?
   newStatus     String?
   performedById String?
   notes         String?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime  @default(now())
+  order         ShopOrder @relation(fields: [orderId], references: [id])
+  performedBy   ShopUser? @relation(fields: [performedById], references: [id])
 
-  order       ShopOrder @relation(fields: [orderId],       references: [id])
-  performedBy ShopUser? @relation(fields: [performedById], references: [id])
+  @@index([orderId, createdAt])
+  @@index([performedById])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model MapBackground {
+  id       String  @id
+  imageUrl String?
+  x1       Int     @default(-10774)
+  z1       Int     @default(15731)
+  x2       Int     @default(-6588)
+  z2       Int     @default(22171)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ProtectionMember {
+  id              String          @id
+  protectionId    String
+  playerName      String
+  level           String          @default("miembro")
+  addedAt         DateTime        @default(now())
+  WorldProtection WorldProtection @relation(fields: [protectionId], references: [id], onDelete: Cascade)
+
+  @@unique([protectionId, playerName])
+  @@index([playerName])
+  @@index([protectionId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model WorldProtection {
+  id               String             @id
+  alias            String
+  startX           Int
+  startZ           Int
+  endX             Int
+  endZ             Int
+  isOwned          Boolean            @default(true)
+  color            String             @default("#4cd7f6")
+  description      String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  ProtectionMember ProtectionMember[]
+
+  @@index([isOwned])
 }

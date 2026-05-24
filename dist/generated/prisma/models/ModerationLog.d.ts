@@ -26,8 +26,8 @@ export type ModerationLogMinAggregateOutputType = {
     type: string | null;
     reason: string | null;
     duration: number | null;
-    active: boolean | null;
     createdAt: Date | null;
+    active: boolean | null;
 };
 export type ModerationLogMaxAggregateOutputType = {
     id: string | null;
@@ -37,8 +37,8 @@ export type ModerationLogMaxAggregateOutputType = {
     type: string | null;
     reason: string | null;
     duration: number | null;
-    active: boolean | null;
     createdAt: Date | null;
+    active: boolean | null;
 };
 export type ModerationLogCountAggregateOutputType = {
     id: number;
@@ -48,8 +48,8 @@ export type ModerationLogCountAggregateOutputType = {
     type: number;
     reason: number;
     duration: number;
-    active: number;
     createdAt: number;
+    active: number;
     _all: number;
 };
 export type ModerationLogAvgAggregateInputType = {
@@ -66,8 +66,8 @@ export type ModerationLogMinAggregateInputType = {
     type?: true;
     reason?: true;
     duration?: true;
-    active?: true;
     createdAt?: true;
+    active?: true;
 };
 export type ModerationLogMaxAggregateInputType = {
     id?: true;
@@ -77,8 +77,8 @@ export type ModerationLogMaxAggregateInputType = {
     type?: true;
     reason?: true;
     duration?: true;
-    active?: true;
     createdAt?: true;
+    active?: true;
 };
 export type ModerationLogCountAggregateInputType = {
     id?: true;
@@ -88,8 +88,8 @@ export type ModerationLogCountAggregateInputType = {
     type?: true;
     reason?: true;
     duration?: true;
-    active?: true;
     createdAt?: true;
+    active?: true;
     _all?: true;
 };
 export type ModerationLogAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -176,8 +176,8 @@ export type ModerationLogGroupByOutputType = {
     type: string;
     reason: string | null;
     duration: number | null;
-    active: boolean;
     createdAt: Date;
+    active: boolean;
     _count: ModerationLogCountAggregateOutputType | null;
     _avg: ModerationLogAvgAggregateOutputType | null;
     _sum: ModerationLogSumAggregateOutputType | null;
@@ -198,8 +198,8 @@ export type ModerationLogWhereInput = {
     type?: Prisma.StringFilter<"ModerationLog"> | string;
     reason?: Prisma.StringNullableFilter<"ModerationLog"> | string | null;
     duration?: Prisma.IntNullableFilter<"ModerationLog"> | number | null;
-    active?: Prisma.BoolFilter<"ModerationLog"> | boolean;
     createdAt?: Prisma.DateTimeFilter<"ModerationLog"> | Date | string;
+    active?: Prisma.BoolFilter<"ModerationLog"> | boolean;
 };
 export type ModerationLogOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -209,8 +209,8 @@ export type ModerationLogOrderByWithRelationInput = {
     type?: Prisma.SortOrder;
     reason?: Prisma.SortOrderInput | Prisma.SortOrder;
     duration?: Prisma.SortOrderInput | Prisma.SortOrder;
-    active?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
+    active?: Prisma.SortOrder;
 };
 export type ModerationLogWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -223,8 +223,8 @@ export type ModerationLogWhereUniqueInput = Prisma.AtLeast<{
     type?: Prisma.StringFilter<"ModerationLog"> | string;
     reason?: Prisma.StringNullableFilter<"ModerationLog"> | string | null;
     duration?: Prisma.IntNullableFilter<"ModerationLog"> | number | null;
-    active?: Prisma.BoolFilter<"ModerationLog"> | boolean;
     createdAt?: Prisma.DateTimeFilter<"ModerationLog"> | Date | string;
+    active?: Prisma.BoolFilter<"ModerationLog"> | boolean;
 }, "id">;
 export type ModerationLogOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -234,8 +234,8 @@ export type ModerationLogOrderByWithAggregationInput = {
     type?: Prisma.SortOrder;
     reason?: Prisma.SortOrderInput | Prisma.SortOrder;
     duration?: Prisma.SortOrderInput | Prisma.SortOrder;
-    active?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
+    active?: Prisma.SortOrder;
     _count?: Prisma.ModerationLogCountOrderByAggregateInput;
     _avg?: Prisma.ModerationLogAvgOrderByAggregateInput;
     _max?: Prisma.ModerationLogMaxOrderByAggregateInput;
@@ -253,8 +253,8 @@ export type ModerationLogScalarWhereWithAggregatesInput = {
     type?: Prisma.StringWithAggregatesFilter<"ModerationLog"> | string;
     reason?: Prisma.StringNullableWithAggregatesFilter<"ModerationLog"> | string | null;
     duration?: Prisma.IntNullableWithAggregatesFilter<"ModerationLog"> | number | null;
-    active?: Prisma.BoolWithAggregatesFilter<"ModerationLog"> | boolean;
     createdAt?: Prisma.DateTimeWithAggregatesFilter<"ModerationLog"> | Date | string;
+    active?: Prisma.BoolWithAggregatesFilter<"ModerationLog"> | boolean;
 };
 export type ModerationLogCreateInput = {
     id?: string;
@@ -264,8 +264,8 @@ export type ModerationLogCreateInput = {
     type: string;
     reason?: string | null;
     duration?: number | null;
-    active?: boolean;
     createdAt?: Date | string;
+    active?: boolean;
 };
 export type ModerationLogUncheckedCreateInput = {
     id?: string;
@@ -275,8 +275,8 @@ export type ModerationLogUncheckedCreateInput = {
     type: string;
     reason?: string | null;
     duration?: number | null;
-    active?: boolean;
     createdAt?: Date | string;
+    active?: boolean;
 };
 export type ModerationLogUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -286,8 +286,8 @@ export type ModerationLogUpdateInput = {
     type?: Prisma.StringFieldUpdateOperationsInput | string;
     reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
-    active?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    active?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 };
 export type ModerationLogUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -297,8 +297,8 @@ export type ModerationLogUncheckedUpdateInput = {
     type?: Prisma.StringFieldUpdateOperationsInput | string;
     reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
-    active?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    active?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 };
 export type ModerationLogCreateManyInput = {
     id?: string;
@@ -308,8 +308,8 @@ export type ModerationLogCreateManyInput = {
     type: string;
     reason?: string | null;
     duration?: number | null;
-    active?: boolean;
     createdAt?: Date | string;
+    active?: boolean;
 };
 export type ModerationLogUpdateManyMutationInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -319,8 +319,8 @@ export type ModerationLogUpdateManyMutationInput = {
     type?: Prisma.StringFieldUpdateOperationsInput | string;
     reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
-    active?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    active?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 };
 export type ModerationLogUncheckedUpdateManyInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -330,8 +330,8 @@ export type ModerationLogUncheckedUpdateManyInput = {
     type?: Prisma.StringFieldUpdateOperationsInput | string;
     reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
-    active?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    active?: Prisma.BoolFieldUpdateOperationsInput | boolean;
 };
 export type ModerationLogCountOrderByAggregateInput = {
     id?: Prisma.SortOrder;
@@ -341,8 +341,8 @@ export type ModerationLogCountOrderByAggregateInput = {
     type?: Prisma.SortOrder;
     reason?: Prisma.SortOrder;
     duration?: Prisma.SortOrder;
-    active?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
+    active?: Prisma.SortOrder;
 };
 export type ModerationLogAvgOrderByAggregateInput = {
     duration?: Prisma.SortOrder;
@@ -355,8 +355,8 @@ export type ModerationLogMaxOrderByAggregateInput = {
     type?: Prisma.SortOrder;
     reason?: Prisma.SortOrder;
     duration?: Prisma.SortOrder;
-    active?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
+    active?: Prisma.SortOrder;
 };
 export type ModerationLogMinOrderByAggregateInput = {
     id?: Prisma.SortOrder;
@@ -366,8 +366,8 @@ export type ModerationLogMinOrderByAggregateInput = {
     type?: Prisma.SortOrder;
     reason?: Prisma.SortOrder;
     duration?: Prisma.SortOrder;
-    active?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
+    active?: Prisma.SortOrder;
 };
 export type ModerationLogSumOrderByAggregateInput = {
     duration?: Prisma.SortOrder;
@@ -390,8 +390,8 @@ export type ModerationLogSelect<ExtArgs extends runtime.Types.Extensions.Interna
     type?: boolean;
     reason?: boolean;
     duration?: boolean;
-    active?: boolean;
     createdAt?: boolean;
+    active?: boolean;
 }, ExtArgs["result"]["moderationLog"]>;
 export type ModerationLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -401,8 +401,8 @@ export type ModerationLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types
     type?: boolean;
     reason?: boolean;
     duration?: boolean;
-    active?: boolean;
     createdAt?: boolean;
+    active?: boolean;
 }, ExtArgs["result"]["moderationLog"]>;
 export type ModerationLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -412,8 +412,8 @@ export type ModerationLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
     type?: boolean;
     reason?: boolean;
     duration?: boolean;
-    active?: boolean;
     createdAt?: boolean;
+    active?: boolean;
 }, ExtArgs["result"]["moderationLog"]>;
 export type ModerationLogSelectScalar = {
     id?: boolean;
@@ -423,10 +423,10 @@ export type ModerationLogSelectScalar = {
     type?: boolean;
     reason?: boolean;
     duration?: boolean;
-    active?: boolean;
     createdAt?: boolean;
+    active?: boolean;
 };
-export type ModerationLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "targetId" | "moderatorId" | "type" | "reason" | "duration" | "active" | "createdAt", ExtArgs["result"]["moderationLog"]>;
+export type ModerationLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "targetId" | "moderatorId" | "type" | "reason" | "duration" | "createdAt" | "active", ExtArgs["result"]["moderationLog"]>;
 export type $ModerationLogPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "ModerationLog";
     objects: {};
@@ -438,8 +438,8 @@ export type $ModerationLogPayload<ExtArgs extends runtime.Types.Extensions.Inter
         type: string;
         reason: string | null;
         duration: number | null;
-        active: boolean;
         createdAt: Date;
+        active: boolean;
     }, ExtArgs["result"]["moderationLog"]>;
     composites: {};
 };
@@ -801,8 +801,8 @@ export interface ModerationLogFieldRefs {
     readonly type: Prisma.FieldRef<"ModerationLog", 'String'>;
     readonly reason: Prisma.FieldRef<"ModerationLog", 'String'>;
     readonly duration: Prisma.FieldRef<"ModerationLog", 'Int'>;
-    readonly active: Prisma.FieldRef<"ModerationLog", 'Boolean'>;
     readonly createdAt: Prisma.FieldRef<"ModerationLog", 'DateTime'>;
+    readonly active: Prisma.FieldRef<"ModerationLog", 'Boolean'>;
 }
 /**
  * ModerationLog findUnique

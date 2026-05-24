@@ -258,6 +258,9 @@ export declare const ModelName: {
     readonly ShopCategory: "ShopCategory";
     readonly ShopSubcategory: "ShopSubcategory";
     readonly ShopOrderEvent: "ShopOrderEvent";
+    readonly MapBackground: "MapBackground";
+    readonly ProtectionMember: "ProtectionMember";
+    readonly WorldProtection: "WorldProtection";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
 export interface TypeMapCb<GlobalOmitOptions = {}> extends runtime.Types.Utils.Fn<{
@@ -270,7 +273,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         omit: GlobalOmitOptions;
     };
     meta: {
-        modelProps: "guildConfig" | "suggestion" | "suggestionVote" | "recruitmentTicket" | "moderationLog" | "userActivity" | "reminderTemplate" | "reminder" | "filterWord" | "nicknameRole" | "clanPlayer" | "shopUser" | "shopMaterial" | "shopInventory" | "shopProduct" | "shopProductComponent" | "shopProductPrice" | "shopOrder" | "shopOrderItem" | "shopInventoryMovement" | "shopSale" | "shopWithdrawal" | "shopDiscountPolicy" | "shopAppliedDiscount" | "shopCategory" | "shopSubcategory" | "shopOrderEvent";
+        modelProps: "guildConfig" | "suggestion" | "suggestionVote" | "recruitmentTicket" | "moderationLog" | "userActivity" | "reminderTemplate" | "reminder" | "filterWord" | "nicknameRole" | "clanPlayer" | "shopUser" | "shopMaterial" | "shopInventory" | "shopProduct" | "shopProductComponent" | "shopProductPrice" | "shopOrder" | "shopOrderItem" | "shopInventoryMovement" | "shopSale" | "shopWithdrawal" | "shopDiscountPolicy" | "shopAppliedDiscount" | "shopCategory" | "shopSubcategory" | "shopOrderEvent" | "mapBackground" | "protectionMember" | "worldProtection";
         txIsolationLevel: TransactionIsolationLevel;
     };
     model: {
@@ -2272,6 +2275,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
                 };
             };
         };
+        MapBackground: {
+            payload: Prisma.$MapBackgroundPayload<ExtArgs>;
+            fields: Prisma.MapBackgroundFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.MapBackgroundFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MapBackgroundPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.MapBackgroundFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MapBackgroundPayload>;
+                };
+                findFirst: {
+                    args: Prisma.MapBackgroundFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MapBackgroundPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.MapBackgroundFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MapBackgroundPayload>;
+                };
+                findMany: {
+                    args: Prisma.MapBackgroundFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MapBackgroundPayload>[];
+                };
+                create: {
+                    args: Prisma.MapBackgroundCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MapBackgroundPayload>;
+                };
+                createMany: {
+                    args: Prisma.MapBackgroundCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.MapBackgroundCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MapBackgroundPayload>[];
+                };
+                delete: {
+                    args: Prisma.MapBackgroundDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MapBackgroundPayload>;
+                };
+                update: {
+                    args: Prisma.MapBackgroundUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MapBackgroundPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.MapBackgroundDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.MapBackgroundUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.MapBackgroundUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MapBackgroundPayload>[];
+                };
+                upsert: {
+                    args: Prisma.MapBackgroundUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MapBackgroundPayload>;
+                };
+                aggregate: {
+                    args: Prisma.MapBackgroundAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateMapBackground>;
+                };
+                groupBy: {
+                    args: Prisma.MapBackgroundGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.MapBackgroundGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.MapBackgroundCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.MapBackgroundCountAggregateOutputType> | number;
+                };
+            };
+        };
+        ProtectionMember: {
+            payload: Prisma.$ProtectionMemberPayload<ExtArgs>;
+            fields: Prisma.ProtectionMemberFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.ProtectionMemberFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProtectionMemberPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.ProtectionMemberFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProtectionMemberPayload>;
+                };
+                findFirst: {
+                    args: Prisma.ProtectionMemberFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProtectionMemberPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.ProtectionMemberFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProtectionMemberPayload>;
+                };
+                findMany: {
+                    args: Prisma.ProtectionMemberFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProtectionMemberPayload>[];
+                };
+                create: {
+                    args: Prisma.ProtectionMemberCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProtectionMemberPayload>;
+                };
+                createMany: {
+                    args: Prisma.ProtectionMemberCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.ProtectionMemberCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProtectionMemberPayload>[];
+                };
+                delete: {
+                    args: Prisma.ProtectionMemberDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProtectionMemberPayload>;
+                };
+                update: {
+                    args: Prisma.ProtectionMemberUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProtectionMemberPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.ProtectionMemberDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.ProtectionMemberUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.ProtectionMemberUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProtectionMemberPayload>[];
+                };
+                upsert: {
+                    args: Prisma.ProtectionMemberUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProtectionMemberPayload>;
+                };
+                aggregate: {
+                    args: Prisma.ProtectionMemberAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateProtectionMember>;
+                };
+                groupBy: {
+                    args: Prisma.ProtectionMemberGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.ProtectionMemberGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.ProtectionMemberCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.ProtectionMemberCountAggregateOutputType> | number;
+                };
+            };
+        };
+        WorldProtection: {
+            payload: Prisma.$WorldProtectionPayload<ExtArgs>;
+            fields: Prisma.WorldProtectionFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.WorldProtectionFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$WorldProtectionPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.WorldProtectionFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$WorldProtectionPayload>;
+                };
+                findFirst: {
+                    args: Prisma.WorldProtectionFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$WorldProtectionPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.WorldProtectionFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$WorldProtectionPayload>;
+                };
+                findMany: {
+                    args: Prisma.WorldProtectionFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$WorldProtectionPayload>[];
+                };
+                create: {
+                    args: Prisma.WorldProtectionCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$WorldProtectionPayload>;
+                };
+                createMany: {
+                    args: Prisma.WorldProtectionCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.WorldProtectionCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$WorldProtectionPayload>[];
+                };
+                delete: {
+                    args: Prisma.WorldProtectionDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$WorldProtectionPayload>;
+                };
+                update: {
+                    args: Prisma.WorldProtectionUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$WorldProtectionPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.WorldProtectionDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.WorldProtectionUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.WorldProtectionUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$WorldProtectionPayload>[];
+                };
+                upsert: {
+                    args: Prisma.WorldProtectionUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$WorldProtectionPayload>;
+                };
+                aggregate: {
+                    args: Prisma.WorldProtectionAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateWorldProtection>;
+                };
+                groupBy: {
+                    args: Prisma.WorldProtectionGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.WorldProtectionGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.WorldProtectionCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.WorldProtectionCountAggregateOutputType> | number;
+                };
+            };
+        };
     };
 } & {
     other: {
@@ -2310,7 +2535,6 @@ export declare const GuildConfigScalarFieldEnum: {
     readonly id: "id";
     readonly guildId: "guildId";
     readonly welcomeChannelId: "welcomeChannelId";
-    readonly farewellChannelId: "farewellChannelId";
     readonly logsChannelId: "logsChannelId";
     readonly logsModChannelId: "logsModChannelId";
     readonly logsAutomodChannelId: "logsAutomodChannelId";
@@ -2331,6 +2555,11 @@ export declare const GuildConfigScalarFieldEnum: {
     readonly shopCategoryId: "shopCategoryId";
     readonly createdAt: "createdAt";
     readonly updatedAt: "updatedAt";
+    readonly farewellChannelId: "farewellChannelId";
+    readonly notifRoles: "notifRoles";
+    readonly expulsionReasons: "expulsionReasons";
+    readonly notifPanelChannelId: "notifPanelChannelId";
+    readonly notifPanelMessageId: "notifPanelMessageId";
 };
 export type GuildConfigScalarFieldEnum = (typeof GuildConfigScalarFieldEnum)[keyof typeof GuildConfigScalarFieldEnum];
 export declare const SuggestionScalarFieldEnum: {
@@ -2359,9 +2588,9 @@ export declare const RecruitmentTicketScalarFieldEnum: {
     readonly minecraftRole: "minecraftRole";
     readonly answers: "answers";
     readonly status: "status";
-    readonly staleAlertedAt: "staleAlertedAt";
     readonly createdAt: "createdAt";
     readonly updatedAt: "updatedAt";
+    readonly staleAlertedAt: "staleAlertedAt";
 };
 export type RecruitmentTicketScalarFieldEnum = (typeof RecruitmentTicketScalarFieldEnum)[keyof typeof RecruitmentTicketScalarFieldEnum];
 export declare const ModerationLogScalarFieldEnum: {
@@ -2372,8 +2601,8 @@ export declare const ModerationLogScalarFieldEnum: {
     readonly type: "type";
     readonly reason: "reason";
     readonly duration: "duration";
-    readonly active: "active";
     readonly createdAt: "createdAt";
+    readonly active: "active";
 };
 export type ModerationLogScalarFieldEnum = (typeof ModerationLogScalarFieldEnum)[keyof typeof ModerationLogScalarFieldEnum];
 export declare const UserActivityScalarFieldEnum: {
@@ -2422,8 +2651,8 @@ export declare const NicknameRoleScalarFieldEnum: {
     readonly id: "id";
     readonly guildId: "guildId";
     readonly roleId: "roleId";
-    readonly emoji: "emoji";
     readonly createdAt: "createdAt";
+    readonly emoji: "emoji";
 };
 export type NicknameRoleScalarFieldEnum = (typeof NicknameRoleScalarFieldEnum)[keyof typeof NicknameRoleScalarFieldEnum];
 export declare const ClanPlayerScalarFieldEnum: {
@@ -2432,14 +2661,14 @@ export declare const ClanPlayerScalarFieldEnum: {
     readonly fullName: "fullName";
     readonly minecraftNick: "minecraftNick";
     readonly rank: "rank";
-    readonly minecraftRank: "minecraftRank";
     readonly joinedAt: "joinedAt";
     readonly country: "country";
     readonly utcOffset: "utcOffset";
     readonly status: "status";
-    readonly notes: "notes";
     readonly createdAt: "createdAt";
     readonly updatedAt: "updatedAt";
+    readonly notes: "notes";
+    readonly minecraftRank: "minecraftRank";
 };
 export type ClanPlayerScalarFieldEnum = (typeof ClanPlayerScalarFieldEnum)[keyof typeof ClanPlayerScalarFieldEnum];
 export declare const ShopUserScalarFieldEnum: {
@@ -2480,8 +2709,6 @@ export declare const ShopProductScalarFieldEnum: {
     readonly name: "name";
     readonly productType: "productType";
     readonly category: "category";
-    readonly additionalCategories: "additionalCategories";
-    readonly additionalCategoryAssignments: "additionalCategoryAssignments";
     readonly subcategory: "subcategory";
     readonly description: "description";
     readonly baseMaterialId: "baseMaterialId";
@@ -2491,6 +2718,8 @@ export declare const ShopProductScalarFieldEnum: {
     readonly isActive: "isActive";
     readonly createdAt: "createdAt";
     readonly updatedAt: "updatedAt";
+    readonly additionalCategories: "additionalCategories";
+    readonly additionalCategoryAssignments: "additionalCategoryAssignments";
 };
 export type ShopProductScalarFieldEnum = (typeof ShopProductScalarFieldEnum)[keyof typeof ShopProductScalarFieldEnum];
 export declare const ShopProductComponentScalarFieldEnum: {
@@ -2648,36 +2877,67 @@ export declare const ShopOrderEventScalarFieldEnum: {
     readonly createdAt: "createdAt";
 };
 export type ShopOrderEventScalarFieldEnum = (typeof ShopOrderEventScalarFieldEnum)[keyof typeof ShopOrderEventScalarFieldEnum];
+export declare const MapBackgroundScalarFieldEnum: {
+    readonly id: "id";
+    readonly imageUrl: "imageUrl";
+    readonly x1: "x1";
+    readonly z1: "z1";
+    readonly x2: "x2";
+    readonly z2: "z2";
+};
+export type MapBackgroundScalarFieldEnum = (typeof MapBackgroundScalarFieldEnum)[keyof typeof MapBackgroundScalarFieldEnum];
+export declare const ProtectionMemberScalarFieldEnum: {
+    readonly id: "id";
+    readonly protectionId: "protectionId";
+    readonly playerName: "playerName";
+    readonly level: "level";
+    readonly addedAt: "addedAt";
+};
+export type ProtectionMemberScalarFieldEnum = (typeof ProtectionMemberScalarFieldEnum)[keyof typeof ProtectionMemberScalarFieldEnum];
+export declare const WorldProtectionScalarFieldEnum: {
+    readonly id: "id";
+    readonly alias: "alias";
+    readonly startX: "startX";
+    readonly startZ: "startZ";
+    readonly endX: "endX";
+    readonly endZ: "endZ";
+    readonly isOwned: "isOwned";
+    readonly color: "color";
+    readonly description: "description";
+    readonly createdAt: "createdAt";
+    readonly updatedAt: "updatedAt";
+};
+export type WorldProtectionScalarFieldEnum = (typeof WorldProtectionScalarFieldEnum)[keyof typeof WorldProtectionScalarFieldEnum];
 export declare const SortOrder: {
     readonly asc: "asc";
     readonly desc: "desc";
 };
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder];
+export declare const JsonNullValueInput: {
+    readonly JsonNull: runtime.JsonNullClass;
+};
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
 export declare const NullableJsonNullValueInput: {
     readonly DbNull: runtime.DbNullClass;
     readonly JsonNull: runtime.JsonNullClass;
 };
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput];
-export declare const JsonNullValueInput: {
-    readonly JsonNull: runtime.JsonNullClass;
-};
-export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
 export declare const QueryMode: {
     readonly default: "default";
     readonly insensitive: "insensitive";
 };
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode];
-export declare const NullsOrder: {
-    readonly first: "first";
-    readonly last: "last";
-};
-export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder];
 export declare const JsonNullValueFilter: {
     readonly DbNull: runtime.DbNullClass;
     readonly JsonNull: runtime.JsonNullClass;
     readonly AnyNull: runtime.AnyNullClass;
 };
 export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter];
+export declare const NullsOrder: {
+    readonly first: "first";
+    readonly last: "last";
+};
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder];
 /**
  * Field references
  */
@@ -2854,6 +3114,9 @@ export type GlobalOmitConfig = {
     shopCategory?: Prisma.ShopCategoryOmit;
     shopSubcategory?: Prisma.ShopSubcategoryOmit;
     shopOrderEvent?: Prisma.ShopOrderEventOmit;
+    mapBackground?: Prisma.MapBackgroundOmit;
+    protectionMember?: Prisma.ProtectionMemberOmit;
+    worldProtection?: Prisma.WorldProtectionOmit;
 };
 export type LogLevel = 'info' | 'query' | 'warn' | 'error';
 export type LogDefinition = {

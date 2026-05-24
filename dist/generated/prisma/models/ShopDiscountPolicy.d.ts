@@ -264,9 +264,9 @@ export type ShopDiscountPolicyWhereInput = {
     endsAt?: Prisma.DateTimeNullableFilter<"ShopDiscountPolicy"> | Date | string | null;
     createdByUserId?: Prisma.StringNullableFilter<"ShopDiscountPolicy"> | string | null;
     createdAt?: Prisma.DateTimeFilter<"ShopDiscountPolicy"> | Date | string;
-    product?: Prisma.XOR<Prisma.ShopProductNullableScalarRelationFilter, Prisma.ShopProductWhereInput> | null;
-    createdBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
     appliedDiscounts?: Prisma.ShopAppliedDiscountListRelationFilter;
+    createdBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
+    product?: Prisma.XOR<Prisma.ShopProductNullableScalarRelationFilter, Prisma.ShopProductWhereInput> | null;
 };
 export type ShopDiscountPolicyOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -285,9 +285,9 @@ export type ShopDiscountPolicyOrderByWithRelationInput = {
     endsAt?: Prisma.SortOrderInput | Prisma.SortOrder;
     createdByUserId?: Prisma.SortOrderInput | Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
-    product?: Prisma.ShopProductOrderByWithRelationInput;
-    createdBy?: Prisma.ShopUserOrderByWithRelationInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountOrderByRelationAggregateInput;
+    createdBy?: Prisma.ShopUserOrderByWithRelationInput;
+    product?: Prisma.ShopProductOrderByWithRelationInput;
 };
 export type ShopDiscountPolicyWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -309,9 +309,9 @@ export type ShopDiscountPolicyWhereUniqueInput = Prisma.AtLeast<{
     endsAt?: Prisma.DateTimeNullableFilter<"ShopDiscountPolicy"> | Date | string | null;
     createdByUserId?: Prisma.StringNullableFilter<"ShopDiscountPolicy"> | string | null;
     createdAt?: Prisma.DateTimeFilter<"ShopDiscountPolicy"> | Date | string;
-    product?: Prisma.XOR<Prisma.ShopProductNullableScalarRelationFilter, Prisma.ShopProductWhereInput> | null;
-    createdBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
     appliedDiscounts?: Prisma.ShopAppliedDiscountListRelationFilter;
+    createdBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
+    product?: Prisma.XOR<Prisma.ShopProductNullableScalarRelationFilter, Prisma.ShopProductWhereInput> | null;
 }, "id">;
 export type ShopDiscountPolicyOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -372,9 +372,9 @@ export type ShopDiscountPolicyCreateInput = {
     startsAt?: Date | string | null;
     endsAt?: Date | string | null;
     createdAt?: Date | string;
-    product?: Prisma.ShopProductCreateNestedOneWithoutDiscountPoliciesInput;
-    createdBy?: Prisma.ShopUserCreateNestedOneWithoutDiscountPoliciesInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutDiscountPolicyInput;
+    createdBy?: Prisma.ShopUserCreateNestedOneWithoutDiscountPoliciesInput;
+    product?: Prisma.ShopProductCreateNestedOneWithoutDiscountPoliciesInput;
 };
 export type ShopDiscountPolicyUncheckedCreateInput = {
     id?: string;
@@ -410,9 +410,9 @@ export type ShopDiscountPolicyUpdateInput = {
     startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     endsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    product?: Prisma.ShopProductUpdateOneWithoutDiscountPoliciesNestedInput;
-    createdBy?: Prisma.ShopUserUpdateOneWithoutDiscountPoliciesNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutDiscountPolicyNestedInput;
+    createdBy?: Prisma.ShopUserUpdateOneWithoutDiscountPoliciesNestedInput;
+    product?: Prisma.ShopProductUpdateOneWithoutDiscountPoliciesNestedInput;
 };
 export type ShopDiscountPolicyUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -666,8 +666,8 @@ export type ShopDiscountPolicyCreateWithoutCreatedByInput = {
     startsAt?: Date | string | null;
     endsAt?: Date | string | null;
     createdAt?: Date | string;
-    product?: Prisma.ShopProductCreateNestedOneWithoutDiscountPoliciesInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutDiscountPolicyInput;
+    product?: Prisma.ShopProductCreateNestedOneWithoutDiscountPoliciesInput;
 };
 export type ShopDiscountPolicyUncheckedCreateWithoutCreatedByInput = {
     id?: string;
@@ -744,8 +744,8 @@ export type ShopDiscountPolicyCreateWithoutProductInput = {
     startsAt?: Date | string | null;
     endsAt?: Date | string | null;
     createdAt?: Date | string;
-    createdBy?: Prisma.ShopUserCreateNestedOneWithoutDiscountPoliciesInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutDiscountPolicyInput;
+    createdBy?: Prisma.ShopUserCreateNestedOneWithoutDiscountPoliciesInput;
 };
 export type ShopDiscountPolicyUncheckedCreateWithoutProductInput = {
     id?: string;
@@ -801,8 +801,8 @@ export type ShopDiscountPolicyCreateWithoutAppliedDiscountsInput = {
     startsAt?: Date | string | null;
     endsAt?: Date | string | null;
     createdAt?: Date | string;
-    product?: Prisma.ShopProductCreateNestedOneWithoutDiscountPoliciesInput;
     createdBy?: Prisma.ShopUserCreateNestedOneWithoutDiscountPoliciesInput;
+    product?: Prisma.ShopProductCreateNestedOneWithoutDiscountPoliciesInput;
 };
 export type ShopDiscountPolicyUncheckedCreateWithoutAppliedDiscountsInput = {
     id?: string;
@@ -850,8 +850,8 @@ export type ShopDiscountPolicyUpdateWithoutAppliedDiscountsInput = {
     startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     endsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    product?: Prisma.ShopProductUpdateOneWithoutDiscountPoliciesNestedInput;
     createdBy?: Prisma.ShopUserUpdateOneWithoutDiscountPoliciesNestedInput;
+    product?: Prisma.ShopProductUpdateOneWithoutDiscountPoliciesNestedInput;
 };
 export type ShopDiscountPolicyUncheckedUpdateWithoutAppliedDiscountsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -903,8 +903,8 @@ export type ShopDiscountPolicyUpdateWithoutCreatedByInput = {
     startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     endsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    product?: Prisma.ShopProductUpdateOneWithoutDiscountPoliciesNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutDiscountPolicyNestedInput;
+    product?: Prisma.ShopProductUpdateOneWithoutDiscountPoliciesNestedInput;
 };
 export type ShopDiscountPolicyUncheckedUpdateWithoutCreatedByInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -973,8 +973,8 @@ export type ShopDiscountPolicyUpdateWithoutProductInput = {
     startsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     endsAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    createdBy?: Prisma.ShopUserUpdateOneWithoutDiscountPoliciesNestedInput;
     appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutDiscountPolicyNestedInput;
+    createdBy?: Prisma.ShopUserUpdateOneWithoutDiscountPoliciesNestedInput;
 };
 export type ShopDiscountPolicyUncheckedUpdateWithoutProductInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1052,9 +1052,9 @@ export type ShopDiscountPolicySelect<ExtArgs extends runtime.Types.Extensions.In
     endsAt?: boolean;
     createdByUserId?: boolean;
     createdAt?: boolean;
-    product?: boolean | Prisma.ShopDiscountPolicy$productArgs<ExtArgs>;
-    createdBy?: boolean | Prisma.ShopDiscountPolicy$createdByArgs<ExtArgs>;
     appliedDiscounts?: boolean | Prisma.ShopDiscountPolicy$appliedDiscountsArgs<ExtArgs>;
+    createdBy?: boolean | Prisma.ShopDiscountPolicy$createdByArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopDiscountPolicy$productArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopDiscountPolicyCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopDiscountPolicy"]>;
 export type ShopDiscountPolicySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1074,8 +1074,8 @@ export type ShopDiscountPolicySelectCreateManyAndReturn<ExtArgs extends runtime.
     endsAt?: boolean;
     createdByUserId?: boolean;
     createdAt?: boolean;
-    product?: boolean | Prisma.ShopDiscountPolicy$productArgs<ExtArgs>;
     createdBy?: boolean | Prisma.ShopDiscountPolicy$createdByArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopDiscountPolicy$productArgs<ExtArgs>;
 }, ExtArgs["result"]["shopDiscountPolicy"]>;
 export type ShopDiscountPolicySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -1094,8 +1094,8 @@ export type ShopDiscountPolicySelectUpdateManyAndReturn<ExtArgs extends runtime.
     endsAt?: boolean;
     createdByUserId?: boolean;
     createdAt?: boolean;
-    product?: boolean | Prisma.ShopDiscountPolicy$productArgs<ExtArgs>;
     createdBy?: boolean | Prisma.ShopDiscountPolicy$createdByArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopDiscountPolicy$productArgs<ExtArgs>;
 }, ExtArgs["result"]["shopDiscountPolicy"]>;
 export type ShopDiscountPolicySelectScalar = {
     id?: boolean;
@@ -1117,25 +1117,25 @@ export type ShopDiscountPolicySelectScalar = {
 };
 export type ShopDiscountPolicyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "productId" | "minQuantity" | "name" | "description" | "policyType" | "scope" | "discountType" | "discountValue" | "isActive" | "priority" | "startsAt" | "endsAt" | "createdByUserId" | "createdAt", ExtArgs["result"]["shopDiscountPolicy"]>;
 export type ShopDiscountPolicyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    product?: boolean | Prisma.ShopDiscountPolicy$productArgs<ExtArgs>;
-    createdBy?: boolean | Prisma.ShopDiscountPolicy$createdByArgs<ExtArgs>;
     appliedDiscounts?: boolean | Prisma.ShopDiscountPolicy$appliedDiscountsArgs<ExtArgs>;
+    createdBy?: boolean | Prisma.ShopDiscountPolicy$createdByArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopDiscountPolicy$productArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopDiscountPolicyCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type ShopDiscountPolicyIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    product?: boolean | Prisma.ShopDiscountPolicy$productArgs<ExtArgs>;
     createdBy?: boolean | Prisma.ShopDiscountPolicy$createdByArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopDiscountPolicy$productArgs<ExtArgs>;
 };
 export type ShopDiscountPolicyIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    product?: boolean | Prisma.ShopDiscountPolicy$productArgs<ExtArgs>;
     createdBy?: boolean | Prisma.ShopDiscountPolicy$createdByArgs<ExtArgs>;
+    product?: boolean | Prisma.ShopDiscountPolicy$productArgs<ExtArgs>;
 };
 export type $ShopDiscountPolicyPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "ShopDiscountPolicy";
     objects: {
-        product: Prisma.$ShopProductPayload<ExtArgs> | null;
-        createdBy: Prisma.$ShopUserPayload<ExtArgs> | null;
         appliedDiscounts: Prisma.$ShopAppliedDiscountPayload<ExtArgs>[];
+        createdBy: Prisma.$ShopUserPayload<ExtArgs> | null;
+        product: Prisma.$ShopProductPayload<ExtArgs> | null;
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
@@ -1483,9 +1483,9 @@ export interface ShopDiscountPolicyDelegate<ExtArgs extends runtime.Types.Extens
  */
 export interface Prisma__ShopDiscountPolicyClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise";
-    product<T extends Prisma.ShopDiscountPolicy$productArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopDiscountPolicy$productArgs<ExtArgs>>): Prisma.Prisma__ShopProductClient<runtime.Types.Result.GetResult<Prisma.$ShopProductPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
-    createdBy<T extends Prisma.ShopDiscountPolicy$createdByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopDiscountPolicy$createdByArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
     appliedDiscounts<T extends Prisma.ShopDiscountPolicy$appliedDiscountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopDiscountPolicy$appliedDiscountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopAppliedDiscountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    createdBy<T extends Prisma.ShopDiscountPolicy$createdByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopDiscountPolicy$createdByArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
+    product<T extends Prisma.ShopDiscountPolicy$productArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopDiscountPolicy$productArgs<ExtArgs>>): Prisma.Prisma__ShopProductClient<runtime.Types.Result.GetResult<Prisma.$ShopProductPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1911,42 +1911,6 @@ export type ShopDiscountPolicyDeleteManyArgs<ExtArgs extends runtime.Types.Exten
     limit?: number;
 };
 /**
- * ShopDiscountPolicy.product
- */
-export type ShopDiscountPolicy$productArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the ShopProduct
-     */
-    select?: Prisma.ShopProductSelect<ExtArgs> | null;
-    /**
-     * Omit specific fields from the ShopProduct
-     */
-    omit?: Prisma.ShopProductOmit<ExtArgs> | null;
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: Prisma.ShopProductInclude<ExtArgs> | null;
-    where?: Prisma.ShopProductWhereInput;
-};
-/**
- * ShopDiscountPolicy.createdBy
- */
-export type ShopDiscountPolicy$createdByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the ShopUser
-     */
-    select?: Prisma.ShopUserSelect<ExtArgs> | null;
-    /**
-     * Omit specific fields from the ShopUser
-     */
-    omit?: Prisma.ShopUserOmit<ExtArgs> | null;
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: Prisma.ShopUserInclude<ExtArgs> | null;
-    where?: Prisma.ShopUserWhereInput;
-};
-/**
  * ShopDiscountPolicy.appliedDiscounts
  */
 export type ShopDiscountPolicy$appliedDiscountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1968,6 +1932,42 @@ export type ShopDiscountPolicy$appliedDiscountsArgs<ExtArgs extends runtime.Type
     take?: number;
     skip?: number;
     distinct?: Prisma.ShopAppliedDiscountScalarFieldEnum | Prisma.ShopAppliedDiscountScalarFieldEnum[];
+};
+/**
+ * ShopDiscountPolicy.createdBy
+ */
+export type ShopDiscountPolicy$createdByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ShopUser
+     */
+    select?: Prisma.ShopUserSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the ShopUser
+     */
+    omit?: Prisma.ShopUserOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.ShopUserInclude<ExtArgs> | null;
+    where?: Prisma.ShopUserWhereInput;
+};
+/**
+ * ShopDiscountPolicy.product
+ */
+export type ShopDiscountPolicy$productArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ShopProduct
+     */
+    select?: Prisma.ShopProductSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the ShopProduct
+     */
+    omit?: Prisma.ShopProductOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.ShopProductInclude<ExtArgs> | null;
+    where?: Prisma.ShopProductWhereInput;
 };
 /**
  * ShopDiscountPolicy without action

@@ -11,6 +11,7 @@ import { timeoutCommand, untimeoutCommand } from './timeout.command.js';
 import { unbanCommand } from './unban.command.js';
 import { warnCommand } from './warn.command.js';
 import { warningsCommand } from './warnings.command.js';
+import { unwarnCommand } from './unwarn.command.js';
 import { avisoCommand } from './aviso.command.js';
 import { buildModerationErrorEmbed } from '../../utils/moderation-ui.js';
 function resolveRequiredPermission(group, subcommand) {
@@ -60,6 +61,12 @@ export const modCommand = {
         .setDescription('Advierte a un usuario')
         .addUserOption(opt => opt.setName('usuario').setDescription('Usuario a advertir').setRequired(true))
         .addStringOption(opt => opt.setName('motivo').setDescription('Motivo de la advertencia').setRequired(true)))
+        .addSubcommand(sub => sub
+        .setName('unwarn')
+        .setDescription('Elimina una advertencia específica de un usuario')
+        .addUserOption(opt => opt.setName('usuario').setDescription('Usuario al que pertenece la advertencia').setRequired(true))
+        .addStringOption(opt => opt.setName('id').setDescription('ID de la advertencia (visible en /warnings)').setRequired(true))
+        .addStringOption(opt => opt.setName('motivo').setDescription('Motivo de la eliminación').setRequired(false)))
         .addSubcommand(sub => sub
         .setName('kick')
         .setDescription('Expulsa a un usuario del servidor')
@@ -184,6 +191,9 @@ export const modCommand = {
             switch (subcommand) {
                 case 'warn':
                     await warnCommand.execute(interaction);
+                    return;
+                case 'unwarn':
+                    await unwarnCommand.execute(interaction);
                     return;
                 case 'kick':
                     await kickCommand.execute(interaction);

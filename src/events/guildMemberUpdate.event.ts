@@ -89,6 +89,7 @@ const guildMemberUpdateEvent: BotEvent<'guildMemberUpdate'> = {
                   userTag: newMember.user.globalName ?? newMember.user.username,
                   guildName: newMember.guild.name,
                   avatarUrl: newMember.user.displayAvatarURL(),
+                  boostCount: newMember.guild.premiumSubscriptionCount ?? 0,
                 }),
               ],
             });

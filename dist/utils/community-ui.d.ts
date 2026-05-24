@@ -1,3 +1,4 @@
+import { EmbedBuilder } from 'discord.js';
 export declare const COMMUNITY_COLORS: {
     readonly welcome: 5763719;
     readonly leave: 10070709;
@@ -17,10 +18,12 @@ type MemberLogOptions = {
     memberCount: number;
     avatarUrl: string;
 };
-export declare function buildWelcomePublicEmbed(options: MemberMessageOptions): import("discord.js").EmbedBuilder;
-export declare function buildJoinLogEmbed(options: MemberLogOptions): import("discord.js").EmbedBuilder;
-export declare function buildFarewellPublicEmbed(options: MemberMessageOptions): import("discord.js").EmbedBuilder;
-export declare function buildLeaveLogEmbed(options: MemberLogOptions): import("discord.js").EmbedBuilder;
-export declare function buildBoostPublicEmbed(options: Omit<MemberMessageOptions, 'memberCount'>): import("discord.js").EmbedBuilder;
+export declare function buildWelcomePublicEmbed(options: MemberMessageOptions): EmbedBuilder;
+export declare function buildJoinLogEmbed(options: MemberLogOptions): EmbedBuilder;
+export declare function buildFarewellPublicEmbed(options: MemberMessageOptions): EmbedBuilder;
+export declare function buildLeaveLogEmbed(options: MemberLogOptions): EmbedBuilder;
+export declare function buildBoostPublicEmbed(options: Omit<MemberMessageOptions, 'memberCount'> & {
+    boostCount: number;
+}): EmbedBuilder;
 export {};
 //# sourceMappingURL=community-ui.d.ts.map

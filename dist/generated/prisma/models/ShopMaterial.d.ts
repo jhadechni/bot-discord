@@ -193,9 +193,9 @@ export type ShopMaterialWhereInput = {
     createdAt?: Prisma.DateTimeFilter<"ShopMaterial"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"ShopMaterial"> | Date | string;
     inventory?: Prisma.XOR<Prisma.ShopInventoryNullableScalarRelationFilter, Prisma.ShopInventoryWhereInput> | null;
-    components?: Prisma.ShopProductComponentListRelationFilter;
-    directProducts?: Prisma.ShopProductListRelationFilter;
     movements?: Prisma.ShopInventoryMovementListRelationFilter;
+    directProducts?: Prisma.ShopProductListRelationFilter;
+    components?: Prisma.ShopProductComponentListRelationFilter;
     withdrawals?: Prisma.ShopWithdrawalListRelationFilter;
 };
 export type ShopMaterialOrderByWithRelationInput = {
@@ -208,9 +208,9 @@ export type ShopMaterialOrderByWithRelationInput = {
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
     inventory?: Prisma.ShopInventoryOrderByWithRelationInput;
-    components?: Prisma.ShopProductComponentOrderByRelationAggregateInput;
-    directProducts?: Prisma.ShopProductOrderByRelationAggregateInput;
     movements?: Prisma.ShopInventoryMovementOrderByRelationAggregateInput;
+    directProducts?: Prisma.ShopProductOrderByRelationAggregateInput;
+    components?: Prisma.ShopProductComponentOrderByRelationAggregateInput;
     withdrawals?: Prisma.ShopWithdrawalOrderByRelationAggregateInput;
 };
 export type ShopMaterialWhereUniqueInput = Prisma.AtLeast<{
@@ -227,9 +227,9 @@ export type ShopMaterialWhereUniqueInput = Prisma.AtLeast<{
     createdAt?: Prisma.DateTimeFilter<"ShopMaterial"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"ShopMaterial"> | Date | string;
     inventory?: Prisma.XOR<Prisma.ShopInventoryNullableScalarRelationFilter, Prisma.ShopInventoryWhereInput> | null;
-    components?: Prisma.ShopProductComponentListRelationFilter;
-    directProducts?: Prisma.ShopProductListRelationFilter;
     movements?: Prisma.ShopInventoryMovementListRelationFilter;
+    directProducts?: Prisma.ShopProductListRelationFilter;
+    components?: Prisma.ShopProductComponentListRelationFilter;
     withdrawals?: Prisma.ShopWithdrawalListRelationFilter;
 }, "id" | "guildId_name">;
 export type ShopMaterialOrderByWithAggregationInput = {
@@ -270,9 +270,9 @@ export type ShopMaterialCreateInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     inventory?: Prisma.ShopInventoryCreateNestedOneWithoutMaterialInput;
-    components?: Prisma.ShopProductComponentCreateNestedManyWithoutMaterialInput;
-    directProducts?: Prisma.ShopProductCreateNestedManyWithoutBaseMaterialInput;
     movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutMaterialInput;
+    directProducts?: Prisma.ShopProductCreateNestedManyWithoutBaseMaterialInput;
+    components?: Prisma.ShopProductComponentCreateNestedManyWithoutMaterialInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutMaterialInput;
 };
 export type ShopMaterialUncheckedCreateInput = {
@@ -285,9 +285,9 @@ export type ShopMaterialUncheckedCreateInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     inventory?: Prisma.ShopInventoryUncheckedCreateNestedOneWithoutMaterialInput;
-    components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutMaterialInput;
-    directProducts?: Prisma.ShopProductUncheckedCreateNestedManyWithoutBaseMaterialInput;
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutMaterialInput;
+    directProducts?: Prisma.ShopProductUncheckedCreateNestedManyWithoutBaseMaterialInput;
+    components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutMaterialInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutMaterialInput;
 };
 export type ShopMaterialUpdateInput = {
@@ -300,9 +300,9 @@ export type ShopMaterialUpdateInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     inventory?: Prisma.ShopInventoryUpdateOneWithoutMaterialNestedInput;
-    components?: Prisma.ShopProductComponentUpdateManyWithoutMaterialNestedInput;
-    directProducts?: Prisma.ShopProductUpdateManyWithoutBaseMaterialNestedInput;
     movements?: Prisma.ShopInventoryMovementUpdateManyWithoutMaterialNestedInput;
+    directProducts?: Prisma.ShopProductUpdateManyWithoutBaseMaterialNestedInput;
+    components?: Prisma.ShopProductComponentUpdateManyWithoutMaterialNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutMaterialNestedInput;
 };
 export type ShopMaterialUncheckedUpdateInput = {
@@ -315,9 +315,9 @@ export type ShopMaterialUncheckedUpdateInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     inventory?: Prisma.ShopInventoryUncheckedUpdateOneWithoutMaterialNestedInput;
-    components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutMaterialNestedInput;
-    directProducts?: Prisma.ShopProductUncheckedUpdateManyWithoutBaseMaterialNestedInput;
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutMaterialNestedInput;
+    directProducts?: Prisma.ShopProductUncheckedUpdateManyWithoutBaseMaterialNestedInput;
+    components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutMaterialNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutMaterialNestedInput;
 };
 export type ShopMaterialCreateManyInput = {
@@ -469,9 +469,9 @@ export type ShopMaterialCreateWithoutInventoryInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
-    components?: Prisma.ShopProductComponentCreateNestedManyWithoutMaterialInput;
-    directProducts?: Prisma.ShopProductCreateNestedManyWithoutBaseMaterialInput;
     movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutMaterialInput;
+    directProducts?: Prisma.ShopProductCreateNestedManyWithoutBaseMaterialInput;
+    components?: Prisma.ShopProductComponentCreateNestedManyWithoutMaterialInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutMaterialInput;
 };
 export type ShopMaterialUncheckedCreateWithoutInventoryInput = {
@@ -483,9 +483,9 @@ export type ShopMaterialUncheckedCreateWithoutInventoryInput = {
     isActive?: boolean;
     createdAt?: Date | string;
     updatedAt?: Date | string;
-    components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutMaterialInput;
-    directProducts?: Prisma.ShopProductUncheckedCreateNestedManyWithoutBaseMaterialInput;
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutMaterialInput;
+    directProducts?: Prisma.ShopProductUncheckedCreateNestedManyWithoutBaseMaterialInput;
+    components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutMaterialInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutMaterialInput;
 };
 export type ShopMaterialCreateOrConnectWithoutInventoryInput = {
@@ -510,9 +510,9 @@ export type ShopMaterialUpdateWithoutInventoryInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    components?: Prisma.ShopProductComponentUpdateManyWithoutMaterialNestedInput;
-    directProducts?: Prisma.ShopProductUpdateManyWithoutBaseMaterialNestedInput;
     movements?: Prisma.ShopInventoryMovementUpdateManyWithoutMaterialNestedInput;
+    directProducts?: Prisma.ShopProductUpdateManyWithoutBaseMaterialNestedInput;
+    components?: Prisma.ShopProductComponentUpdateManyWithoutMaterialNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutMaterialNestedInput;
 };
 export type ShopMaterialUncheckedUpdateWithoutInventoryInput = {
@@ -524,9 +524,9 @@ export type ShopMaterialUncheckedUpdateWithoutInventoryInput = {
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutMaterialNestedInput;
-    directProducts?: Prisma.ShopProductUncheckedUpdateManyWithoutBaseMaterialNestedInput;
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutMaterialNestedInput;
+    directProducts?: Prisma.ShopProductUncheckedUpdateManyWithoutBaseMaterialNestedInput;
+    components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutMaterialNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutMaterialNestedInput;
 };
 export type ShopMaterialCreateWithoutDirectProductsInput = {
@@ -539,8 +539,8 @@ export type ShopMaterialCreateWithoutDirectProductsInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     inventory?: Prisma.ShopInventoryCreateNestedOneWithoutMaterialInput;
-    components?: Prisma.ShopProductComponentCreateNestedManyWithoutMaterialInput;
     movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutMaterialInput;
+    components?: Prisma.ShopProductComponentCreateNestedManyWithoutMaterialInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutMaterialInput;
 };
 export type ShopMaterialUncheckedCreateWithoutDirectProductsInput = {
@@ -553,8 +553,8 @@ export type ShopMaterialUncheckedCreateWithoutDirectProductsInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     inventory?: Prisma.ShopInventoryUncheckedCreateNestedOneWithoutMaterialInput;
-    components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutMaterialInput;
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutMaterialInput;
+    components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutMaterialInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutMaterialInput;
 };
 export type ShopMaterialCreateOrConnectWithoutDirectProductsInput = {
@@ -580,8 +580,8 @@ export type ShopMaterialUpdateWithoutDirectProductsInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     inventory?: Prisma.ShopInventoryUpdateOneWithoutMaterialNestedInput;
-    components?: Prisma.ShopProductComponentUpdateManyWithoutMaterialNestedInput;
     movements?: Prisma.ShopInventoryMovementUpdateManyWithoutMaterialNestedInput;
+    components?: Prisma.ShopProductComponentUpdateManyWithoutMaterialNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutMaterialNestedInput;
 };
 export type ShopMaterialUncheckedUpdateWithoutDirectProductsInput = {
@@ -594,8 +594,8 @@ export type ShopMaterialUncheckedUpdateWithoutDirectProductsInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     inventory?: Prisma.ShopInventoryUncheckedUpdateOneWithoutMaterialNestedInput;
-    components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutMaterialNestedInput;
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutMaterialNestedInput;
+    components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutMaterialNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutMaterialNestedInput;
 };
 export type ShopMaterialCreateWithoutComponentsInput = {
@@ -608,8 +608,8 @@ export type ShopMaterialCreateWithoutComponentsInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     inventory?: Prisma.ShopInventoryCreateNestedOneWithoutMaterialInput;
-    directProducts?: Prisma.ShopProductCreateNestedManyWithoutBaseMaterialInput;
     movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutMaterialInput;
+    directProducts?: Prisma.ShopProductCreateNestedManyWithoutBaseMaterialInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutMaterialInput;
 };
 export type ShopMaterialUncheckedCreateWithoutComponentsInput = {
@@ -622,8 +622,8 @@ export type ShopMaterialUncheckedCreateWithoutComponentsInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     inventory?: Prisma.ShopInventoryUncheckedCreateNestedOneWithoutMaterialInput;
-    directProducts?: Prisma.ShopProductUncheckedCreateNestedManyWithoutBaseMaterialInput;
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutMaterialInput;
+    directProducts?: Prisma.ShopProductUncheckedCreateNestedManyWithoutBaseMaterialInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutMaterialInput;
 };
 export type ShopMaterialCreateOrConnectWithoutComponentsInput = {
@@ -649,8 +649,8 @@ export type ShopMaterialUpdateWithoutComponentsInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     inventory?: Prisma.ShopInventoryUpdateOneWithoutMaterialNestedInput;
-    directProducts?: Prisma.ShopProductUpdateManyWithoutBaseMaterialNestedInput;
     movements?: Prisma.ShopInventoryMovementUpdateManyWithoutMaterialNestedInput;
+    directProducts?: Prisma.ShopProductUpdateManyWithoutBaseMaterialNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutMaterialNestedInput;
 };
 export type ShopMaterialUncheckedUpdateWithoutComponentsInput = {
@@ -663,8 +663,8 @@ export type ShopMaterialUncheckedUpdateWithoutComponentsInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     inventory?: Prisma.ShopInventoryUncheckedUpdateOneWithoutMaterialNestedInput;
-    directProducts?: Prisma.ShopProductUncheckedUpdateManyWithoutBaseMaterialNestedInput;
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutMaterialNestedInput;
+    directProducts?: Prisma.ShopProductUncheckedUpdateManyWithoutBaseMaterialNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutMaterialNestedInput;
 };
 export type ShopMaterialCreateWithoutMovementsInput = {
@@ -677,8 +677,8 @@ export type ShopMaterialCreateWithoutMovementsInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     inventory?: Prisma.ShopInventoryCreateNestedOneWithoutMaterialInput;
-    components?: Prisma.ShopProductComponentCreateNestedManyWithoutMaterialInput;
     directProducts?: Prisma.ShopProductCreateNestedManyWithoutBaseMaterialInput;
+    components?: Prisma.ShopProductComponentCreateNestedManyWithoutMaterialInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutMaterialInput;
 };
 export type ShopMaterialUncheckedCreateWithoutMovementsInput = {
@@ -691,8 +691,8 @@ export type ShopMaterialUncheckedCreateWithoutMovementsInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     inventory?: Prisma.ShopInventoryUncheckedCreateNestedOneWithoutMaterialInput;
-    components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutMaterialInput;
     directProducts?: Prisma.ShopProductUncheckedCreateNestedManyWithoutBaseMaterialInput;
+    components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutMaterialInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutMaterialInput;
 };
 export type ShopMaterialCreateOrConnectWithoutMovementsInput = {
@@ -718,8 +718,8 @@ export type ShopMaterialUpdateWithoutMovementsInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     inventory?: Prisma.ShopInventoryUpdateOneWithoutMaterialNestedInput;
-    components?: Prisma.ShopProductComponentUpdateManyWithoutMaterialNestedInput;
     directProducts?: Prisma.ShopProductUpdateManyWithoutBaseMaterialNestedInput;
+    components?: Prisma.ShopProductComponentUpdateManyWithoutMaterialNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutMaterialNestedInput;
 };
 export type ShopMaterialUncheckedUpdateWithoutMovementsInput = {
@@ -732,8 +732,8 @@ export type ShopMaterialUncheckedUpdateWithoutMovementsInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     inventory?: Prisma.ShopInventoryUncheckedUpdateOneWithoutMaterialNestedInput;
-    components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutMaterialNestedInput;
     directProducts?: Prisma.ShopProductUncheckedUpdateManyWithoutBaseMaterialNestedInput;
+    components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutMaterialNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutMaterialNestedInput;
 };
 export type ShopMaterialCreateWithoutWithdrawalsInput = {
@@ -746,9 +746,9 @@ export type ShopMaterialCreateWithoutWithdrawalsInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     inventory?: Prisma.ShopInventoryCreateNestedOneWithoutMaterialInput;
-    components?: Prisma.ShopProductComponentCreateNestedManyWithoutMaterialInput;
-    directProducts?: Prisma.ShopProductCreateNestedManyWithoutBaseMaterialInput;
     movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutMaterialInput;
+    directProducts?: Prisma.ShopProductCreateNestedManyWithoutBaseMaterialInput;
+    components?: Prisma.ShopProductComponentCreateNestedManyWithoutMaterialInput;
 };
 export type ShopMaterialUncheckedCreateWithoutWithdrawalsInput = {
     id?: string;
@@ -760,9 +760,9 @@ export type ShopMaterialUncheckedCreateWithoutWithdrawalsInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     inventory?: Prisma.ShopInventoryUncheckedCreateNestedOneWithoutMaterialInput;
-    components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutMaterialInput;
-    directProducts?: Prisma.ShopProductUncheckedCreateNestedManyWithoutBaseMaterialInput;
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutMaterialInput;
+    directProducts?: Prisma.ShopProductUncheckedCreateNestedManyWithoutBaseMaterialInput;
+    components?: Prisma.ShopProductComponentUncheckedCreateNestedManyWithoutMaterialInput;
 };
 export type ShopMaterialCreateOrConnectWithoutWithdrawalsInput = {
     where: Prisma.ShopMaterialWhereUniqueInput;
@@ -787,9 +787,9 @@ export type ShopMaterialUpdateWithoutWithdrawalsInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     inventory?: Prisma.ShopInventoryUpdateOneWithoutMaterialNestedInput;
-    components?: Prisma.ShopProductComponentUpdateManyWithoutMaterialNestedInput;
-    directProducts?: Prisma.ShopProductUpdateManyWithoutBaseMaterialNestedInput;
     movements?: Prisma.ShopInventoryMovementUpdateManyWithoutMaterialNestedInput;
+    directProducts?: Prisma.ShopProductUpdateManyWithoutBaseMaterialNestedInput;
+    components?: Prisma.ShopProductComponentUpdateManyWithoutMaterialNestedInput;
 };
 export type ShopMaterialUncheckedUpdateWithoutWithdrawalsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -801,23 +801,23 @@ export type ShopMaterialUncheckedUpdateWithoutWithdrawalsInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     inventory?: Prisma.ShopInventoryUncheckedUpdateOneWithoutMaterialNestedInput;
-    components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutMaterialNestedInput;
-    directProducts?: Prisma.ShopProductUncheckedUpdateManyWithoutBaseMaterialNestedInput;
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutMaterialNestedInput;
+    directProducts?: Prisma.ShopProductUncheckedUpdateManyWithoutBaseMaterialNestedInput;
+    components?: Prisma.ShopProductComponentUncheckedUpdateManyWithoutMaterialNestedInput;
 };
 /**
  * Count Type ShopMaterialCountOutputType
  */
 export type ShopMaterialCountOutputType = {
-    components: number;
-    directProducts: number;
     movements: number;
+    directProducts: number;
+    components: number;
     withdrawals: number;
 };
 export type ShopMaterialCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    components?: boolean | ShopMaterialCountOutputTypeCountComponentsArgs;
-    directProducts?: boolean | ShopMaterialCountOutputTypeCountDirectProductsArgs;
     movements?: boolean | ShopMaterialCountOutputTypeCountMovementsArgs;
+    directProducts?: boolean | ShopMaterialCountOutputTypeCountDirectProductsArgs;
+    components?: boolean | ShopMaterialCountOutputTypeCountComponentsArgs;
     withdrawals?: boolean | ShopMaterialCountOutputTypeCountWithdrawalsArgs;
 };
 /**
@@ -832,8 +832,8 @@ export type ShopMaterialCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types
 /**
  * ShopMaterialCountOutputType without action
  */
-export type ShopMaterialCountOutputTypeCountComponentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    where?: Prisma.ShopProductComponentWhereInput;
+export type ShopMaterialCountOutputTypeCountMovementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.ShopInventoryMovementWhereInput;
 };
 /**
  * ShopMaterialCountOutputType without action
@@ -844,8 +844,8 @@ export type ShopMaterialCountOutputTypeCountDirectProductsArgs<ExtArgs extends r
 /**
  * ShopMaterialCountOutputType without action
  */
-export type ShopMaterialCountOutputTypeCountMovementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    where?: Prisma.ShopInventoryMovementWhereInput;
+export type ShopMaterialCountOutputTypeCountComponentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.ShopProductComponentWhereInput;
 };
 /**
  * ShopMaterialCountOutputType without action
@@ -863,9 +863,9 @@ export type ShopMaterialSelect<ExtArgs extends runtime.Types.Extensions.Internal
     createdAt?: boolean;
     updatedAt?: boolean;
     inventory?: boolean | Prisma.ShopMaterial$inventoryArgs<ExtArgs>;
-    components?: boolean | Prisma.ShopMaterial$componentsArgs<ExtArgs>;
-    directProducts?: boolean | Prisma.ShopMaterial$directProductsArgs<ExtArgs>;
     movements?: boolean | Prisma.ShopMaterial$movementsArgs<ExtArgs>;
+    directProducts?: boolean | Prisma.ShopMaterial$directProductsArgs<ExtArgs>;
+    components?: boolean | Prisma.ShopMaterial$componentsArgs<ExtArgs>;
     withdrawals?: boolean | Prisma.ShopMaterial$withdrawalsArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopMaterialCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopMaterial"]>;
@@ -902,9 +902,9 @@ export type ShopMaterialSelectScalar = {
 export type ShopMaterialOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "name" | "baseUnit" | "stackSize" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["shopMaterial"]>;
 export type ShopMaterialInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     inventory?: boolean | Prisma.ShopMaterial$inventoryArgs<ExtArgs>;
-    components?: boolean | Prisma.ShopMaterial$componentsArgs<ExtArgs>;
-    directProducts?: boolean | Prisma.ShopMaterial$directProductsArgs<ExtArgs>;
     movements?: boolean | Prisma.ShopMaterial$movementsArgs<ExtArgs>;
+    directProducts?: boolean | Prisma.ShopMaterial$directProductsArgs<ExtArgs>;
+    components?: boolean | Prisma.ShopMaterial$componentsArgs<ExtArgs>;
     withdrawals?: boolean | Prisma.ShopMaterial$withdrawalsArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopMaterialCountOutputTypeDefaultArgs<ExtArgs>;
 };
@@ -914,9 +914,9 @@ export type $ShopMaterialPayload<ExtArgs extends runtime.Types.Extensions.Intern
     name: "ShopMaterial";
     objects: {
         inventory: Prisma.$ShopInventoryPayload<ExtArgs> | null;
-        components: Prisma.$ShopProductComponentPayload<ExtArgs>[];
-        directProducts: Prisma.$ShopProductPayload<ExtArgs>[];
         movements: Prisma.$ShopInventoryMovementPayload<ExtArgs>[];
+        directProducts: Prisma.$ShopProductPayload<ExtArgs>[];
+        components: Prisma.$ShopProductComponentPayload<ExtArgs>[];
         withdrawals: Prisma.$ShopWithdrawalPayload<ExtArgs>[];
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1258,9 +1258,9 @@ export interface ShopMaterialDelegate<ExtArgs extends runtime.Types.Extensions.I
 export interface Prisma__ShopMaterialClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise";
     inventory<T extends Prisma.ShopMaterial$inventoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopMaterial$inventoryArgs<ExtArgs>>): Prisma.Prisma__ShopInventoryClient<runtime.Types.Result.GetResult<Prisma.$ShopInventoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
-    components<T extends Prisma.ShopMaterial$componentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopMaterial$componentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopProductComponentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
-    directProducts<T extends Prisma.ShopMaterial$directProductsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopMaterial$directProductsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopProductPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     movements<T extends Prisma.ShopMaterial$movementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopMaterial$movementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopInventoryMovementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    directProducts<T extends Prisma.ShopMaterial$directProductsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopMaterial$directProductsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopProductPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    components<T extends Prisma.ShopMaterial$componentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopMaterial$componentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopProductComponentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     withdrawals<T extends Prisma.ShopMaterial$withdrawalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopMaterial$withdrawalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopWithdrawalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1689,27 +1689,27 @@ export type ShopMaterial$inventoryArgs<ExtArgs extends runtime.Types.Extensions.
     where?: Prisma.ShopInventoryWhereInput;
 };
 /**
- * ShopMaterial.components
+ * ShopMaterial.movements
  */
-export type ShopMaterial$componentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type ShopMaterial$movementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ShopProductComponent
+     * Select specific fields to fetch from the ShopInventoryMovement
      */
-    select?: Prisma.ShopProductComponentSelect<ExtArgs> | null;
+    select?: Prisma.ShopInventoryMovementSelect<ExtArgs> | null;
     /**
-     * Omit specific fields from the ShopProductComponent
+     * Omit specific fields from the ShopInventoryMovement
      */
-    omit?: Prisma.ShopProductComponentOmit<ExtArgs> | null;
+    omit?: Prisma.ShopInventoryMovementOmit<ExtArgs> | null;
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: Prisma.ShopProductComponentInclude<ExtArgs> | null;
-    where?: Prisma.ShopProductComponentWhereInput;
-    orderBy?: Prisma.ShopProductComponentOrderByWithRelationInput | Prisma.ShopProductComponentOrderByWithRelationInput[];
-    cursor?: Prisma.ShopProductComponentWhereUniqueInput;
+    include?: Prisma.ShopInventoryMovementInclude<ExtArgs> | null;
+    where?: Prisma.ShopInventoryMovementWhereInput;
+    orderBy?: Prisma.ShopInventoryMovementOrderByWithRelationInput | Prisma.ShopInventoryMovementOrderByWithRelationInput[];
+    cursor?: Prisma.ShopInventoryMovementWhereUniqueInput;
     take?: number;
     skip?: number;
-    distinct?: Prisma.ShopProductComponentScalarFieldEnum | Prisma.ShopProductComponentScalarFieldEnum[];
+    distinct?: Prisma.ShopInventoryMovementScalarFieldEnum | Prisma.ShopInventoryMovementScalarFieldEnum[];
 };
 /**
  * ShopMaterial.directProducts
@@ -1735,27 +1735,27 @@ export type ShopMaterial$directProductsArgs<ExtArgs extends runtime.Types.Extens
     distinct?: Prisma.ShopProductScalarFieldEnum | Prisma.ShopProductScalarFieldEnum[];
 };
 /**
- * ShopMaterial.movements
+ * ShopMaterial.components
  */
-export type ShopMaterial$movementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type ShopMaterial$componentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ShopInventoryMovement
+     * Select specific fields to fetch from the ShopProductComponent
      */
-    select?: Prisma.ShopInventoryMovementSelect<ExtArgs> | null;
+    select?: Prisma.ShopProductComponentSelect<ExtArgs> | null;
     /**
-     * Omit specific fields from the ShopInventoryMovement
+     * Omit specific fields from the ShopProductComponent
      */
-    omit?: Prisma.ShopInventoryMovementOmit<ExtArgs> | null;
+    omit?: Prisma.ShopProductComponentOmit<ExtArgs> | null;
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: Prisma.ShopInventoryMovementInclude<ExtArgs> | null;
-    where?: Prisma.ShopInventoryMovementWhereInput;
-    orderBy?: Prisma.ShopInventoryMovementOrderByWithRelationInput | Prisma.ShopInventoryMovementOrderByWithRelationInput[];
-    cursor?: Prisma.ShopInventoryMovementWhereUniqueInput;
+    include?: Prisma.ShopProductComponentInclude<ExtArgs> | null;
+    where?: Prisma.ShopProductComponentWhereInput;
+    orderBy?: Prisma.ShopProductComponentOrderByWithRelationInput | Prisma.ShopProductComponentOrderByWithRelationInput[];
+    cursor?: Prisma.ShopProductComponentWhereUniqueInput;
     take?: number;
     skip?: number;
-    distinct?: Prisma.ShopInventoryMovementScalarFieldEnum | Prisma.ShopInventoryMovementScalarFieldEnum[];
+    distinct?: Prisma.ShopProductComponentScalarFieldEnum | Prisma.ShopProductComponentScalarFieldEnum[];
 };
 /**
  * ShopMaterial.withdrawals

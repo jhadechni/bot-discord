@@ -94,7 +94,10 @@ export const ModelName = {
     ShopAppliedDiscount: 'ShopAppliedDiscount',
     ShopCategory: 'ShopCategory',
     ShopSubcategory: 'ShopSubcategory',
-    ShopOrderEvent: 'ShopOrderEvent'
+    ShopOrderEvent: 'ShopOrderEvent',
+    MapBackground: 'MapBackground',
+    ProtectionMember: 'ProtectionMember',
+    WorldProtection: 'WorldProtection'
 };
 /**
  * Enums
@@ -109,7 +112,6 @@ export const GuildConfigScalarFieldEnum = {
     id: 'id',
     guildId: 'guildId',
     welcomeChannelId: 'welcomeChannelId',
-    farewellChannelId: 'farewellChannelId',
     logsChannelId: 'logsChannelId',
     logsModChannelId: 'logsModChannelId',
     logsAutomodChannelId: 'logsAutomodChannelId',
@@ -129,7 +131,12 @@ export const GuildConfigScalarFieldEnum = {
     shopStaffChannelId: 'shopStaffChannelId',
     shopCategoryId: 'shopCategoryId',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    farewellChannelId: 'farewellChannelId',
+    notifRoles: 'notifRoles',
+    expulsionReasons: 'expulsionReasons',
+    notifPanelChannelId: 'notifPanelChannelId',
+    notifPanelMessageId: 'notifPanelMessageId'
 };
 export const SuggestionScalarFieldEnum = {
     id: 'id',
@@ -155,9 +162,9 @@ export const RecruitmentTicketScalarFieldEnum = {
     minecraftRole: 'minecraftRole',
     answers: 'answers',
     status: 'status',
-    staleAlertedAt: 'staleAlertedAt',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    staleAlertedAt: 'staleAlertedAt'
 };
 export const ModerationLogScalarFieldEnum = {
     id: 'id',
@@ -167,8 +174,8 @@ export const ModerationLogScalarFieldEnum = {
     type: 'type',
     reason: 'reason',
     duration: 'duration',
-    active: 'active',
-    createdAt: 'createdAt'
+    createdAt: 'createdAt',
+    active: 'active'
 };
 export const UserActivityScalarFieldEnum = {
     id: 'id',
@@ -212,8 +219,8 @@ export const NicknameRoleScalarFieldEnum = {
     id: 'id',
     guildId: 'guildId',
     roleId: 'roleId',
-    emoji: 'emoji',
-    createdAt: 'createdAt'
+    createdAt: 'createdAt',
+    emoji: 'emoji'
 };
 export const ClanPlayerScalarFieldEnum = {
     id: 'id',
@@ -221,14 +228,14 @@ export const ClanPlayerScalarFieldEnum = {
     fullName: 'fullName',
     minecraftNick: 'minecraftNick',
     rank: 'rank',
-    minecraftRank: 'minecraftRank',
     joinedAt: 'joinedAt',
     country: 'country',
     utcOffset: 'utcOffset',
     status: 'status',
-    notes: 'notes',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    notes: 'notes',
+    minecraftRank: 'minecraftRank'
 };
 export const ShopUserScalarFieldEnum = {
     id: 'id',
@@ -265,8 +272,6 @@ export const ShopProductScalarFieldEnum = {
     name: 'name',
     productType: 'productType',
     category: 'category',
-    additionalCategories: 'additionalCategories',
-    additionalCategoryAssignments: 'additionalCategoryAssignments',
     subcategory: 'subcategory',
     description: 'description',
     baseMaterialId: 'baseMaterialId',
@@ -275,7 +280,9 @@ export const ShopProductScalarFieldEnum = {
     presentationLabel: 'presentationLabel',
     isActive: 'isActive',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    additionalCategories: 'additionalCategories',
+    additionalCategoryAssignments: 'additionalCategoryAssignments'
 };
 export const ShopProductComponentScalarFieldEnum = {
     id: 'id',
@@ -420,29 +427,57 @@ export const ShopOrderEventScalarFieldEnum = {
     notes: 'notes',
     createdAt: 'createdAt'
 };
+export const MapBackgroundScalarFieldEnum = {
+    id: 'id',
+    imageUrl: 'imageUrl',
+    x1: 'x1',
+    z1: 'z1',
+    x2: 'x2',
+    z2: 'z2'
+};
+export const ProtectionMemberScalarFieldEnum = {
+    id: 'id',
+    protectionId: 'protectionId',
+    playerName: 'playerName',
+    level: 'level',
+    addedAt: 'addedAt'
+};
+export const WorldProtectionScalarFieldEnum = {
+    id: 'id',
+    alias: 'alias',
+    startX: 'startX',
+    startZ: 'startZ',
+    endX: 'endX',
+    endZ: 'endZ',
+    isOwned: 'isOwned',
+    color: 'color',
+    description: 'description',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
 export const SortOrder = {
     asc: 'asc',
     desc: 'desc'
 };
-export const NullableJsonNullValueInput = {
-    DbNull: DbNull,
+export const JsonNullValueInput = {
     JsonNull: JsonNull
 };
-export const JsonNullValueInput = {
+export const NullableJsonNullValueInput = {
+    DbNull: DbNull,
     JsonNull: JsonNull
 };
 export const QueryMode = {
     default: 'default',
     insensitive: 'insensitive'
 };
-export const NullsOrder = {
-    first: 'first',
-    last: 'last'
-};
 export const JsonNullValueFilter = {
     DbNull: DbNull,
     JsonNull: JsonNull,
     AnyNull: AnyNull
+};
+export const NullsOrder = {
+    first: 'first',
+    last: 'last'
 };
 export const defineExtension = runtime.Extensions.defineExtension;
 //# sourceMappingURL=prismaNamespace.js.map

@@ -78,13 +78,13 @@ export declare function queryCartProducts(guildId: string): Promise<({
     isActive: boolean;
     category: string;
     productType: string;
-    additionalCategories: string[];
-    additionalCategoryAssignments: import("@prisma/client/runtime/client").JsonValue;
     subcategory: string;
     baseMaterialId: string | null;
     presentationType: string;
     presentationQuantity: number;
     presentationLabel: string | null;
+    additionalCategories: string[];
+    additionalCategoryAssignments: import("@prisma/client/runtime/client").JsonValue;
 })[]>;
 export type CartProductOption = Awaited<ReturnType<typeof queryCartProducts>>[number];
 export declare function buildCartEmbed(session: CartSession): EmbedBuilder;

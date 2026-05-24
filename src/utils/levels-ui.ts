@@ -24,7 +24,7 @@ type LevelProfileOptions = {
   voiceTime: string;
 };
 
-type TopEntry = {
+export type TopEntry = {
   rank: number;
   name: string;
   avatarUrl: string | null;
@@ -86,15 +86,15 @@ export function buildLevelProfileEmbed(options: LevelProfileOptions) {
 }
 
 export function buildTopEmbed(options: TopEmbedOptions): EmbedBuilder {
-  const top3   = options.entries.slice(0, 3);
-  const rest   = options.entries.slice(3);
-  const top1   = options.entries[0];
+  const top3 = options.entries.slice(0, 3);
+  const rest = options.entries.slice(3);
+  const top1 = options.entries[0];
 
   const podiumLines = top3.map(e =>
-    `${MEDALS[e.rank - 1]}  **${e.name}**\n     ${e.statLine}  ·  Nv. ${e.level}`,
+    `${MEDALS[e.rank - 1]}  **${e.name}**\n> ${e.statLine}  ·  Nivel **${e.level}**`,
   );
 
-  const sep = '─'.repeat(32);
+  const sep = `\n${'─'.repeat(30)}\n`;
 
   const restLines = rest.map(e => {
     const rankStr = String(e.rank).padStart(2, ' ');
@@ -107,9 +107,9 @@ export function buildTopEmbed(options: TopEmbedOptions): EmbedBuilder {
   ].join('\n');
 
   const embed = new EmbedBuilder()
-    .setTitle(options.title)
+    .setTitle(`🏆  ${options.title}`)
     .setDescription(description)
-    .setColor(0xffd700)
+    .setColor(0xFFD700)
     .setFooter(AQUARIS_FOOTERS.levels)
     .setTimestamp();
 

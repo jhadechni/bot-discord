@@ -81,8 +81,8 @@ export const pedidoCommand = {
             const nombreProducto = interaction.options.getString('producto', true);
             const cantidad = interaction.options.getInteger('cantidad', true);
             const notas = interaction.options.getString('notas') ?? null;
-            const product = await findFirstInShopScopes(guildId, scope => prisma.shopProduct.findUnique({
-                where: { guildId_name: { guildId: scope, name: nombreProducto } },
+            const product = await findFirstInShopScopes(guildId, scope => prisma.shopProduct.findFirst({
+                where: { guildId: scope, name: nombreProducto },
             }));
             if (!product || !product.isActive) {
                 await interaction.editReply({

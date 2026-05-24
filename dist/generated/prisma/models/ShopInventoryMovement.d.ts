@@ -201,8 +201,8 @@ export type ShopInventoryMovementWhereInput = {
     performedById?: Prisma.StringNullableFilter<"ShopInventoryMovement"> | string | null;
     createdAt?: Prisma.DateTimeFilter<"ShopInventoryMovement"> | Date | string;
     material?: Prisma.XOR<Prisma.ShopMaterialScalarRelationFilter, Prisma.ShopMaterialWhereInput>;
-    relatedOrder?: Prisma.XOR<Prisma.ShopOrderNullableScalarRelationFilter, Prisma.ShopOrderWhereInput> | null;
     performedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
+    relatedOrder?: Prisma.XOR<Prisma.ShopOrderNullableScalarRelationFilter, Prisma.ShopOrderWhereInput> | null;
 };
 export type ShopInventoryMovementOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -215,8 +215,8 @@ export type ShopInventoryMovementOrderByWithRelationInput = {
     performedById?: Prisma.SortOrderInput | Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     material?: Prisma.ShopMaterialOrderByWithRelationInput;
-    relatedOrder?: Prisma.ShopOrderOrderByWithRelationInput;
     performedBy?: Prisma.ShopUserOrderByWithRelationInput;
+    relatedOrder?: Prisma.ShopOrderOrderByWithRelationInput;
 };
 export type ShopInventoryMovementWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -232,8 +232,8 @@ export type ShopInventoryMovementWhereUniqueInput = Prisma.AtLeast<{
     performedById?: Prisma.StringNullableFilter<"ShopInventoryMovement"> | string | null;
     createdAt?: Prisma.DateTimeFilter<"ShopInventoryMovement"> | Date | string;
     material?: Prisma.XOR<Prisma.ShopMaterialScalarRelationFilter, Prisma.ShopMaterialWhereInput>;
-    relatedOrder?: Prisma.XOR<Prisma.ShopOrderNullableScalarRelationFilter, Prisma.ShopOrderWhereInput> | null;
     performedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
+    relatedOrder?: Prisma.XOR<Prisma.ShopOrderNullableScalarRelationFilter, Prisma.ShopOrderWhereInput> | null;
 }, "id">;
 export type ShopInventoryMovementOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -273,8 +273,8 @@ export type ShopInventoryMovementCreateInput = {
     reason?: string | null;
     createdAt?: Date | string;
     material: Prisma.ShopMaterialCreateNestedOneWithoutMovementsInput;
-    relatedOrder?: Prisma.ShopOrderCreateNestedOneWithoutMovementsInput;
     performedBy?: Prisma.ShopUserCreateNestedOneWithoutMovementsInput;
+    relatedOrder?: Prisma.ShopOrderCreateNestedOneWithoutMovementsInput;
 };
 export type ShopInventoryMovementUncheckedCreateInput = {
     id?: string;
@@ -295,8 +295,8 @@ export type ShopInventoryMovementUpdateInput = {
     reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     material?: Prisma.ShopMaterialUpdateOneRequiredWithoutMovementsNestedInput;
-    relatedOrder?: Prisma.ShopOrderUpdateOneWithoutMovementsNestedInput;
     performedBy?: Prisma.ShopUserUpdateOneWithoutMovementsNestedInput;
+    relatedOrder?: Prisma.ShopOrderUpdateOneWithoutMovementsNestedInput;
 };
 export type ShopInventoryMovementUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -562,8 +562,8 @@ export type ShopInventoryMovementCreateWithoutMaterialInput = {
     quantity: number;
     reason?: string | null;
     createdAt?: Date | string;
-    relatedOrder?: Prisma.ShopOrderCreateNestedOneWithoutMovementsInput;
     performedBy?: Prisma.ShopUserCreateNestedOneWithoutMovementsInput;
+    relatedOrder?: Prisma.ShopOrderCreateNestedOneWithoutMovementsInput;
 };
 export type ShopInventoryMovementUncheckedCreateWithoutMaterialInput = {
     id?: string;
@@ -694,8 +694,8 @@ export type ShopInventoryMovementUpdateWithoutMaterialInput = {
     quantity?: Prisma.IntFieldUpdateOperationsInput | number;
     reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    relatedOrder?: Prisma.ShopOrderUpdateOneWithoutMovementsNestedInput;
     performedBy?: Prisma.ShopUserUpdateOneWithoutMovementsNestedInput;
+    relatedOrder?: Prisma.ShopOrderUpdateOneWithoutMovementsNestedInput;
 };
 export type ShopInventoryMovementUncheckedUpdateWithoutMaterialInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -768,8 +768,8 @@ export type ShopInventoryMovementSelect<ExtArgs extends runtime.Types.Extensions
     performedById?: boolean;
     createdAt?: boolean;
     material?: boolean | Prisma.ShopMaterialDefaultArgs<ExtArgs>;
-    relatedOrder?: boolean | Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>;
     performedBy?: boolean | Prisma.ShopInventoryMovement$performedByArgs<ExtArgs>;
+    relatedOrder?: boolean | Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>;
 }, ExtArgs["result"]["shopInventoryMovement"]>;
 export type ShopInventoryMovementSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -782,8 +782,8 @@ export type ShopInventoryMovementSelectCreateManyAndReturn<ExtArgs extends runti
     performedById?: boolean;
     createdAt?: boolean;
     material?: boolean | Prisma.ShopMaterialDefaultArgs<ExtArgs>;
-    relatedOrder?: boolean | Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>;
     performedBy?: boolean | Prisma.ShopInventoryMovement$performedByArgs<ExtArgs>;
+    relatedOrder?: boolean | Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>;
 }, ExtArgs["result"]["shopInventoryMovement"]>;
 export type ShopInventoryMovementSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -796,8 +796,8 @@ export type ShopInventoryMovementSelectUpdateManyAndReturn<ExtArgs extends runti
     performedById?: boolean;
     createdAt?: boolean;
     material?: boolean | Prisma.ShopMaterialDefaultArgs<ExtArgs>;
-    relatedOrder?: boolean | Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>;
     performedBy?: boolean | Prisma.ShopInventoryMovement$performedByArgs<ExtArgs>;
+    relatedOrder?: boolean | Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>;
 }, ExtArgs["result"]["shopInventoryMovement"]>;
 export type ShopInventoryMovementSelectScalar = {
     id?: boolean;
@@ -813,25 +813,25 @@ export type ShopInventoryMovementSelectScalar = {
 export type ShopInventoryMovementOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "materialId" | "movementType" | "quantity" | "reason" | "relatedOrderId" | "performedById" | "createdAt", ExtArgs["result"]["shopInventoryMovement"]>;
 export type ShopInventoryMovementInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     material?: boolean | Prisma.ShopMaterialDefaultArgs<ExtArgs>;
-    relatedOrder?: boolean | Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>;
     performedBy?: boolean | Prisma.ShopInventoryMovement$performedByArgs<ExtArgs>;
+    relatedOrder?: boolean | Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>;
 };
 export type ShopInventoryMovementIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     material?: boolean | Prisma.ShopMaterialDefaultArgs<ExtArgs>;
-    relatedOrder?: boolean | Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>;
     performedBy?: boolean | Prisma.ShopInventoryMovement$performedByArgs<ExtArgs>;
+    relatedOrder?: boolean | Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>;
 };
 export type ShopInventoryMovementIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     material?: boolean | Prisma.ShopMaterialDefaultArgs<ExtArgs>;
-    relatedOrder?: boolean | Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>;
     performedBy?: boolean | Prisma.ShopInventoryMovement$performedByArgs<ExtArgs>;
+    relatedOrder?: boolean | Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>;
 };
 export type $ShopInventoryMovementPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "ShopInventoryMovement";
     objects: {
         material: Prisma.$ShopMaterialPayload<ExtArgs>;
-        relatedOrder: Prisma.$ShopOrderPayload<ExtArgs> | null;
         performedBy: Prisma.$ShopUserPayload<ExtArgs> | null;
+        relatedOrder: Prisma.$ShopOrderPayload<ExtArgs> | null;
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
@@ -1173,8 +1173,8 @@ export interface ShopInventoryMovementDelegate<ExtArgs extends runtime.Types.Ext
 export interface Prisma__ShopInventoryMovementClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise";
     material<T extends Prisma.ShopMaterialDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopMaterialDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopMaterialClient<runtime.Types.Result.GetResult<Prisma.$ShopMaterialPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
-    relatedOrder<T extends Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>>): Prisma.Prisma__ShopOrderClient<runtime.Types.Result.GetResult<Prisma.$ShopOrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
     performedBy<T extends Prisma.ShopInventoryMovement$performedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopInventoryMovement$performedByArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
+    relatedOrder<T extends Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopInventoryMovement$relatedOrderArgs<ExtArgs>>): Prisma.Prisma__ShopOrderClient<runtime.Types.Result.GetResult<Prisma.$ShopOrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1593,24 +1593,6 @@ export type ShopInventoryMovementDeleteManyArgs<ExtArgs extends runtime.Types.Ex
     limit?: number;
 };
 /**
- * ShopInventoryMovement.relatedOrder
- */
-export type ShopInventoryMovement$relatedOrderArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the ShopOrder
-     */
-    select?: Prisma.ShopOrderSelect<ExtArgs> | null;
-    /**
-     * Omit specific fields from the ShopOrder
-     */
-    omit?: Prisma.ShopOrderOmit<ExtArgs> | null;
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: Prisma.ShopOrderInclude<ExtArgs> | null;
-    where?: Prisma.ShopOrderWhereInput;
-};
-/**
  * ShopInventoryMovement.performedBy
  */
 export type ShopInventoryMovement$performedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1627,6 +1609,24 @@ export type ShopInventoryMovement$performedByArgs<ExtArgs extends runtime.Types.
      */
     include?: Prisma.ShopUserInclude<ExtArgs> | null;
     where?: Prisma.ShopUserWhereInput;
+};
+/**
+ * ShopInventoryMovement.relatedOrder
+ */
+export type ShopInventoryMovement$relatedOrderArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ShopOrder
+     */
+    select?: Prisma.ShopOrderSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the ShopOrder
+     */
+    omit?: Prisma.ShopOrderOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.ShopOrderInclude<ExtArgs> | null;
+    where?: Prisma.ShopOrderWhereInput;
 };
 /**
  * ShopInventoryMovement without action
