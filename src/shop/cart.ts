@@ -20,6 +20,7 @@ import {
   resolveCatalogViewState,
 } from './catalog.js';
 import { getCategoryDefinition, getSubcategoryDefinition } from './taxonomy.js';
+import { resolvePresentationTypeName } from './quantities.js';
 
 export interface CartItem {
   contentsSummary?: string | null;
@@ -145,10 +146,16 @@ function buildCartProductSelectRow(
           const price = p.prices[0];
           const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
           const icon = getCategoryDefinition(p.category).emoji;
+          const typeName = p.productType !== 'service'
+            ? resolvePresentationTypeName(p.presentationType as Parameters<typeof resolvePresentationTypeName>[0])
+            : null;
+          const description = typeName
+            ? `${typeName}  ·  💰 ${priceStr}`.slice(0, 100)
+            : `💰 ${priceStr}`;
           return new StringSelectMenuOptionBuilder()
             .setLabel(`${icon} ${p.name}`.slice(0, 100))
             .setValue(p.id)
-            .setDescription(`💰 ${priceStr}`);
+            .setDescription(description);
         }),
       ),
   );

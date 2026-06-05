@@ -3,6 +3,7 @@ import { formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 import { SHOP_COLORS } from '../utils/shop-ui.js';
 import { buildCategorySelectRow, queryCatalogProducts, resolveCatalogViewState, } from './catalog.js';
 import { getCategoryDefinition, getSubcategoryDefinition } from './taxonomy.js';
+import { resolvePresentationTypeName } from './quantities.js';
 const CART_TTL_MS = 30 * 60 * 1000;
 const CART_PAGE_SIZE = 10;
 const sessions = new Map();
@@ -81,10 +82,16 @@ function buildCartProductSelectRow(products) {
         const price = p.prices[0];
         const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
         const icon = getCategoryDefinition(p.category).emoji;
+        const typeName = p.productType !== 'service'
+            ? resolvePresentationTypeName(p.presentationType)
+            : null;
+        const description = typeName
+            ? `${typeName}  ·  💰 ${priceStr}`.slice(0, 100)
+            : `💰 ${priceStr}`;
         return new StringSelectMenuOptionBuilder()
             .setLabel(`${icon} ${p.name}`.slice(0, 100))
             .setValue(p.id)
-            .setDescription(`💰 ${priceStr}`);
+            .setDescription(description);
     })));
 }
 function buildBrowsePaginationRow(state) {
