@@ -74,6 +74,7 @@ export const ModelName = {
     RecruitmentTicket: 'RecruitmentTicket',
     ModerationLog: 'ModerationLog',
     UserActivity: 'UserActivity',
+    MonthlyActivity: 'MonthlyActivity',
     ReminderTemplate: 'ReminderTemplate',
     Reminder: 'Reminder',
     FilterWord: 'FilterWord',
@@ -95,6 +96,7 @@ export const ModelName = {
     ShopCategory: 'ShopCategory',
     ShopSubcategory: 'ShopSubcategory',
     ShopOrderEvent: 'ShopOrderEvent',
+    Poll: 'Poll',
     MapBackground: 'MapBackground',
     ProtectionMember: 'ProtectionMember',
     WorldProtection: 'WorldProtection'
@@ -186,6 +188,16 @@ export const UserActivityScalarFieldEnum = {
     messageCount: 'messageCount',
     voiceMinutes: 'voiceMinutes',
     createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+export const MonthlyActivityScalarFieldEnum = {
+    id: 'id',
+    guildId: 'guildId',
+    userId: 'userId',
+    yearMonth: 'yearMonth',
+    xp: 'xp',
+    messageCount: 'messageCount',
+    voiceMinutes: 'voiceMinutes',
     updatedAt: 'updatedAt'
 };
 export const ReminderTemplateScalarFieldEnum = {
@@ -425,6 +437,20 @@ export const ShopOrderEventScalarFieldEnum = {
     newStatus: 'newStatus',
     performedById: 'performedById',
     notes: 'notes',
+    createdAt: 'createdAt'
+};
+export const PollScalarFieldEnum = {
+    id: 'id',
+    guildId: 'guildId',
+    channelId: 'channelId',
+    messageId: 'messageId',
+    authorId: 'authorId',
+    question: 'question',
+    options: 'options',
+    votes: 'votes',
+    anonymous: 'anonymous',
+    closesAt: 'closesAt',
+    closed: 'closed',
     createdAt: 'createdAt'
 };
 export const MapBackgroundScalarFieldEnum = {

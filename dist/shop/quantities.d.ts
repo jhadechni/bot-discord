@@ -36,6 +36,7 @@ export declare function resolvePresentationQuantity(params: {
     presentationType: PresentationType;
     stackSize: number;
 }): number;
+export declare function resolvePresentationTypeName(presentationType: PresentationType): string;
 export declare function resolvePresentationLabel(params: {
     presentationQuantity: number;
     presentationType: PresentationType;

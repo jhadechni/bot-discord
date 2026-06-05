@@ -76,15 +76,42 @@ export function buildConfirmRow(targetId, disabled = true) {
 }
 // ── Ejecución de expulsión ────────────────────────────────────────────────────
 export async function executeExpulsion(params) {
-    const { guildId, targetId, targetTag, reason, moderatorId, guild } = params;
+    const { guildId, targetId, targetTag, reason, comments, moderatorId, guild } = params;
     const results = {
         rolesReset: false,
         visitorAssigned: false,
         clanPlayerUpdated: false,
         protectionsRemoved: 0,
         clanPlayerFound: false,
+        dmDelivered: false,
     };
-    // 1. Quitar todos los roles y asignar visitante
+    // 1. Enviar DM al jugador antes de quitarle los roles
+    try {
+        const targetUser = await guild.client.users.fetch(targetId).catch(() => null);
+        if (targetUser) {
+            const dmLines = [
+                `Has sido expulsado del clan **Aquaris**.\n`,
+                `**Motivo:** ${reason}`,
+                ...(comments ? [`**Comentario:** ${comments}`] : []),
+                `\n-# Si crees que esto fue un error, contacta con el staff de Aquaris.`,
+            ];
+            await targetUser.send({
+                embeds: [
+                    buildAquarisEmbed({
+                        title: '🚪 Has sido expulsado del clan Aquaris',
+                        description: dmLines.join('\n'),
+                        color: MODERATION_COLORS.danger,
+                        footer: 'moderation',
+                    }),
+                ],
+            });
+            results.dmDelivered = true;
+        }
+    }
+    catch {
+        results.dmDelivered = false;
+    }
+    // 2. Quitar todos los roles y asignar visitante
     const config = await getOrCreateGuildConfig(guildId);
     try {
         const member = await guild.members.fetch(targetId).catch(() => null);
@@ -180,7 +207,14 @@ export async function executeExpulsion(params) {
                 ? `🗑️ ${results.protectionsRemoved} eliminadas`
                 : '—',
             inline: true,
+        }, {
+            name: 'DM al jugador',
+            value: results.dmDelivered ? '✅ Enviado' : '❌ No entregado (DMs cerrados)',
+            inline: true,
         });
+        if (comments) {
+            logEmbed.addFields({ name: 'Comentario interno', value: comments, inline: false });
+        }
         await logsChannel.send({ embeds: [logEmbed] });
     }
     return results;

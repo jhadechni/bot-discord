@@ -8,6 +8,7 @@ export declare const pendingExpulsions: Map<string, {
     targetId: string;
     targetTag: string;
     reason: string;
+    comments: string | null;
 }>;
 export declare function parseExpulsionReasons(raw: unknown): ExpulsionReason[];
 export declare function buildExpulsionSelectorEmbed(target: {
@@ -26,6 +27,7 @@ export declare function executeExpulsion(params: {
     targetId: string;
     targetTag: string;
     reason: string;
+    comments: string | null;
     moderatorId: string;
     guild: import('discord.js').Guild;
 }): Promise<{
@@ -34,6 +36,7 @@ export declare function executeExpulsion(params: {
     clanPlayerUpdated: boolean;
     protectionsRemoved: number;
     clanPlayerFound: boolean;
+    dmDelivered: boolean;
 }>;
 export declare const expulsionCommand: Command;
 //# sourceMappingURL=expulsion.command.d.ts.map

@@ -4,7 +4,7 @@ import { resolveShopGuildScopes } from './scope.js';
 import { coerceShopTaxonomy, compareCategoryKeys, compareSubcategoryKeys, getCategoryDefinition, getSubcategoryDefinition, isValidCategory, normalizeShopTaxonomyKey, } from './taxonomy.js';
 import { formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 import { SHOP_COLORS } from '../utils/shop-ui.js';
-import { resolvePresentationLabel } from './quantities.js';
+import { resolvePresentationLabel, resolvePresentationTypeName } from './quantities.js';
 import { buildProductContentsSummary } from './product-contents.js';
 const CATALOG_PAGE_SIZE = 10;
 const PRODUCT_SELECT_THRESHOLD = 25;
@@ -392,18 +392,25 @@ function buildPaginationRow(mode, currentCategory, currentSubcategory, currentPa
         .setStyle(ButtonStyle.Secondary)
         .setDisabled(currentPage >= totalPages));
 }
+function buildProductOptionDescription(product) {
+    const price = product.prices[0];
+    const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
+    if (product.productType === 'service') {
+        return `💰 ${priceStr}`;
+    }
+    const typeName = resolvePresentationTypeName(product.presentationType);
+    return `${typeName}  ·  💰 ${priceStr}`.slice(0, 100);
+}
 function buildProductSelectRow(products, mode, category, subcategory, selectedProductId) {
     const select = new StringSelectMenuBuilder()
         .setCustomId(`tienda:catalog:product:${mode}:${category}:${subcategory}`)
         .setPlaceholder('🔍 Busca o selecciona un producto…')
         .addOptions(products.slice(0, PRODUCT_SELECT_THRESHOLD).map(product => {
-        const price = product.prices[0];
-        const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
         const icon = getProductEmoji(product);
         return new StringSelectMenuOptionBuilder()
             .setLabel(`${icon} ${truncateText(product.name, 95)}`)
             .setValue(product.id)
-            .setDescription(`💰 ${priceStr}`)
+            .setDescription(buildProductOptionDescription(product))
             .setDefault(product.id === selectedProductId);
     }));
     return new ActionRowBuilder().addComponents(select);
@@ -474,13 +481,11 @@ function buildSearchProductSelectRow(products, selectedProductId) {
         .setCustomId('tienda:catalog:search_product')
         .setPlaceholder('Selecciona un resultado…')
         .addOptions(products.slice(0, PRODUCT_SELECT_THRESHOLD).map(product => {
-        const price = product.prices[0];
-        const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
         const icon = getProductEmoji(product);
         return new StringSelectMenuOptionBuilder()
             .setLabel(`${icon} ${truncateText(product.name, 95)}`)
             .setValue(product.id)
-            .setDescription(`💰 ${priceStr}`)
+            .setDescription(buildProductOptionDescription(product))
             .setDefault(product.id === selectedProductId);
     }));
     return new ActionRowBuilder().addComponents(select);

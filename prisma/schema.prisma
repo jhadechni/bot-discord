@@ -110,6 +110,20 @@ model UserActivity {
   @@unique([guildId, userId])
 }
 
+model MonthlyActivity {
+  id           String   @id @default(cuid())
+  guildId      String
+  userId       String
+  yearMonth    String   // "YYYY-MM"
+  xp           Int      @default(0)
+  messageCount Int      @default(0)
+  voiceMinutes Int      @default(0)
+  updatedAt    DateTime @updatedAt
+
+  @@unique([guildId, userId, yearMonth])
+  @@index([guildId, yearMonth])
+}
+
 model ReminderTemplate {
   id          String     @id @default(cuid())
   guildId     String
@@ -503,6 +517,23 @@ model ShopOrderEvent {
 
   @@index([orderId, createdAt])
   @@index([performedById])
+}
+
+model Poll {
+  id        String   @id @default(cuid())
+  guildId   String
+  channelId String
+  messageId String?
+  authorId  String
+  question  String
+  options   Json     // string[]
+  votes     Json     // string[][] — array de arrays de userIds por opción
+  anonymous Boolean  @default(false)
+  closesAt  DateTime
+  closed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([guildId, closed, closesAt])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.

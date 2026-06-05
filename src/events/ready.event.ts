@@ -3,6 +3,7 @@ import { logger } from '../core/logger.js';
 import { startReminderScheduler } from '../utils/reminder-scheduler.js';
 import { startRecruitmentScheduler } from '../utils/recruitment-scheduler.js';
 import { startTempbanScheduler } from '../utils/tempban-scheduler.js';
+import { startMonthlyScheduler } from '../utils/monthly-scheduler.js';
 import { reloadTaxonomyFromDatabase } from '../shop/taxonomy.js';
 import { syncAutoModRule } from '../utils/automod-sync.js';
 import { initVoiceSessions } from './voiceStateUpdate.event.js';
@@ -19,7 +20,8 @@ const readyEvent: BotEvent<'ready'> = {
     logger.info('Recruitment scheduler iniciado');
     startTempbanScheduler();
     logger.info('Tempban scheduler iniciado');
-
+    startMonthlyScheduler();
+    logger.info('Monthly scheduler iniciado');
     try {
       const categories = await reloadTaxonomyFromDatabase();
       logger.info(`[taxonomy] ${categories.length} categoría(s) cargadas desde la base de datos`);

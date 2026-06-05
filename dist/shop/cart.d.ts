@@ -97,5 +97,5 @@ export declare function buildCartView(session: CartSession, products: CartProduc
     embeds: EmbedBuilder[];
     state: CatalogViewState;
 };
-export declare function buildQtyModal(productName: string): ModalBuilder;
+export declare function buildQtyModal(productName: string, presentationTypeName?: string): ModalBuilder;
 //# sourceMappingURL=cart.d.ts.map

@@ -20,7 +20,7 @@ import {
 } from './taxonomy.js';
 import { formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 import { SHOP_COLORS } from '../utils/shop-ui.js';
-import { resolvePresentationLabel } from './quantities.js';
+import { resolvePresentationLabel, resolvePresentationTypeName } from './quantities.js';
 import { buildProductContentsSummary } from './product-contents.js';
 
 const CATALOG_PAGE_SIZE = 10;
@@ -602,6 +602,18 @@ function buildPaginationRow(
   );
 }
 
+function buildProductOptionDescription(product: CatalogProduct): string {
+  const price = product.prices[0];
+  const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
+  if (product.productType === 'service') {
+    return `💰 ${priceStr}`;
+  }
+  const typeName = resolvePresentationTypeName(
+    product.presentationType as Parameters<typeof resolvePresentationTypeName>[0],
+  );
+  return `${typeName}  ·  💰 ${priceStr}`.slice(0, 100);
+}
+
 function buildProductSelectRow(
   products: CatalogProduct[],
   mode: CatalogMode,
@@ -614,13 +626,11 @@ function buildProductSelectRow(
     .setPlaceholder('🔍 Busca o selecciona un producto…')
     .addOptions(
       products.slice(0, PRODUCT_SELECT_THRESHOLD).map(product => {
-        const price = product.prices[0];
-        const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
         const icon = getProductEmoji(product);
         return new StringSelectMenuOptionBuilder()
           .setLabel(`${icon} ${truncateText(product.name, 95)}`)
           .setValue(product.id)
-          .setDescription(`💰 ${priceStr}`)
+          .setDescription(buildProductOptionDescription(product))
           .setDefault(product.id === selectedProductId);
       }),
     );
@@ -751,13 +761,11 @@ function buildSearchProductSelectRow(
     .setPlaceholder('Selecciona un resultado…')
     .addOptions(
       products.slice(0, PRODUCT_SELECT_THRESHOLD).map(product => {
-        const price = product.prices[0];
-        const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
         const icon = getProductEmoji(product);
         return new StringSelectMenuOptionBuilder()
           .setLabel(`${icon} ${truncateText(product.name, 95)}`)
           .setValue(product.id)
-          .setDescription(`💰 ${priceStr}`)
+          .setDescription(buildProductOptionDescription(product))
           .setDefault(product.id === selectedProductId);
       }),
     );

@@ -13,6 +13,7 @@ export const AQUARIS_FOOTERS = {
     levels: { text: 'Aquaris • Niveles  ·  💙 by jhadechni' },
     community: { text: 'Aquaris • Comunidad  ·  💙 by jhadechni' },
     general: { text: 'Aquaris  ·  💙 by jhadechni' },
+    polls: { text: 'Aquaris • Encuestas  ·  💙 by jhadechni' },
 };
 export const AQUARIS_COLORS = {
     info: COLORS.info,
@@ -31,6 +32,7 @@ export const AQUARIS_COLORS = {
     suggestions: COLORS.info,
     levels: COLORS.blurple,
     community: COLORS.info,
+    polls: COLORS.blurple,
 };
 export function normalizeMessageReason(reason) {
     const trimmed = reason?.trim();

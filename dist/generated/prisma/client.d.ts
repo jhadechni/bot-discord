@@ -52,6 +52,11 @@ export type ModerationLog = Prisma.ModerationLogModel;
  */
 export type UserActivity = Prisma.UserActivityModel;
 /**
+ * Model MonthlyActivity
+ *
+ */
+export type MonthlyActivity = Prisma.MonthlyActivityModel;
+/**
  * Model ReminderTemplate
  *
  */
@@ -156,6 +161,11 @@ export type ShopSubcategory = Prisma.ShopSubcategoryModel;
  *
  */
 export type ShopOrderEvent = Prisma.ShopOrderEventModel;
+/**
+ * Model Poll
+ *
+ */
+export type Poll = Prisma.PollModel;
 /**
  * Model MapBackground
  * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.

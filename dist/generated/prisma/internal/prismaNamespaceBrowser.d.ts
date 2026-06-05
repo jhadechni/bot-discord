@@ -32,6 +32,7 @@ export declare const ModelName: {
     readonly RecruitmentTicket: "RecruitmentTicket";
     readonly ModerationLog: "ModerationLog";
     readonly UserActivity: "UserActivity";
+    readonly MonthlyActivity: "MonthlyActivity";
     readonly ReminderTemplate: "ReminderTemplate";
     readonly Reminder: "Reminder";
     readonly FilterWord: "FilterWord";
@@ -53,6 +54,7 @@ export declare const ModelName: {
     readonly ShopCategory: "ShopCategory";
     readonly ShopSubcategory: "ShopSubcategory";
     readonly ShopOrderEvent: "ShopOrderEvent";
+    readonly Poll: "Poll";
     readonly MapBackground: "MapBackground";
     readonly ProtectionMember: "ProtectionMember";
     readonly WorldProtection: "WorldProtection";
@@ -151,6 +153,17 @@ export declare const UserActivityScalarFieldEnum: {
     readonly updatedAt: "updatedAt";
 };
 export type UserActivityScalarFieldEnum = (typeof UserActivityScalarFieldEnum)[keyof typeof UserActivityScalarFieldEnum];
+export declare const MonthlyActivityScalarFieldEnum: {
+    readonly id: "id";
+    readonly guildId: "guildId";
+    readonly userId: "userId";
+    readonly yearMonth: "yearMonth";
+    readonly xp: "xp";
+    readonly messageCount: "messageCount";
+    readonly voiceMinutes: "voiceMinutes";
+    readonly updatedAt: "updatedAt";
+};
+export type MonthlyActivityScalarFieldEnum = (typeof MonthlyActivityScalarFieldEnum)[keyof typeof MonthlyActivityScalarFieldEnum];
 export declare const ReminderTemplateScalarFieldEnum: {
     readonly id: "id";
     readonly guildId: "guildId";
@@ -411,6 +424,21 @@ export declare const ShopOrderEventScalarFieldEnum: {
     readonly createdAt: "createdAt";
 };
 export type ShopOrderEventScalarFieldEnum = (typeof ShopOrderEventScalarFieldEnum)[keyof typeof ShopOrderEventScalarFieldEnum];
+export declare const PollScalarFieldEnum: {
+    readonly id: "id";
+    readonly guildId: "guildId";
+    readonly channelId: "channelId";
+    readonly messageId: "messageId";
+    readonly authorId: "authorId";
+    readonly question: "question";
+    readonly options: "options";
+    readonly votes: "votes";
+    readonly anonymous: "anonymous";
+    readonly closesAt: "closesAt";
+    readonly closed: "closed";
+    readonly createdAt: "createdAt";
+};
+export type PollScalarFieldEnum = (typeof PollScalarFieldEnum)[keyof typeof PollScalarFieldEnum];
 export declare const MapBackgroundScalarFieldEnum: {
     readonly id: "id";
     readonly imageUrl: "imageUrl";

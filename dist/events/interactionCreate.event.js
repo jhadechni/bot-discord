@@ -14,7 +14,7 @@ import { getOrderFull, buildOrderEmbed, buildAcceptedButtons, buildPendingButton
 import { buildCatalogEntryView, buildCatalogView, buildProductDetailEmbed, buildSearchView, queryCatalogProducts, searchCatalogProducts, } from '../shop/catalog.js';
 import { getCart, setCart, deleteCart, buildCartView, buildCartSearchView, buildQtyModal, queryCartProducts, } from '../shop/cart.js';
 import { buildProductContentsSummary } from '../shop/product-contents.js';
-import { hasProductInventoryDefinition } from '../shop/quantities.js';
+import { hasProductInventoryDefinition, resolvePresentationTypeName } from '../shop/quantities.js';
 import { CLAN_PLAYER_CUSTOM_IDS, applyAdditionalModalValues, applyBasicsModalValues, applySessionSelectValue, buildClanPlayerAdditionalModal, buildClanPlayerBasicsModal, buildClanPlayerReviewReply, buildClanPlayerStepOneReply, canManageClanPlayers, clearClanPlayerRegistrationSession, getClanPlayerSession, saveClanPlayerRegistration, } from '../recruitment/player-registration.js';
 import { RECRUITMENT_COLORS, buildRecruitmentAcceptedApplicationEmbed, buildRecruitmentApplicationEmbed, buildRecruitmentErrorEmbed, buildRecruitmentLogEmbed, buildRecruitmentNoticeEmbed, buildRecruitmentRejectedApplicationEmbed, buildRecruitmentTicketWelcomeEmbed, buildRecruitmentUserMessageEmbed, normalizeRecruitmentReason, } from '../utils/recruitment-ui.js';
 import { REMINDER_COLORS, buildKitReminderListEmbed, buildReminderErrorEmbed, buildReminderNoticeEmbed, } from '../utils/reminder-ui.js';
@@ -22,6 +22,7 @@ import { SHOP_COLORS, buildOrderReceivedEmbed, buildShopErrorEmbed, buildShopNot
 import { buildSystemErrorEmbed } from '../utils/system-ui.js';
 import { parseNotifRoles, buildNotifEphemeral } from '../commands/notif/notif.command.js';
 import { parseExpulsionReasons, pendingExpulsions, buildExpulsionConfirmEmbed, buildReasonSelectMenu, buildConfirmRow, executeExpulsion, } from '../commands/expulsion/expulsion.command.js';
+import { buildAquarisEmbed, AQUARIS_COLORS } from '../utils/message-ui.js';
 // ── Cooldowns (en memoria para sugerencias, DB para apply) ───────────────────
 const SUGGEST_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutos
 const APPLY_COOLDOWN_MS = 48 * 60 * 60 * 1000; // 48 horas
@@ -2351,8 +2352,15 @@ const interactionCreateEvent = {
                 const productId = interaction.values[0];
                 if (!productId)
                     return;
+                const productForModal = await prisma.shopProduct.findUnique({
+                    where: { id: productId },
+                    select: { name: true, presentationType: true },
+                });
+                const presentationTypeName = productForModal
+                    ? resolvePresentationTypeName(productForModal.presentationType)
+                    : undefined;
                 setCart({ ...cart, pendingProductId: productId });
-                await interaction.showModal(buildQtyModal('producto'));
+                await interaction.showModal(buildQtyModal(productForModal?.name ?? 'producto', presentationTypeName));
                 return;
             }
             // ── Carrito interactivo: abrir búsqueda ───────────────────────────────────
@@ -3011,6 +3019,7 @@ const interactionCreateEvent = {
                     targetId,
                     targetTag: target.tag,
                     reason: found.text,
+                    comments: null,
                 });
                 await interaction.deferUpdate();
                 await interaction.editReply({
@@ -3036,6 +3045,7 @@ const interactionCreateEvent = {
                     targetId,
                     targetTag: target.tag,
                     reason,
+                    comments: null,
                 });
                 const config = await getOrCreateGuildConfig(guild.id);
                 const reasons = parseExpulsionReasons(config.expulsionReasons);
@@ -3051,8 +3061,31 @@ const interactionCreateEvent = {
             }
             // ── expulsion:confirm:{targetId} ─────────────────────────────────────────
             if (interaction.isButton() && interaction.customId.startsWith('expulsion:confirm:')) {
-                await interaction.deferUpdate();
                 const targetId = interaction.customId.slice('expulsion:confirm:'.length);
+                const pending = pendingExpulsions.get(interaction.user.id);
+                if (!pending || pending.targetId !== targetId) {
+                    await interaction.reply({
+                        embeds: [new EmbedBuilder().setColor(0xed4245).setDescription('❌ Sesión expirada. Inicia el proceso de nuevo con `/expulsion ejecutar`.')],
+                        flags: 64,
+                    });
+                    return;
+                }
+                await interaction.showModal(new ModalBuilder()
+                    .setCustomId(`expulsion:comment_modal:${targetId}`)
+                    .setTitle('Comentario adicional (opcional)')
+                    .addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder()
+                    .setCustomId('comment')
+                    .setLabel('Comentario interno')
+                    .setStyle(TextInputStyle.Paragraph)
+                    .setRequired(false)
+                    .setMaxLength(500)
+                    .setPlaceholder('Deja vacío si no hay comentarios adicionales...'))));
+                return;
+            }
+            // ── expulsion:comment_modal:{targetId} ───────────────────────────────────
+            if (interaction.isModalSubmit() && interaction.customId.startsWith('expulsion:comment_modal:')) {
+                await interaction.deferUpdate();
+                const targetId = interaction.customId.slice('expulsion:comment_modal:'.length);
                 const guild = interaction.guild;
                 if (!guild)
                     return;
@@ -3064,12 +3097,14 @@ const interactionCreateEvent = {
                     });
                     return;
                 }
+                const comments = interaction.fields.getTextInputValue('comment').trim() || null;
                 pendingExpulsions.delete(interaction.user.id);
                 const results = await executeExpulsion({
                     guildId: guild.id,
                     targetId: pending.targetId,
                     targetTag: pending.targetTag,
                     reason: pending.reason,
+                    comments,
                     moderatorId: interaction.user.id,
                     guild,
                 });
@@ -3079,7 +3114,7 @@ const interactionCreateEvent = {
                             .setColor(0x57f287)
                             .setTitle('✅ Expulsión ejecutada')
                             .setDescription(`<@${pending.targetId}> ha sido expulsado del clan.`)
-                            .addFields({ name: 'Motivo', value: pending.reason, inline: false }, { name: 'Roles', value: results.rolesReset ? `✅ Quitados${results.visitorAssigned ? ' · Visitante asignado' : ''}` : '⚠️ No se pudo', inline: true }, { name: 'Estado clan', value: results.clanPlayerFound ? (results.clanPlayerUpdated ? '✅ Marcado retirado' : '⚠️ Error') : '⚠️ No encontrado', inline: true }, { name: 'Protecciones', value: results.clanPlayerFound ? `🗑️ ${results.protectionsRemoved} eliminadas` : '—', inline: true })
+                            .addFields({ name: 'Motivo', value: pending.reason, inline: false }, ...(comments ? [{ name: 'Comentario', value: comments, inline: false }] : []), { name: 'Roles', value: results.rolesReset ? `✅ Quitados${results.visitorAssigned ? ' · Visitante asignado' : ''}` : '⚠️ No se pudo', inline: true }, { name: 'Estado clan', value: results.clanPlayerFound ? (results.clanPlayerUpdated ? '✅ Marcado retirado' : '⚠️ Error') : '⚠️ No encontrado', inline: true }, { name: 'Protecciones', value: results.clanPlayerFound ? `🗑️ ${results.protectionsRemoved} eliminadas` : '—', inline: true }, { name: 'DM al jugador', value: results.dmDelivered ? '✅ Enviado' : '❌ DMs cerrados', inline: true })
                             .setFooter({ text: 'Aquaris • Moderación  ·  💙 by jhadechni' })
                             .setTimestamp(),
                     ],

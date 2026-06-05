@@ -30,11 +30,20 @@ async function trackMessageXp(message, guildId, userId, config) {
     const xpGain = onCooldown ? 0 : randomMessageXp();
     if (!onCooldown)
         xpCooldown.set(key, now);
-    const activity = await prisma.userActivity.upsert({
-        where: { guildId_userId: { guildId, userId } },
-        update: { xp: { increment: xpGain }, messageCount: { increment: 1 } },
-        create: { guildId, userId, xp: xpGain, messageCount: 1, level: 0 },
-    });
+    const { currentYearMonth } = await import('../utils/monthly-scheduler.js');
+    const yearMonth = currentYearMonth();
+    const [activity] = await Promise.all([
+        prisma.userActivity.upsert({
+            where: { guildId_userId: { guildId, userId } },
+            update: { xp: { increment: xpGain }, messageCount: { increment: 1 } },
+            create: { guildId, userId, xp: xpGain, messageCount: 1, level: 0 },
+        }),
+        prisma.monthlyActivity.upsert({
+            where: { guildId_userId_yearMonth: { guildId, userId, yearMonth } },
+            update: { xp: { increment: xpGain }, messageCount: { increment: 1 } },
+            create: { guildId, userId, yearMonth, xp: xpGain, messageCount: 1 },
+        }),
+    ]);
     if (xpGain > 0) {
         const newLevel = calcLevel(activity.xp);
         if (newLevel > activity.level) {

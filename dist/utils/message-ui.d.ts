@@ -36,6 +36,9 @@ export declare const AQUARIS_FOOTERS: {
     readonly general: {
         readonly text: "Aquaris  ·  💙 by jhadechni";
     };
+    readonly polls: {
+        readonly text: "Aquaris • Encuestas  ·  💙 by jhadechni";
+    };
 };
 export declare const AQUARIS_COLORS: {
     readonly info: 3447003;
@@ -54,6 +57,7 @@ export declare const AQUARIS_COLORS: {
     readonly suggestions: 3447003;
     readonly levels: 5793266;
     readonly community: 3447003;
+    readonly polls: 5793266;
 };
 export type AquarisFooterKey = keyof typeof AQUARIS_FOOTERS;
 export type AquarisColor = (typeof AQUARIS_COLORS)[keyof typeof AQUARIS_COLORS];

@@ -47,15 +47,27 @@ export function buildTopEmbed(options) {
     const top3 = options.entries.slice(0, 3);
     const rest = options.entries.slice(3);
     const top1 = options.entries[0];
-    const podiumLines = top3.map(e => `${MEDALS[e.rank - 1]}  **${e.name}**\n> ${e.statLine}  ·  Nivel **${e.level}**`);
+    const podiumLines = top3.map((e, i) => {
+        const winner = i === 0 && options.isClosed ? '👑  ' : '';
+        const levelStr = e.level > 0 ? `  ·  Nivel **${e.level}**` : '';
+        return `${MEDALS[e.rank - 1]}  ${winner}**${e.name}**\n> ${e.statLine}${levelStr}`;
+    });
     const sep = `\n${'─'.repeat(30)}\n`;
     const restLines = rest.map(e => {
         const rankStr = String(e.rank).padStart(2, ' ');
         return `\`${rankStr}.\`  ${e.name}  —  ${e.statLine}  ·  Nv. ${e.level}`;
     });
+    const selfLines = options.selfEntry
+        ? [
+            sep,
+            `📍  **Tu posición**`,
+            `\`${String(options.selfEntry.rank).padStart(2, ' ')}.\`  ${options.selfEntry.name}  —  ${options.selfEntry.statLine}  ·  Nv. ${options.selfEntry.level}`,
+        ]
+        : [];
     const description = [
         ...podiumLines,
         ...(restLines.length > 0 ? [sep, ...restLines] : []),
+        ...selfLines,
     ].join('\n');
     const embed = new EmbedBuilder()
         .setTitle(`🏆  ${options.title}`)
@@ -67,10 +79,10 @@ export function buildTopEmbed(options) {
         embed.setThumbnail(top1.avatarUrl);
     return embed;
 }
-export function buildLevelEmptyEmbed() {
+export function buildLevelEmptyEmbed(description) {
     return buildAquarisEmbed({
         title: 'Sin actividad registrada',
-        description: 'Todavía no hay actividad suficiente para mostrar un ranking.',
+        description: description ?? 'Todavía no hay actividad suficiente para mostrar un ranking.',
         color: LEVEL_COLORS.empty,
         footer: 'levels',
     });

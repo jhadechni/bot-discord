@@ -182,6 +182,17 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
         omit: OmitOpts;
     }>;
     /**
+     * `prisma.monthlyActivity`: Exposes CRUD operations for the **MonthlyActivity** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more MonthlyActivities
+      * const monthlyActivities = await prisma.monthlyActivity.findMany()
+      * ```
+      */
+    get monthlyActivity(): Prisma.MonthlyActivityDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
+    /**
      * `prisma.reminderTemplate`: Exposes CRUD operations for the **ReminderTemplate** model.
       * Example usage:
       * ```ts
@@ -410,6 +421,17 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
       * ```
       */
     get shopOrderEvent(): Prisma.ShopOrderEventDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
+    /**
+     * `prisma.poll`: Exposes CRUD operations for the **Poll** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more Polls
+      * const polls = await prisma.poll.findMany()
+      * ```
+      */
+    get poll(): Prisma.PollDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
     /**

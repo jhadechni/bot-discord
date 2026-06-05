@@ -209,14 +209,17 @@ export function buildCartView(session, products) {
         state,
     };
 }
-export function buildQtyModal(productName) {
+export function buildQtyModal(productName, presentationTypeName) {
     const shortName = productName.slice(0, 40);
+    const qtyLabel = presentationTypeName
+        ? `Cantidad (en ${presentationTypeName.toLowerCase()}s)`.slice(0, 45)
+        : 'Cantidad';
     return new ModalBuilder()
         .setCustomId('pedido:cart:qty_modal')
         .setTitle(`Añadir: ${shortName}`)
         .addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder()
         .setCustomId('qty')
-        .setLabel('Cantidad')
+        .setLabel(qtyLabel)
         .setStyle(TextInputStyle.Short)
         .setRequired(true)
         .setMinLength(1)

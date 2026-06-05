@@ -76,6 +76,17 @@ export function resolvePresentationQuantity(params: {
   }
 }
 
+export function resolvePresentationTypeName(presentationType: PresentationType): string {
+  switch (presentationType) {
+    case 'unit':         return 'Unidad';
+    case 'stack':        return 'Stack';
+    case 'chest':        return 'Cofre';
+    case 'double_chest': return 'Cofre doble';
+    case 'custom':
+    default:             return 'Lote';
+  }
+}
+
 export function resolvePresentationLabel(params: {
   presentationQuantity: number;
   presentationType: PresentationType;

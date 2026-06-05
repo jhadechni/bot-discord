@@ -237,6 +237,7 @@ export declare const ModelName: {
     readonly RecruitmentTicket: "RecruitmentTicket";
     readonly ModerationLog: "ModerationLog";
     readonly UserActivity: "UserActivity";
+    readonly MonthlyActivity: "MonthlyActivity";
     readonly ReminderTemplate: "ReminderTemplate";
     readonly Reminder: "Reminder";
     readonly FilterWord: "FilterWord";
@@ -258,6 +259,7 @@ export declare const ModelName: {
     readonly ShopCategory: "ShopCategory";
     readonly ShopSubcategory: "ShopSubcategory";
     readonly ShopOrderEvent: "ShopOrderEvent";
+    readonly Poll: "Poll";
     readonly MapBackground: "MapBackground";
     readonly ProtectionMember: "ProtectionMember";
     readonly WorldProtection: "WorldProtection";
@@ -273,7 +275,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         omit: GlobalOmitOptions;
     };
     meta: {
-        modelProps: "guildConfig" | "suggestion" | "suggestionVote" | "recruitmentTicket" | "moderationLog" | "userActivity" | "reminderTemplate" | "reminder" | "filterWord" | "nicknameRole" | "clanPlayer" | "shopUser" | "shopMaterial" | "shopInventory" | "shopProduct" | "shopProductComponent" | "shopProductPrice" | "shopOrder" | "shopOrderItem" | "shopInventoryMovement" | "shopSale" | "shopWithdrawal" | "shopDiscountPolicy" | "shopAppliedDiscount" | "shopCategory" | "shopSubcategory" | "shopOrderEvent" | "mapBackground" | "protectionMember" | "worldProtection";
+        modelProps: "guildConfig" | "suggestion" | "suggestionVote" | "recruitmentTicket" | "moderationLog" | "userActivity" | "monthlyActivity" | "reminderTemplate" | "reminder" | "filterWord" | "nicknameRole" | "clanPlayer" | "shopUser" | "shopMaterial" | "shopInventory" | "shopProduct" | "shopProductComponent" | "shopProductPrice" | "shopOrder" | "shopOrderItem" | "shopInventoryMovement" | "shopSale" | "shopWithdrawal" | "shopDiscountPolicy" | "shopAppliedDiscount" | "shopCategory" | "shopSubcategory" | "shopOrderEvent" | "poll" | "mapBackground" | "protectionMember" | "worldProtection";
         txIsolationLevel: TransactionIsolationLevel;
     };
     model: {
@@ -718,6 +720,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
                 count: {
                     args: Prisma.UserActivityCountArgs<ExtArgs>;
                     result: runtime.Types.Utils.Optional<Prisma.UserActivityCountAggregateOutputType> | number;
+                };
+            };
+        };
+        MonthlyActivity: {
+            payload: Prisma.$MonthlyActivityPayload<ExtArgs>;
+            fields: Prisma.MonthlyActivityFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.MonthlyActivityFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyActivityPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.MonthlyActivityFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyActivityPayload>;
+                };
+                findFirst: {
+                    args: Prisma.MonthlyActivityFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyActivityPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.MonthlyActivityFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyActivityPayload>;
+                };
+                findMany: {
+                    args: Prisma.MonthlyActivityFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyActivityPayload>[];
+                };
+                create: {
+                    args: Prisma.MonthlyActivityCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyActivityPayload>;
+                };
+                createMany: {
+                    args: Prisma.MonthlyActivityCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.MonthlyActivityCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyActivityPayload>[];
+                };
+                delete: {
+                    args: Prisma.MonthlyActivityDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyActivityPayload>;
+                };
+                update: {
+                    args: Prisma.MonthlyActivityUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyActivityPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.MonthlyActivityDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.MonthlyActivityUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.MonthlyActivityUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyActivityPayload>[];
+                };
+                upsert: {
+                    args: Prisma.MonthlyActivityUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$MonthlyActivityPayload>;
+                };
+                aggregate: {
+                    args: Prisma.MonthlyActivityAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateMonthlyActivity>;
+                };
+                groupBy: {
+                    args: Prisma.MonthlyActivityGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.MonthlyActivityGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.MonthlyActivityCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.MonthlyActivityCountAggregateOutputType> | number;
                 };
             };
         };
@@ -2275,6 +2351,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
                 };
             };
         };
+        Poll: {
+            payload: Prisma.$PollPayload<ExtArgs>;
+            fields: Prisma.PollFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.PollFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PollPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.PollFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PollPayload>;
+                };
+                findFirst: {
+                    args: Prisma.PollFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PollPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.PollFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PollPayload>;
+                };
+                findMany: {
+                    args: Prisma.PollFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PollPayload>[];
+                };
+                create: {
+                    args: Prisma.PollCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PollPayload>;
+                };
+                createMany: {
+                    args: Prisma.PollCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.PollCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PollPayload>[];
+                };
+                delete: {
+                    args: Prisma.PollDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PollPayload>;
+                };
+                update: {
+                    args: Prisma.PollUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PollPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.PollDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.PollUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.PollUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PollPayload>[];
+                };
+                upsert: {
+                    args: Prisma.PollUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$PollPayload>;
+                };
+                aggregate: {
+                    args: Prisma.PollAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregatePoll>;
+                };
+                groupBy: {
+                    args: Prisma.PollGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.PollGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.PollCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.PollCountAggregateOutputType> | number;
+                };
+            };
+        };
         MapBackground: {
             payload: Prisma.$MapBackgroundPayload<ExtArgs>;
             fields: Prisma.MapBackgroundFieldRefs;
@@ -2617,6 +2767,17 @@ export declare const UserActivityScalarFieldEnum: {
     readonly updatedAt: "updatedAt";
 };
 export type UserActivityScalarFieldEnum = (typeof UserActivityScalarFieldEnum)[keyof typeof UserActivityScalarFieldEnum];
+export declare const MonthlyActivityScalarFieldEnum: {
+    readonly id: "id";
+    readonly guildId: "guildId";
+    readonly userId: "userId";
+    readonly yearMonth: "yearMonth";
+    readonly xp: "xp";
+    readonly messageCount: "messageCount";
+    readonly voiceMinutes: "voiceMinutes";
+    readonly updatedAt: "updatedAt";
+};
+export type MonthlyActivityScalarFieldEnum = (typeof MonthlyActivityScalarFieldEnum)[keyof typeof MonthlyActivityScalarFieldEnum];
 export declare const ReminderTemplateScalarFieldEnum: {
     readonly id: "id";
     readonly guildId: "guildId";
@@ -2877,6 +3038,21 @@ export declare const ShopOrderEventScalarFieldEnum: {
     readonly createdAt: "createdAt";
 };
 export type ShopOrderEventScalarFieldEnum = (typeof ShopOrderEventScalarFieldEnum)[keyof typeof ShopOrderEventScalarFieldEnum];
+export declare const PollScalarFieldEnum: {
+    readonly id: "id";
+    readonly guildId: "guildId";
+    readonly channelId: "channelId";
+    readonly messageId: "messageId";
+    readonly authorId: "authorId";
+    readonly question: "question";
+    readonly options: "options";
+    readonly votes: "votes";
+    readonly anonymous: "anonymous";
+    readonly closesAt: "closesAt";
+    readonly closed: "closed";
+    readonly createdAt: "createdAt";
+};
+export type PollScalarFieldEnum = (typeof PollScalarFieldEnum)[keyof typeof PollScalarFieldEnum];
 export declare const MapBackgroundScalarFieldEnum: {
     readonly id: "id";
     readonly imageUrl: "imageUrl";
@@ -3093,6 +3269,7 @@ export type GlobalOmitConfig = {
     recruitmentTicket?: Prisma.RecruitmentTicketOmit;
     moderationLog?: Prisma.ModerationLogOmit;
     userActivity?: Prisma.UserActivityOmit;
+    monthlyActivity?: Prisma.MonthlyActivityOmit;
     reminderTemplate?: Prisma.ReminderTemplateOmit;
     reminder?: Prisma.ReminderOmit;
     filterWord?: Prisma.FilterWordOmit;
@@ -3114,6 +3291,7 @@ export type GlobalOmitConfig = {
     shopCategory?: Prisma.ShopCategoryOmit;
     shopSubcategory?: Prisma.ShopSubcategoryOmit;
     shopOrderEvent?: Prisma.ShopOrderEventOmit;
+    poll?: Prisma.PollOmit;
     mapBackground?: Prisma.MapBackgroundOmit;
     protectionMember?: Prisma.ProtectionMemberOmit;
     worldProtection?: Prisma.WorldProtectionOmit;

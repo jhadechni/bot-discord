@@ -14,6 +14,7 @@ export const AQUARIS_FOOTERS = {
   levels: { text: 'Aquaris • Niveles  ·  💙 by jhadechni' },
   community: { text: 'Aquaris • Comunidad  ·  💙 by jhadechni' },
   general: { text: 'Aquaris  ·  💙 by jhadechni' },
+  polls: { text: 'Aquaris • Encuestas  ·  💙 by jhadechni' },
 } as const;
 
 export const AQUARIS_COLORS = {
@@ -33,6 +34,7 @@ export const AQUARIS_COLORS = {
   suggestions: COLORS.info,
   levels: COLORS.blurple,
   community: COLORS.info,
+  polls: COLORS.blurple,
 } as const;
 
 export type AquarisFooterKey = keyof typeof AQUARIS_FOOTERS;

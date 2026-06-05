@@ -31,10 +31,12 @@ type TopEmbedOptions = {
     title: string;
     entries: TopEntry[];
     guildName: string;
+    selfEntry?: TopEntry | null;
+    isClosed?: boolean;
 };
 export declare function buildLevelProfileEmbed(options: LevelProfileOptions): EmbedBuilder;
 export declare function buildTopEmbed(options: TopEmbedOptions): EmbedBuilder;
-export declare function buildLevelEmptyEmbed(): EmbedBuilder;
+export declare function buildLevelEmptyEmbed(description?: string): EmbedBuilder;
 export declare function buildLevelUpEmbed(userId: string, level: number): EmbedBuilder;
 export type LevelFields = APIEmbedField[];
 export {};

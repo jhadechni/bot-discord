@@ -56,6 +56,16 @@ export function resolvePresentationQuantity(params) {
             return params.customQuantity ?? 1;
     }
 }
+export function resolvePresentationTypeName(presentationType) {
+    switch (presentationType) {
+        case 'unit': return 'Unidad';
+        case 'stack': return 'Stack';
+        case 'chest': return 'Cofre';
+        case 'double_chest': return 'Cofre doble';
+        case 'custom':
+        default: return 'Lote';
+    }
+}
 export function resolvePresentationLabel(params) {
     const normalizedStackSize = normalizeStackSize(params.stackSize);
     switch (params.presentationType) {

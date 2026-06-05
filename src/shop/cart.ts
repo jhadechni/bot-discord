@@ -352,8 +352,11 @@ export function buildCartView(
   };
 }
 
-export function buildQtyModal(productName: string): ModalBuilder {
+export function buildQtyModal(productName: string, presentationTypeName?: string): ModalBuilder {
   const shortName = productName.slice(0, 40);
+  const qtyLabel = presentationTypeName
+    ? `Cantidad (en ${presentationTypeName.toLowerCase()}s)`.slice(0, 45)
+    : 'Cantidad';
 
   return new ModalBuilder()
     .setCustomId('pedido:cart:qty_modal')
@@ -362,7 +365,7 @@ export function buildQtyModal(productName: string): ModalBuilder {
       new ActionRowBuilder<TextInputBuilder>().addComponents(
         new TextInputBuilder()
           .setCustomId('qty')
-          .setLabel('Cantidad')
+          .setLabel(qtyLabel)
           .setStyle(TextInputStyle.Short)
           .setRequired(true)
           .setMinLength(1)
