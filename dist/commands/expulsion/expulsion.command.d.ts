@@ -25,7 +25,7 @@ export declare function buildExpulsionConfirmEmbed(target: {
     label: string;
     body: string;
 }): import("discord.js").EmbedBuilder;
-export declare function buildReasonSelectMenu(reasons: ExpulsionReason[], targetId: string): StringSelectMenuBuilder;
+export declare function buildReasonSelectMenu(reasons: ExpulsionReason[], targetId: string, selectedId?: string): StringSelectMenuBuilder;
 export declare function buildConfirmRow(targetId: string, disabled?: boolean): ActionRowBuilder<ButtonBuilder>;
 export declare function executeExpulsion(params: {
     guildId: string;

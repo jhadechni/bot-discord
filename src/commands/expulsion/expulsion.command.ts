@@ -151,15 +151,18 @@ export async function executeExpulsion(params: {
   try {
     const targetUser = await guild.client.users.fetch(targetId).catch(() => null);
     if (targetUser) {
-      const dmDescription = [
-        body,
-        ...(comments ? [`\n**Comentario del staff:** ${comments}`] : []),
-        `\n-# Si crees que esto fue un error, contacta con el staff de Aquaris.`,
-      ].join('\n');
+      const COMMENTS_PLACEHOLDER = '${staff_comments}';
+      let dmDescription: string;
+      if (body.includes(COMMENTS_PLACEHOLDER)) {
+        dmDescription = comments
+          ? body.replace(COMMENTS_PLACEHOLDER, `> **Comentario del staff:** ${comments}`)
+          : body.split('\n').filter(l => !l.includes(COMMENTS_PLACEHOLDER)).join('\n').trim();
+      } else {
+        dmDescription = comments ? `${body}\n\n> **Comentario del staff:** ${comments}` : body;
+      }
       await targetUser.send({
         embeds: [
           buildAquarisEmbed({
-            title: '🚪 Has sido expulsado del clan Aquaris',
             description: dmDescription,
             color: MODERATION_COLORS.danger,
             footer: 'moderation',

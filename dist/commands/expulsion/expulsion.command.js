@@ -46,17 +46,19 @@ export function buildExpulsionConfirmEmbed(target, reason) {
         ],
     });
 }
-export function buildReasonSelectMenu(reasons, targetId) {
+export function buildReasonSelectMenu(reasons, targetId, selectedId) {
     const options = [
         ...reasons.map(r => new StringSelectMenuOptionBuilder()
             .setValue(r.id)
             .setLabel(r.label.length > 100 ? r.label.slice(0, 97) + '...' : r.label)
-            .setEmoji('📋')),
+            .setEmoji('📋')
+            .setDefault(r.id === selectedId)),
         new StringSelectMenuOptionBuilder()
             .setValue('__custom__')
             .setLabel('Motivo personalizado')
             .setDescription('Escribir un motivo libre')
-            .setEmoji('✏️'),
+            .setEmoji('✏️')
+            .setDefault(selectedId === '__custom__'),
     ];
     return new StringSelectMenuBuilder()
         .setCustomId(`expulsion:select:${targetId}`)
@@ -92,15 +94,19 @@ export async function executeExpulsion(params) {
     try {
         const targetUser = await guild.client.users.fetch(targetId).catch(() => null);
         if (targetUser) {
-            const dmDescription = [
-                body,
-                ...(comments ? [`\n**Comentario del staff:** ${comments}`] : []),
-                `\n-# Si crees que esto fue un error, contacta con el staff de Aquaris.`,
-            ].join('\n');
+            const COMMENTS_PLACEHOLDER = '${staff_comments}';
+            let dmDescription;
+            if (body.includes(COMMENTS_PLACEHOLDER)) {
+                dmDescription = comments
+                    ? body.replace(COMMENTS_PLACEHOLDER, `> **Comentario del staff:** ${comments}`)
+                    : body.split('\n').filter(l => !l.includes(COMMENTS_PLACEHOLDER)).join('\n').trim();
+            }
+            else {
+                dmDescription = comments ? `${body}\n\n> **Comentario del staff:** ${comments}` : body;
+            }
             await targetUser.send({
                 embeds: [
                     buildAquarisEmbed({
-                        title: '🚪 Has sido expulsado del clan Aquaris',
                         description: dmDescription,
                         color: MODERATION_COLORS.danger,
                         footer: 'moderation',

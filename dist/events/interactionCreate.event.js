@@ -3113,7 +3113,7 @@ const interactionCreateEvent = {
                 await interaction.editReply({
                     embeds: [buildExpulsionConfirmEmbed({ id: targetId, username: target.username }, { label: found.label, body: found.body })],
                     components: [
-                        new ActionRowBuilder().addComponents(buildReasonSelectMenu(reasons, targetId)),
+                        new ActionRowBuilder().addComponents(buildReasonSelectMenu(reasons, targetId, selected)),
                         buildConfirmRow(targetId, false),
                     ],
                 });
@@ -3143,7 +3143,7 @@ const interactionCreateEvent = {
                 await interaction.editReply({
                     embeds: [buildExpulsionConfirmEmbed({ id: targetId, username: target.username }, { label, body })],
                     components: [
-                        new ActionRowBuilder().addComponents(buildReasonSelectMenu(reasons, targetId)),
+                        new ActionRowBuilder().addComponents(buildReasonSelectMenu(reasons, targetId, '__custom__')),
                         buildConfirmRow(targetId, false),
                     ],
                 });
