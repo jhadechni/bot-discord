@@ -61,11 +61,13 @@ export declare function getOrderFull(orderCode: string): Promise<({
         } & {
             createdAt: Date;
             id: string;
+            parentId: string | null;
             guildId: string;
             name: string;
             updatedAt: Date;
             description: string | null;
             isActive: boolean;
+            sortOrder: number;
             category: string;
             productType: string;
             subcategory: string;
@@ -75,6 +77,8 @@ export declare function getOrderFull(orderCode: string): Promise<({
             presentationLabel: string | null;
             additionalCategories: string[];
             additionalCategoryAssignments: import("@prisma/client/runtime/client").JsonValue;
+            variantLabel: string | null;
+            variantAttributes: import("@prisma/client/runtime/client").JsonValue | null;
         };
         appliedDiscounts: {
             id: string;

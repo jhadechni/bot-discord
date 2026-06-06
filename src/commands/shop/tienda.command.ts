@@ -7,6 +7,7 @@ import {
   buildCatalogEntryView,
   queryCatalogProducts,
 } from '../../shop/catalog.js';
+import { reloadTaxonomyFromDatabase } from '../../shop/taxonomy.js';
 import {
   SHOP_COLORS,
   buildShopNoticeEmbed,
@@ -29,6 +30,7 @@ export const tiendaCommand: Command = {
 
     await interaction.deferReply({ ephemeral: true });
 
+    await reloadTaxonomyFromDatabase(guildId);
     const products = await queryCatalogProducts(guildId);
 
     if (products.length === 0) {

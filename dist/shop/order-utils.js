@@ -557,7 +557,10 @@ export function buildOrderEmbed(order, stockAssessment) {
     const itemLines = order.items.map(item => {
         const lineTotal = formatPrice(item.grossLineTotal);
         const unitStr = formatPrice(item.unitPrice);
-        const line = `**${item.product.name}** × ${item.quantity}  —  ${unitStr} c/u  →  **${lineTotal}**`;
+        const namePart = item.product.variantLabel
+            ? `${item.product.name} · *${item.product.variantLabel}*`
+            : item.product.name;
+        const line = `**${namePart}** × ${item.quantity}  —  ${unitStr} c/u  →  **${lineTotal}**`;
         const itemDiscountTotal = item.appliedDiscounts.reduce((sum, discount) => sum.add(discount.discountAmount), new Prisma.Decimal(0));
         const extraLines = [];
         if (itemDiscountTotal.comparedTo(0) > 0) {
@@ -603,10 +606,13 @@ export function buildCustomerOrderEmbed(order) {
     const label = ORDER_LABELS[order.status] ?? order.status;
     const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
     const productLines = order.items.map(item => {
+        const namePart = item.product.variantLabel
+            ? `${item.product.name} · *${item.product.variantLabel}*`
+            : item.product.name;
         const contentsSummary = buildProductContentsSummary(item.product, 3);
         return contentsSummary
-            ? `• **${item.product.name}** × ${item.quantity}\n  ${contentsSummary}`
-            : `• **${item.product.name}** × ${item.quantity}`;
+            ? `• **${namePart}** × ${item.quantity}\n  ${contentsSummary}`
+            : `• **${namePart}** × ${item.quantity}`;
     });
     const embed = new EmbedBuilder()
         .setTitle(`Estado de tu pedido ${order.orderCode}`)

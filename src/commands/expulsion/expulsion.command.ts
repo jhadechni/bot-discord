@@ -6,6 +6,9 @@ import {
   ButtonStyle,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
 } from 'discord.js';
 import { randomUUID } from 'node:crypto';
 import type { Command } from '../../types/command.js';
@@ -20,7 +23,8 @@ import { logger } from '../../core/logger.js';
 
 export type ExpulsionReason = {
   id: string;
-  text: string;
+  label: string;
+  body: string;
 };
 
 // ── Session en RAM ────────────────────────────────────────────────────────────
@@ -28,7 +32,8 @@ export type ExpulsionReason = {
 export const pendingExpulsions = new Map<string, {
   targetId: string;
   targetTag: string;
-  reason: string;
+  label: string;
+  body: string;
   comments: string | null;
 }>();
 
@@ -40,7 +45,8 @@ export function parseExpulsionReasons(raw: unknown): ExpulsionReason[] {
     (r): r is ExpulsionReason =>
       typeof r === 'object' && r !== null &&
       typeof r.id === 'string' &&
-      typeof r.text === 'string',
+      typeof r.label === 'string' &&
+      typeof r.body === 'string',
   );
 }
 
@@ -60,7 +66,11 @@ export function buildExpulsionSelectorEmbed(target: { id: string; username: stri
   });
 }
 
-export function buildExpulsionConfirmEmbed(target: { id: string; username: string }, reason: string) {
+export function buildExpulsionConfirmEmbed(
+  target: { id: string; username: string },
+  reason: { label: string; body: string },
+) {
+  const bodyPreview = reason.body.length > 1024 ? reason.body.slice(0, 1021) + '...' : reason.body;
   return buildAquarisEmbed({
     title: '⚠️ Confirmar expulsión',
     color: MODERATION_COLORS.warning,
@@ -68,24 +78,27 @@ export function buildExpulsionConfirmEmbed(target: { id: string; username: strin
     description: `¿Confirmas la expulsión de <@${target.id}>?`,
     fields: [
       { name: 'Usuario', value: `<@${target.id}> — \`${target.username}\``, inline: true },
-      { name: 'Motivo', value: reason, inline: false },
+      { name: 'Motivo', value: reason.label, inline: true },
+      { name: 'Mensaje al jugador', value: bodyPreview, inline: false },
     ],
   });
 }
 
-export function buildReasonSelectMenu(reasons: ExpulsionReason[], targetId: string) {
+export function buildReasonSelectMenu(reasons: ExpulsionReason[], targetId: string, selectedId?: string) {
   const options = [
     ...reasons.map(r =>
       new StringSelectMenuOptionBuilder()
         .setValue(r.id)
-        .setLabel(r.text.length > 100 ? r.text.slice(0, 97) + '...' : r.text)
-        .setEmoji('📋'),
+        .setLabel(r.label.length > 100 ? r.label.slice(0, 97) + '...' : r.label)
+        .setEmoji('📋')
+        .setDefault(r.id === selectedId),
     ),
     new StringSelectMenuOptionBuilder()
       .setValue('__custom__')
       .setLabel('Motivo personalizado')
       .setDescription('Escribir un motivo libre')
-      .setEmoji('✏️'),
+      .setEmoji('✏️')
+      .setDefault(selectedId === '__custom__'),
   ];
 
   return new StringSelectMenuBuilder()
@@ -118,12 +131,13 @@ export async function executeExpulsion(params: {
   guildId: string;
   targetId: string;
   targetTag: string;
-  reason: string;
+  label: string;
+  body: string;
   comments: string | null;
   moderatorId: string;
   guild: import('discord.js').Guild;
 }) {
-  const { guildId, targetId, targetTag, reason, comments, moderatorId, guild } = params;
+  const { guildId, targetId, targetTag, label, body, comments, moderatorId, guild } = params;
   const results = {
     rolesReset: false,
     visitorAssigned: false,
@@ -137,17 +151,16 @@ export async function executeExpulsion(params: {
   try {
     const targetUser = await guild.client.users.fetch(targetId).catch(() => null);
     if (targetUser) {
-      const dmLines = [
-        `Has sido expulsado del clan **Aquaris**.\n`,
-        `**Motivo:** ${reason}`,
-        ...(comments ? [`**Comentario:** ${comments}`] : []),
+      const dmDescription = [
+        body,
+        ...(comments ? [`\n**Comentario del staff:** ${comments}`] : []),
         `\n-# Si crees que esto fue un error, contacta con el staff de Aquaris.`,
-      ];
+      ].join('\n');
       await targetUser.send({
         embeds: [
           buildAquarisEmbed({
             title: '🚪 Has sido expulsado del clan Aquaris',
-            description: dmLines.join('\n'),
+            description: dmDescription,
             color: MODERATION_COLORS.danger,
             footer: 'moderation',
           }),
@@ -169,7 +182,7 @@ export async function executeExpulsion(params: {
         .map(r => r.id);
 
       if (rolesToRemove.length > 0) {
-        await member.roles.remove(rolesToRemove, reason);
+        await member.roles.remove(rolesToRemove, label);
       }
       results.rolesReset = true;
 
@@ -223,7 +236,7 @@ export async function executeExpulsion(params: {
       targetId,
       moderatorId,
       type: 'KICK',
-      reason,
+      reason: body,
       active: false,
     },
   });
@@ -238,7 +251,7 @@ export async function executeExpulsion(params: {
       targetId,
       targetTag,
       moderatorId,
-      reason,
+      reason: label,
       logId: log.id,
       createdAt: new Date(),
     });
@@ -304,10 +317,7 @@ export const expulsionCommand: Command = {
         .addSubcommand(sub =>
           sub
             .setName('add')
-            .setDescription('Agrega un motivo predeterminado')
-            .addStringOption(opt =>
-              opt.setName('texto').setDescription('Texto del motivo').setRequired(true).setMaxLength(200),
-            ),
+            .setDescription('Agrega un motivo predeterminado (abre formulario)'),
         )
         .addSubcommand(sub =>
           sub
@@ -324,10 +334,54 @@ export const expulsionCommand: Command = {
 
   async execute(interaction) {
     if (!interaction.inCachedGuild()) return;
-    await interaction.deferReply({ ephemeral: true });
 
     const group = interaction.options.getSubcommandGroup(false);
     const sub = interaction.options.getSubcommand();
+
+    // ── motivo add — abre modal, no puede haber deferReply previo ────────────
+    if (group === 'motivo' && sub === 'add') {
+      const { guildId } = interaction;
+      const config = await getOrCreateGuildConfig(guildId);
+      const reasons = parseExpulsionReasons(config.expulsionReasons);
+
+      if (reasons.length >= 24) {
+        await interaction.reply({
+          embeds: [buildModerationErrorEmbed('Límite alcanzado', 'Máximo 24 motivos predeterminados.')],
+          flags: 64,
+        });
+        return;
+      }
+
+      await interaction.showModal(
+        new ModalBuilder()
+          .setCustomId('expulsion:add_reason_modal')
+          .setTitle('Nuevo motivo de expulsión')
+          .addComponents(
+            new ActionRowBuilder<TextInputBuilder>().addComponents(
+              new TextInputBuilder()
+                .setCustomId('label')
+                .setLabel('Nombre corto (aparece en el selector)')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+                .setMaxLength(80)
+                .setPlaceholder('Ej: Inactividad extendida'),
+            ),
+            new ActionRowBuilder<TextInputBuilder>().addComponents(
+              new TextInputBuilder()
+                .setCustomId('body')
+                .setLabel('Mensaje completo (se envía al jugador por DM)')
+                .setStyle(TextInputStyle.Paragraph)
+                .setRequired(true)
+                .setMaxLength(4000)
+                .setPlaceholder('Escribe el mensaje completo aquí...'),
+            ),
+          ),
+      );
+      return;
+    }
+
+    await interaction.deferReply({ ephemeral: true });
+
     const { guildId } = interaction;
     const config = await getOrCreateGuildConfig(guildId);
     const reasons = parseExpulsionReasons(config.expulsionReasons);
@@ -378,33 +432,6 @@ export const expulsionCommand: Command = {
       return;
     }
 
-    // ── motivo add ────────────────────────────────────────────────────────────
-    if (group === 'motivo' && sub === 'add') {
-      const text = interaction.options.getString('texto', true).trim();
-
-      if (reasons.length >= 24) {
-        await interaction.editReply({
-          embeds: [buildModerationErrorEmbed('Límite alcanzado', 'Máximo 24 motivos predeterminados.')],
-        });
-        return;
-      }
-
-      const updated: ExpulsionReason[] = [...reasons, { id: randomUUID().slice(0, 8), text }];
-      await prisma.guildConfig.update({ where: { guildId }, data: { expulsionReasons: updated } });
-
-      await interaction.editReply({
-        embeds: [
-          buildAquarisEmbed({
-            title: '✅ Motivo agregado',
-            color: MODERATION_COLORS.success,
-            footer: 'moderation',
-            description: `**"${text}"** fue agregado a los motivos predeterminados.`,
-          }),
-        ],
-      });
-      return;
-    }
-
     // ── motivo remove ─────────────────────────────────────────────────────────
     if (group === 'motivo' && sub === 'remove') {
       const id = interaction.options.getString('id', true).trim();
@@ -440,7 +467,10 @@ export const expulsionCommand: Command = {
         footer: 'moderation',
         description: reasons.length === 0
           ? 'No hay motivos predeterminados configurados.\nUsa `/expulsion motivo add` para agregar uno.'
-          : reasons.map((r, i) => `**${i + 1}.** ${r.text}\n\`ID: ${r.id}\``).join('\n\n'),
+          : reasons.map((r, i) => {
+              const preview = r.body.length > 80 ? r.body.slice(0, 77).replace(/\n/g, ' ') + '...' : r.body.replace(/\n/g, ' ');
+              return `**${i + 1}.** **${r.label}**\n> ${preview}\n\`ID: ${r.id}\``;
+            }).join('\n\n'),
       });
 
       await interaction.editReply({ embeds: [embed] });

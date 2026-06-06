@@ -2,12 +2,14 @@ import { ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder } from 'discor
 import type { Command } from '../../types/command.js';
 export type ExpulsionReason = {
     id: string;
-    text: string;
+    label: string;
+    body: string;
 };
 export declare const pendingExpulsions: Map<string, {
     targetId: string;
     targetTag: string;
-    reason: string;
+    label: string;
+    body: string;
     comments: string | null;
 }>;
 export declare function parseExpulsionReasons(raw: unknown): ExpulsionReason[];
@@ -19,14 +21,18 @@ export declare function buildExpulsionSelectorEmbed(target: {
 export declare function buildExpulsionConfirmEmbed(target: {
     id: string;
     username: string;
-}, reason: string): import("discord.js").EmbedBuilder;
+}, reason: {
+    label: string;
+    body: string;
+}): import("discord.js").EmbedBuilder;
 export declare function buildReasonSelectMenu(reasons: ExpulsionReason[], targetId: string): StringSelectMenuBuilder;
 export declare function buildConfirmRow(targetId: string, disabled?: boolean): ActionRowBuilder<ButtonBuilder>;
 export declare function executeExpulsion(params: {
     guildId: string;
     targetId: string;
     targetTag: string;
-    reason: string;
+    label: string;
+    body: string;
     comments: string | null;
     moderatorId: string;
     guild: import('discord.js').Guild;

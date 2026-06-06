@@ -45,7 +45,8 @@ export function buildCartEmbed(session) {
     }
     const lines = items.map((item, index) => {
         const emoji = getCategoryDefinition(item.productCategory).emoji;
-        const line = `**${index + 1}.** ${emoji} **${item.productName}** × ${item.quantity}  —  ${formatPrice(item.unitPrice)} c/u  →  **${formatPrice(item.lineTotal)}**`;
+        const namePart = item.variantLabel ? `${item.productName} · *${item.variantLabel}*` : item.productName;
+        const line = `**${index + 1}.** ${emoji} **${namePart}** × ${item.quantity}  —  ${formatPrice(item.unitPrice)} c/u  →  **${formatPrice(item.lineTotal)}**`;
         const extraLines = [];
         if (item.contentsSummary)
             extraLines.push(`> 🎁 ${item.contentsSummary}`);
@@ -74,24 +75,37 @@ function buildBrowseEmbed(state) {
         .setFooter({ text: SHOP_FOOTER.text })
         .setTimestamp();
 }
-function buildCartProductSelectRow(products) {
+function buildCartProductSelectRow(products, selectedProductId) {
     return new ActionRowBuilder().addComponents(new StringSelectMenuBuilder()
         .setCustomId('pedido:cart:add:select')
         .setPlaceholder('🔍 Selecciona un producto para añadir…')
         .addOptions(products.slice(0, 25).map(p => {
-        const price = p.prices[0];
-        const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
         const icon = getCategoryDefinition(p.category).emoji;
-        const typeName = p.productType !== 'service'
-            ? resolvePresentationTypeName(p.presentationType)
-            : null;
-        const description = typeName
-            ? `${typeName}  ·  💰 ${priceStr}`.slice(0, 100)
-            : `💰 ${priceStr}`;
+        const hasVariants = p.variants.length > 0;
+        let description;
+        if (hasVariants) {
+            const count = p.variants.length;
+            const prices = p.variants.map(v => v.prices[0]?.price).filter(pr => pr != null);
+            const minPrice = prices.length > 0 ? prices.reduce((min, pr) => (pr.lt(min) ? pr : min)) : null;
+            const currency = p.variants[0]?.prices[0]?.currency ?? '$';
+            const priceStr = minPrice ? `desde ${formatPrice(minPrice, currency)}` : 'S/P';
+            description = `🔀 ${count} variante${count !== 1 ? 's' : ''}  ·  💰 ${priceStr}`.slice(0, 100);
+        }
+        else {
+            const price = p.prices[0];
+            const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
+            const typeName = p.productType !== 'service'
+                ? resolvePresentationTypeName(p.presentationType)
+                : null;
+            description = typeName
+                ? `${typeName}  ·  💰 ${priceStr}`.slice(0, 100)
+                : `💰 ${priceStr}`;
+        }
         return new StringSelectMenuOptionBuilder()
             .setLabel(`${icon} ${p.name}`.slice(0, 100))
             .setValue(p.id)
-            .setDescription(description);
+            .setDescription(description)
+            .setDefault(p.id === selectedProductId);
     })));
 }
 function buildBrowsePaginationRow(state) {
@@ -155,7 +169,7 @@ function buildRemoveSelectRow(session) {
         .setEmoji('🗑️')));
     return new ActionRowBuilder().addComponents(removeSelect);
 }
-function buildBrowseComponents(session, state) {
+function buildBrowseComponents(session, state, selectedProductId) {
     const rows = [];
     if (state.categoryKeys.length > 1) {
         rows.push(buildCategorySelectRow('pedido:cart', state.currentMode, state.categoryKeys, state.currentCategory));
@@ -166,7 +180,7 @@ function buildBrowseComponents(session, state) {
     const useProductSelect = state.allSubcategoryProducts.length > 0 && state.allSubcategoryProducts.length <= 25;
     const usePagination = !useProductSelect && state.totalPages > 1;
     if (state.pageProducts.length > 0) {
-        rows.push(buildCartProductSelectRow(usePagination ? state.pageProducts : state.allSubcategoryProducts));
+        rows.push(buildCartProductSelectRow(usePagination ? state.pageProducts : state.allSubcategoryProducts, selectedProductId));
     }
     if (usePagination) {
         rows.push(buildBrowsePaginationRow(state));
@@ -201,7 +215,7 @@ export function buildCartSearchView(session, results, query) {
     components.push(buildCartActionsRow(session));
     return { components, embeds: [searchEmbed, buildCartEmbed(session)] };
 }
-export function buildCartView(session, products) {
+export function buildCartView(session, products, selectedProductId) {
     const state = resolveCatalogViewState(products, session.currentCatalogMode, session.currentCategory, session.currentSubcategory, session.currentPage, CART_PAGE_SIZE);
     if (session.viewMode === 'cart') {
         return {
@@ -211,7 +225,7 @@ export function buildCartView(session, products) {
         };
     }
     return {
-        components: buildBrowseComponents(session, state),
+        components: buildBrowseComponents(session, state, selectedProductId),
         embeds: [buildBrowseEmbed(state), buildCartEmbed(session)],
         state,
     };

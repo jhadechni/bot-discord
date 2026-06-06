@@ -267,16 +267,24 @@ model ShopProduct {
   updatedAt                     DateTime               @updatedAt
   additionalCategories          String[]               @default([])
   additionalCategoryAssignments Json                   @default("[]")
+  parentId                      String?
+  variantLabel                  String?
+  variantAttributes             Json?
+  sortOrder                     Int                    @default(0)
   discountPolicies              ShopDiscountPolicy[]
   orderItems                    ShopOrderItem[]
   baseMaterial                  ShopMaterial?          @relation("ShopProductBaseMaterial", fields: [baseMaterialId], references: [id])
   components                    ShopProductComponent[]
   prices                        ShopProductPrice[]
+  parent                        ShopProduct?           @relation("ShopProductVariants", fields: [parentId], references: [id])
+  variants                      ShopProduct[]          @relation("ShopProductVariants")
 
   @@index([baseMaterialId])
   @@index([isActive, name])
   @@index([productType, category, name])
   @@index([productType, isActive])
+  @@index([parentId])
+  @@index([parentId, sortOrder])
 }
 
 model ShopProductComponent {

@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, } from 'discord.js';
 import { buildCatalogEntryView, queryCatalogProducts, } from '../../shop/catalog.js';
+import { reloadTaxonomyFromDatabase } from '../../shop/taxonomy.js';
 import { SHOP_COLORS, buildShopNoticeEmbed, } from '../../utils/shop-ui.js';
 export const tiendaCommand = {
     data: new SlashCommandBuilder()
@@ -14,6 +15,7 @@ export const tiendaCommand = {
         if (sub !== 'ver')
             return;
         await interaction.deferReply({ ephemeral: true });
+        await reloadTaxonomyFromDatabase(guildId);
         const products = await queryCatalogProducts(guildId);
         if (products.length === 0) {
             await interaction.editReply({

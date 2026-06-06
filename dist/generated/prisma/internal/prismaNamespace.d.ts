@@ -2881,6 +2881,10 @@ export declare const ShopProductScalarFieldEnum: {
     readonly updatedAt: "updatedAt";
     readonly additionalCategories: "additionalCategories";
     readonly additionalCategoryAssignments: "additionalCategoryAssignments";
+    readonly parentId: "parentId";
+    readonly variantLabel: "variantLabel";
+    readonly variantAttributes: "variantAttributes";
+    readonly sortOrder: "sortOrder";
 };
 export type ShopProductScalarFieldEnum = (typeof ShopProductScalarFieldEnum)[keyof typeof ShopProductScalarFieldEnum];
 export declare const ShopProductComponentScalarFieldEnum: {

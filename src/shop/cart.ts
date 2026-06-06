@@ -26,6 +26,7 @@ export interface CartItem {
   contentsSummary?: string | null;
   productId: string;
   productName: string;
+  variantLabel?: string | null;
   productType: string;
   productCategory: string;
   quantity: number;
@@ -102,7 +103,8 @@ export function buildCartEmbed(session: CartSession): EmbedBuilder {
 
   const lines = items.map((item, index) => {
     const emoji = getCategoryDefinition(item.productCategory).emoji;
-    const line = `**${index + 1}.** ${emoji} **${item.productName}** × ${item.quantity}  —  ${formatPrice(item.unitPrice)} c/u  →  **${formatPrice(item.lineTotal)}**`;
+    const namePart = item.variantLabel ? `${item.productName} · *${item.variantLabel}*` : item.productName;
+    const line = `**${index + 1}.** ${emoji} **${namePart}** × ${item.quantity}  —  ${formatPrice(item.unitPrice)} c/u  →  **${formatPrice(item.lineTotal)}**`;
     const extraLines = [];
     if (item.contentsSummary) extraLines.push(`> 🎁 ${item.contentsSummary}`);
     if (item.notes) extraLines.push(`> 📝 ${item.notes}`);
@@ -136,6 +138,7 @@ function buildBrowseEmbed(state: CatalogViewState): EmbedBuilder {
 
 function buildCartProductSelectRow(
   products: CartProductOption[],
+  selectedProductId?: string | null,
 ): ActionRowBuilder<StringSelectMenuBuilder> {
   return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
     new StringSelectMenuBuilder()
@@ -143,19 +146,31 @@ function buildCartProductSelectRow(
       .setPlaceholder('🔍 Selecciona un producto para añadir…')
       .addOptions(
         products.slice(0, 25).map(p => {
-          const price = p.prices[0];
-          const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
           const icon = getCategoryDefinition(p.category).emoji;
-          const typeName = p.productType !== 'service'
-            ? resolvePresentationTypeName(p.presentationType as Parameters<typeof resolvePresentationTypeName>[0])
-            : null;
-          const description = typeName
-            ? `${typeName}  ·  💰 ${priceStr}`.slice(0, 100)
-            : `💰 ${priceStr}`;
+          const hasVariants = p.variants.length > 0;
+          let description: string;
+          if (hasVariants) {
+            const count = p.variants.length;
+            const prices = p.variants.map(v => v.prices[0]?.price).filter(pr => pr != null);
+            const minPrice = prices.length > 0 ? prices.reduce((min, pr) => (pr.lt(min) ? pr : min)) : null;
+            const currency = p.variants[0]?.prices[0]?.currency ?? '$';
+            const priceStr = minPrice ? `desde ${formatPrice(minPrice, currency)}` : 'S/P';
+            description = `🔀 ${count} variante${count !== 1 ? 's' : ''}  ·  💰 ${priceStr}`.slice(0, 100);
+          } else {
+            const price = p.prices[0];
+            const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
+            const typeName = p.productType !== 'service'
+              ? resolvePresentationTypeName(p.presentationType as Parameters<typeof resolvePresentationTypeName>[0])
+              : null;
+            description = typeName
+              ? `${typeName}  ·  💰 ${priceStr}`.slice(0, 100)
+              : `💰 ${priceStr}`;
+          }
           return new StringSelectMenuOptionBuilder()
             .setLabel(`${icon} ${p.name}`.slice(0, 100))
             .setValue(p.id)
-            .setDescription(description);
+            .setDescription(description)
+            .setDefault(p.id === selectedProductId);
         }),
       ),
   );
@@ -255,6 +270,7 @@ function buildRemoveSelectRow(session: CartSession): ActionRowBuilder<StringSele
 function buildBrowseComponents(
   session: CartSession,
   state: CatalogViewState,
+  selectedProductId?: string | null,
 ): Array<ActionRowBuilder<MessageActionRowComponentBuilder>> {
   const rows: Array<ActionRowBuilder<MessageActionRowComponentBuilder>> = [];
 
@@ -270,7 +286,10 @@ function buildBrowseComponents(
   const usePagination = !useProductSelect && state.totalPages > 1;
 
   if (state.pageProducts.length > 0) {
-    rows.push(buildCartProductSelectRow(usePagination ? state.pageProducts : state.allSubcategoryProducts));
+    rows.push(buildCartProductSelectRow(
+      usePagination ? state.pageProducts : state.allSubcategoryProducts,
+      selectedProductId,
+    ));
   }
 
   if (usePagination) {
@@ -330,6 +349,7 @@ export function buildCartSearchView(
 export function buildCartView(
   session: CartSession,
   products: CartProductOption[],
+  selectedProductId?: string | null,
 ): {
   components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>>;
   embeds: EmbedBuilder[];
@@ -353,7 +373,7 @@ export function buildCartView(
   }
 
   return {
-    components: buildBrowseComponents(session, state),
+    components: buildBrowseComponents(session, state, selectedProductId),
     embeds: [buildBrowseEmbed(state), buildCartEmbed(session)],
     state,
   };

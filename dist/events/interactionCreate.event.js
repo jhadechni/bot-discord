@@ -1,4 +1,5 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, ModalBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, TextInputStyle, ThreadAutoArchiveDuration, } from 'discord.js';
+import { randomUUID } from 'node:crypto';
 import { prisma } from '../database/prisma.js';
 import { getOrCreateGuildConfig } from '../database/guild-config.js';
 import { getLogChannel } from '../utils/log-channel.js';
@@ -11,7 +12,7 @@ import { logger } from '../core/logger.js';
 import { upsertShopUser } from '../database/shop-user.js';
 import { applyManualVolumeDiscounts, getEligibleManualVolumeDiscounts, normalizeDiscountType, } from '../shop/discounts.js';
 import { getOrderFull, buildOrderEmbed, buildAcceptedButtons, buildPendingButtons, createPendingOrder, formatOrderStockStatusLine, getOrderStockAssessment, releaseOrderStock, consumeOrderStock, } from '../shop/order-utils.js';
-import { buildCatalogEntryView, buildCatalogView, buildProductDetailEmbed, buildSearchView, queryCatalogProducts, searchCatalogProducts, } from '../shop/catalog.js';
+import { buildCatalogEntryView, buildCatalogView, buildProductDetailEmbed, buildSearchView, buildVariantDetailEmbed, buildVariantSelectRow, isParentProduct, queryCatalogProducts, searchCatalogProducts, } from '../shop/catalog.js';
 import { getCart, setCart, deleteCart, buildCartView, buildCartSearchView, buildQtyModal, queryCartProducts, } from '../shop/cart.js';
 import { buildProductContentsSummary } from '../shop/product-contents.js';
 import { hasProductInventoryDefinition, resolvePresentationTypeName } from '../shop/quantities.js';
@@ -2020,6 +2021,26 @@ const interactionCreateEvent = {
                 }
                 return;
             }
+            // --- Selección de variante en catálogo ---
+            if (interaction.isStringSelectMenu() && interaction.customId.startsWith('tienda:catalog:variant:')) {
+                await interaction.deferUpdate();
+                const guildId = interaction.guildId;
+                if (!guildId)
+                    return;
+                const parentProductId = interaction.customId.slice('tienda:catalog:variant:'.length);
+                const variantId = interaction.values[0];
+                if (!parentProductId || !variantId)
+                    return;
+                const products = await queryCatalogProducts(guildId);
+                const parent = products.find(p => p.id === parentProductId);
+                const variant = parent?.variants.find(v => v.id === variantId);
+                if (!parent || !variant)
+                    return;
+                const embed = buildVariantDetailEmbed(variant, parent, parent.category, parent.subcategory);
+                const { components } = buildCatalogView(products, parent.productType === 'service' ? 'services' : 'products', parent.category, parent.subcategory, 1, parent.id, variantId);
+                await interaction.editReply({ embeds: [embed], components });
+                return;
+            }
             // --- Select de producto en catálogo (≤25 items) ---
             if (interaction.isStringSelectMenu() && interaction.customId.startsWith('tienda:catalog:product:')) {
                 await interaction.deferUpdate();
@@ -2352,15 +2373,74 @@ const interactionCreateEvent = {
                 const productId = interaction.values[0];
                 if (!productId)
                     return;
-                const productForModal = await prisma.shopProduct.findUnique({
+                const productCheck = await prisma.shopProduct.findUnique({
                     where: { id: productId },
-                    select: { name: true, presentationType: true },
+                    select: {
+                        name: true,
+                        presentationType: true,
+                        variants: {
+                            where: { isActive: true },
+                            orderBy: { sortOrder: 'asc' },
+                            select: {
+                                id: true,
+                                name: true,
+                                variantLabel: true,
+                                presentationType: true,
+                                prices: { where: { validTo: null }, take: 1 },
+                                baseMaterial: { select: { stackSize: true } },
+                            },
+                        },
+                    },
                 });
-                const presentationTypeName = productForModal
-                    ? resolvePresentationTypeName(productForModal.presentationType)
-                    : undefined;
+                if (!productCheck)
+                    return;
+                // Producto padre → mostrar selector de variantes en lugar del modal
+                if (productCheck.variants.length > 0) {
+                    await interaction.deferUpdate();
+                    const products = await queryCartProducts(guildId);
+                    const view = buildCartView(cart, products, productId);
+                    const variantRow = buildVariantSelectRow(productCheck.variants, productId, 'cart');
+                    const components = [...view.components];
+                    components.splice(components.length - 1, 0, variantRow);
+                    await interaction.editReply({ embeds: view.embeds, components });
+                    return;
+                }
+                // Producto hoja → flujo normal con modal
+                const presentationTypeName = resolvePresentationTypeName(productCheck.presentationType);
                 setCart({ ...cart, pendingProductId: productId });
-                await interaction.showModal(buildQtyModal(productForModal?.name ?? 'producto', presentationTypeName));
+                await interaction.showModal(buildQtyModal(productCheck.name, presentationTypeName));
+                return;
+            }
+            // ── Carrito interactivo: seleccionar variante de producto padre ────────────
+            if (interaction.isStringSelectMenu() && interaction.customId.startsWith('pedido:cart:variant:select:')) {
+                const guildId = interaction.guildId;
+                if (!guildId)
+                    return;
+                const cart = getCart(guildId, interaction.user.id);
+                if (!cart) {
+                    await interaction.reply({
+                        embeds: [buildShopErrorEmbed('Carrito expirado', 'Usa `/pedido carrito` de nuevo.')],
+                        ephemeral: true,
+                    });
+                    return;
+                }
+                const variantId = interaction.values[0];
+                if (!variantId)
+                    return;
+                const variant = await prisma.shopProduct.findUnique({
+                    where: { id: variantId },
+                    select: { name: true, presentationType: true, parentId: true, isActive: true },
+                });
+                if (!variant?.isActive || !variant.parentId) {
+                    await interaction.reply({
+                        embeds: [buildShopErrorEmbed('Variante no disponible', 'Esa variante ya no está activa.')],
+                        ephemeral: true,
+                    });
+                    return;
+                }
+                const presentationTypeName = resolvePresentationTypeName(variant.presentationType);
+                setCart({ ...cart, pendingProductId: variantId });
+                await interaction.showModal(buildQtyModal(variant.name, presentationTypeName));
                 return;
             }
             // ── Carrito interactivo: abrir búsqueda ───────────────────────────────────
@@ -2552,6 +2632,7 @@ const interactionCreateEvent = {
                         contentsSummary,
                         productId: product.id,
                         productName: product.name,
+                        variantLabel: product.variantLabel ?? null,
                         productType: product.productType,
                         productCategory: product.category,
                         quantity: qty,
@@ -2996,14 +3077,20 @@ const interactionCreateEvent = {
                 if (selected === '__custom__') {
                     const modal = new ModalBuilder()
                         .setCustomId(`expulsion:custom_modal:${targetId}`)
-                        .setTitle('Motivo de expulsión')
+                        .setTitle('Motivo de expulsión personalizado')
                         .addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder()
-                        .setCustomId('reason_text')
-                        .setLabel('Escribe el motivo')
+                        .setCustomId('label_text')
+                        .setLabel('Nombre corto (aparece en el log)')
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(true)
+                        .setMaxLength(80)
+                        .setPlaceholder('Ej: Conducta inapropiada')), new ActionRowBuilder().addComponents(new TextInputBuilder()
+                        .setCustomId('body_text')
+                        .setLabel('Mensaje completo (se envía al jugador por DM)')
                         .setStyle(TextInputStyle.Paragraph)
                         .setRequired(true)
-                        .setMinLength(5)
-                        .setMaxLength(500)));
+                        .setMaxLength(4000)
+                        .setPlaceholder('Escribe el mensaje completo aquí...')));
                     await interaction.showModal(modal);
                     return;
                 }
@@ -3018,12 +3105,13 @@ const interactionCreateEvent = {
                 pendingExpulsions.set(interaction.user.id, {
                     targetId,
                     targetTag: target.tag,
-                    reason: found.text,
+                    label: found.label,
+                    body: found.body,
                     comments: null,
                 });
                 await interaction.deferUpdate();
                 await interaction.editReply({
-                    embeds: [buildExpulsionConfirmEmbed({ id: targetId, username: target.username }, found.text)],
+                    embeds: [buildExpulsionConfirmEmbed({ id: targetId, username: target.username }, { label: found.label, body: found.body })],
                     components: [
                         new ActionRowBuilder().addComponents(buildReasonSelectMenu(reasons, targetId)),
                         buildConfirmRow(targetId, false),
@@ -3034,7 +3122,8 @@ const interactionCreateEvent = {
             // ── expulsion:custom_modal:{targetId} — motivo libre ─────────────────────
             if (interaction.isModalSubmit() && interaction.customId.startsWith('expulsion:custom_modal:')) {
                 const targetId = interaction.customId.slice('expulsion:custom_modal:'.length);
-                const reason = interaction.fields.getTextInputValue('reason_text').trim();
+                const label = interaction.fields.getTextInputValue('label_text').trim();
+                const body = interaction.fields.getTextInputValue('body_text').trim();
                 const guild = interaction.guild;
                 if (!guild)
                     return;
@@ -3044,18 +3133,49 @@ const interactionCreateEvent = {
                 pendingExpulsions.set(interaction.user.id, {
                     targetId,
                     targetTag: target.tag,
-                    reason,
+                    label,
+                    body,
                     comments: null,
                 });
                 const config = await getOrCreateGuildConfig(guild.id);
                 const reasons = parseExpulsionReasons(config.expulsionReasons);
                 await interaction.deferUpdate();
                 await interaction.editReply({
-                    embeds: [buildExpulsionConfirmEmbed({ id: targetId, username: target.username }, reason)],
+                    embeds: [buildExpulsionConfirmEmbed({ id: targetId, username: target.username }, { label, body })],
                     components: [
                         new ActionRowBuilder().addComponents(buildReasonSelectMenu(reasons, targetId)),
                         buildConfirmRow(targetId, false),
                     ],
+                });
+                return;
+            }
+            // ── expulsion:add_reason_modal — guardar nuevo motivo predeterminado ──────
+            if (interaction.isModalSubmit() && interaction.customId === 'expulsion:add_reason_modal') {
+                if (!interaction.inCachedGuild())
+                    return;
+                const label = interaction.fields.getTextInputValue('label').trim();
+                const body = interaction.fields.getTextInputValue('body').trim();
+                const { guildId } = interaction;
+                const config = await getOrCreateGuildConfig(guildId);
+                const reasons = parseExpulsionReasons(config.expulsionReasons);
+                if (reasons.length >= 24) {
+                    await interaction.reply({
+                        embeds: [new EmbedBuilder().setColor(0xed4245).setDescription('❌ Límite de 24 motivos alcanzado.')],
+                        flags: 64,
+                    });
+                    return;
+                }
+                const updated = [...reasons, { id: randomUUID().slice(0, 8), label, body }];
+                await prisma.guildConfig.update({ where: { guildId }, data: { expulsionReasons: updated } });
+                await interaction.reply({
+                    embeds: [
+                        new EmbedBuilder()
+                            .setColor(0x57f287)
+                            .setTitle('✅ Motivo agregado')
+                            .setDescription(`**${label}** fue agregado a los motivos predeterminados.`)
+                            .setFooter({ text: 'Aquaris • Moderación  ·  💙 by jhadechni' }),
+                    ],
+                    flags: 64,
                 });
                 return;
             }
@@ -3103,7 +3223,8 @@ const interactionCreateEvent = {
                     guildId: guild.id,
                     targetId: pending.targetId,
                     targetTag: pending.targetTag,
-                    reason: pending.reason,
+                    label: pending.label,
+                    body: pending.body,
                     comments,
                     moderatorId: interaction.user.id,
                     guild,
@@ -3114,7 +3235,7 @@ const interactionCreateEvent = {
                             .setColor(0x57f287)
                             .setTitle('✅ Expulsión ejecutada')
                             .setDescription(`<@${pending.targetId}> ha sido expulsado del clan.`)
-                            .addFields({ name: 'Motivo', value: pending.reason, inline: false }, ...(comments ? [{ name: 'Comentario', value: comments, inline: false }] : []), { name: 'Roles', value: results.rolesReset ? `✅ Quitados${results.visitorAssigned ? ' · Visitante asignado' : ''}` : '⚠️ No se pudo', inline: true }, { name: 'Estado clan', value: results.clanPlayerFound ? (results.clanPlayerUpdated ? '✅ Marcado retirado' : '⚠️ Error') : '⚠️ No encontrado', inline: true }, { name: 'Protecciones', value: results.clanPlayerFound ? `🗑️ ${results.protectionsRemoved} eliminadas` : '—', inline: true }, { name: 'DM al jugador', value: results.dmDelivered ? '✅ Enviado' : '❌ DMs cerrados', inline: true })
+                            .addFields({ name: 'Motivo', value: pending.label, inline: false }, ...(comments ? [{ name: 'Comentario', value: comments, inline: false }] : []), { name: 'Roles', value: results.rolesReset ? `✅ Quitados${results.visitorAssigned ? ' · Visitante asignado' : ''}` : '⚠️ No se pudo', inline: true }, { name: 'Estado clan', value: results.clanPlayerFound ? (results.clanPlayerUpdated ? '✅ Marcado retirado' : '⚠️ Error') : '⚠️ No encontrado', inline: true }, { name: 'Protecciones', value: results.clanPlayerFound ? `🗑️ ${results.protectionsRemoved} eliminadas` : '—', inline: true }, { name: 'DM al jugador', value: results.dmDelivered ? '✅ Enviado' : '❌ DMs cerrados', inline: true })
                             .setFooter({ text: 'Aquaris • Moderación  ·  💙 by jhadechni' })
                             .setTimestamp(),
                     ],

@@ -1,7 +1,7 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, } from 'discord.js';
 import { prisma } from '../database/prisma.js';
 import { resolveShopGuildScopes } from './scope.js';
-import { coerceShopTaxonomy, compareCategoryKeys, compareSubcategoryKeys, getCategoryDefinition, getSubcategoryDefinition, isValidCategory, normalizeShopTaxonomyKey, } from './taxonomy.js';
+import { compareCategoryKeys, compareSubcategoryKeys, getCategoryDefinition, getSubcategoryDefinition, normalizeShopTaxonomyKey, } from './taxonomy.js';
 import { formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 import { SHOP_COLORS } from '../utils/shop-ui.js';
 import { resolvePresentationLabel, resolvePresentationTypeName } from './quantities.js';
@@ -42,16 +42,26 @@ export async function queryCatalogProducts(guildId) {
             where: {
                 guildId: scope,
                 isActive: true,
+                parentId: null,
                 OR: [
                     { productType: 'service' },
                     { baseMaterialId: { not: null } },
                     { components: { some: {} } },
+                    { variants: { some: { isActive: true } } },
                 ],
             },
             include: {
                 baseMaterial: true,
                 prices: { where: { validTo: null }, take: 1 },
                 components: { include: { material: true }, orderBy: { quantityRequired: 'desc' } },
+                variants: {
+                    where: { isActive: true },
+                    orderBy: { sortOrder: 'asc' },
+                    include: {
+                        prices: { where: { validTo: null }, take: 1 },
+                        baseMaterial: true,
+                    },
+                },
             },
             orderBy: [
                 { category: 'asc' },
@@ -118,17 +128,15 @@ function parseProductCategoryAssignments(product) {
     const assignments = [];
     const seen = new Set();
     const pushAssignment = (categoryValue, subcategoryValue) => {
-        if (!isValidCategory(normalizeShopTaxonomyKey(categoryValue)))
+        const categoryKey = normalizeShopTaxonomyKey(categoryValue);
+        if (!categoryKey)
             return;
-        const taxonomy = coerceShopTaxonomy(categoryValue, subcategoryValue);
-        const key = `${taxonomy.category}:${taxonomy.subcategory}`;
+        const subcategoryKey = normalizeShopTaxonomyKey(subcategoryValue) || 'otros';
+        const key = `${categoryKey}:${subcategoryKey}`;
         if (seen.has(key))
             return;
         seen.add(key);
-        assignments.push({
-            category: taxonomy.category,
-            subcategory: taxonomy.subcategory,
-        });
+        assignments.push({ category: categoryKey, subcategory: subcategoryKey });
     };
     pushAssignment(product.category, product.subcategory);
     const rawAssignments = 'additionalCategoryAssignments' in product
@@ -190,12 +198,12 @@ export function resolveCatalogViewState(products, mode, categoryKey, subcategory
     const grouped = groupCatalogProducts(filterCatalogProductsByMode(products, mode));
     const categoryKeys = [...grouped.keys()].sort(compareCategoryKeys);
     const fallbackCategory = categoryKeys[0] ?? 'general';
-    const normalizedCategory = coerceShopTaxonomy(categoryKey, null).category;
+    const normalizedCategory = normalizeShopTaxonomyKey(categoryKey);
     const currentCategory = grouped.has(normalizedCategory) ? normalizedCategory : fallbackCategory;
     const subcategoryMap = grouped.get(currentCategory) ?? new Map();
     const subcategoryKeys = [...subcategoryMap.keys()].sort((left, right) => compareSubcategoryKeys(currentCategory, left, right));
     const fallbackSubcategory = subcategoryKeys[0] ?? 'otros';
-    const normalizedSubcategory = coerceShopTaxonomy(currentCategory, subcategoryKey).subcategory;
+    const normalizedSubcategory = normalizeShopTaxonomyKey(subcategoryKey);
     const currentSubcategory = subcategoryMap.has(normalizedSubcategory)
         ? normalizedSubcategory
         : fallbackSubcategory;
@@ -392,7 +400,20 @@ function buildPaginationRow(mode, currentCategory, currentSubcategory, currentPa
         .setStyle(ButtonStyle.Secondary)
         .setDisabled(currentPage >= totalPages));
 }
+export function isParentProduct(product) {
+    return product.variants.length > 0;
+}
 function buildProductOptionDescription(product) {
+    if (isParentProduct(product)) {
+        const count = product.variants.length;
+        const prices = product.variants.map(v => v.prices[0]?.price).filter(p => p != null);
+        const minPrice = prices.length > 0
+            ? prices.reduce((min, p) => (p.lt(min) ? p : min))
+            : null;
+        const currency = product.variants[0]?.prices[0]?.currency ?? '$';
+        const priceStr = minPrice ? `desde ${formatPrice(minPrice, currency)}` : 'S/P';
+        return `🔀 ${count} variante${count !== 1 ? 's' : ''}  ·  💰 ${priceStr}`.slice(0, 100);
+    }
     const price = product.prices[0];
     const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
     if (product.productType === 'service') {
@@ -400,6 +421,72 @@ function buildProductOptionDescription(product) {
     }
     const typeName = resolvePresentationTypeName(product.presentationType);
     return `${typeName}  ·  💰 ${priceStr}`.slice(0, 100);
+}
+export function buildVariantSelectRow(variants, parentProductId, context, selectedVariantId) {
+    const customId = context === 'tienda'
+        ? `tienda:catalog:variant:${parentProductId}`
+        : `pedido:cart:variant:select:${parentProductId}`;
+    const select = new StringSelectMenuBuilder()
+        .setCustomId(customId)
+        .setPlaceholder('Selecciona una variante…')
+        .addOptions(variants.slice(0, 25).map(variant => {
+        const price = variant.prices[0];
+        const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
+        const label = (variant.variantLabel ?? variant.name).slice(0, 100);
+        const typeName = variant.productType !== 'service'
+            ? resolvePresentationTypeName(variant.presentationType)
+            : null;
+        const desc = typeName
+            ? `${typeName}  ·  💰 ${priceStr}`.slice(0, 100)
+            : `💰 ${priceStr}`;
+        return new StringSelectMenuOptionBuilder()
+            .setLabel(label)
+            .setValue(variant.id)
+            .setDescription(desc)
+            .setDefault(variant.id === selectedVariantId);
+    }));
+    return new ActionRowBuilder().addComponents(select);
+}
+function buildVariantPickerEmbed(product, categoryKey, subcategoryKey) {
+    const icon = getProductEmoji(product);
+    const count = product.variants.length;
+    return applyTaxonomyImages(new EmbedBuilder()
+        .setTitle(`${icon} ${product.name}`)
+        .setDescription([
+        product.description ?? null,
+        `**${count} variante${count !== 1 ? 's' : ''} disponibles** — selecciona una del menú para ver el detalle y añadirla al carrito.`,
+    ].filter(Boolean).join('\n\n'))
+        .setColor(SHOP_COLORS.info)
+        .setFooter({ text: SHOP_FOOTER.text })
+        .setTimestamp(), categoryKey, subcategoryKey);
+}
+export function buildVariantDetailEmbed(variant, parent, categoryKey, subcategoryKey) {
+    const price = variant.prices[0];
+    const priceStr = price
+        ? `💰 **${formatPrice(price.price, price.currency)}**`
+        : '💰 _Sin precio_';
+    const icon = getProductEmoji(parent);
+    const label = variant.variantLabel ?? variant.name;
+    const presentationStr = variant.productType !== 'service'
+        ? `📐 ${resolvePresentationLabel({
+            presentationQuantity: variant.presentationQuantity,
+            presentationType: variant.presentationType,
+            stackSize: variant.baseMaterial?.stackSize ?? 64,
+        })}`
+        : null;
+    const embed = new EmbedBuilder()
+        .setTitle(`${icon} ${parent.name}`)
+        .setColor(SHOP_COLORS.info)
+        .setTimestamp()
+        .setFooter({ text: SHOP_FOOTER.text });
+    embed.addFields({ name: 'Variante', value: `**${label}**`, inline: true }, { name: 'Precio', value: priceStr, inline: true });
+    if (presentationStr) {
+        embed.addFields({ name: 'Presentación', value: presentationStr, inline: true });
+    }
+    if (parent.description) {
+        embed.setDescription(parent.description);
+    }
+    return applyTaxonomyImages(embed, categoryKey, subcategoryKey);
 }
 function buildProductSelectRow(products, mode, category, subcategory, selectedProductId) {
     const select = new StringSelectMenuBuilder()
@@ -433,7 +520,7 @@ function buildBrowseHintEmbed(state) {
         .setFooter({ text: SHOP_FOOTER.text })
         .setTimestamp(), state.currentCategory, state.currentSubcategory);
 }
-export function buildCatalogView(products, mode, categoryKey, subcategoryKey, requestedPage = 1, selectedProductId) {
+export function buildCatalogView(products, mode, categoryKey, subcategoryKey, requestedPage = 1, selectedProductId, selectedVariantId) {
     const state = resolveCatalogViewState(products, mode, categoryKey, subcategoryKey, requestedPage);
     const components = [];
     const counts = countCatalogProductsByMode(products);
@@ -453,18 +540,28 @@ export function buildCatalogView(products, mode, categoryKey, subcategoryKey, re
     else if (state.totalPages > 1) {
         components.push(buildPaginationRow(state.currentMode, state.currentCategory, state.currentSubcategory, state.currentPage, state.totalPages));
     }
-    components.push(buildOpenCartRow(state));
+    // Resolve selected product and check if it's a parent (has variants)
     let embed;
     if (useProductSelect && state.allSubcategoryProducts.length > 0) {
-        const product = (selectedProductId
-            ? state.allSubcategoryProducts.find(p => p.id === selectedProductId)
+        const resolvedId = selectedProductId ?? state.allSubcategoryProducts[0]?.id ?? null;
+        const product = (resolvedId
+            ? state.allSubcategoryProducts.find(p => p.id === resolvedId)
             : null) ?? state.allSubcategoryProducts[0];
-        embed = product
-            ? buildProductDetailEmbed(product, state.currentCategory, state.currentSubcategory)
-            : buildBrowseHintEmbed(state);
+        if (product && isParentProduct(product)) {
+            // Parent: show variant picker embed + variant select row (within 5-row Discord limit)
+            embed = buildVariantPickerEmbed(product, state.currentCategory, state.currentSubcategory);
+            components.push(buildVariantSelectRow(product.variants, product.id, 'tienda', selectedVariantId));
+        }
+        else {
+            embed = product
+                ? buildProductDetailEmbed(product, state.currentCategory, state.currentSubcategory)
+                : buildBrowseHintEmbed(state);
+            components.push(buildOpenCartRow(state));
+        }
     }
     else {
         embed = buildBrowseHintEmbed(state);
+        components.push(buildOpenCartRow(state));
     }
     return { components, embed, state };
 }

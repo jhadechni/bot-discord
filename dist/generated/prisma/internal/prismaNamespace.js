@@ -294,7 +294,11 @@ export const ShopProductScalarFieldEnum = {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     additionalCategories: 'additionalCategories',
-    additionalCategoryAssignments: 'additionalCategoryAssignments'
+    additionalCategoryAssignments: 'additionalCategoryAssignments',
+    parentId: 'parentId',
+    variantLabel: 'variantLabel',
+    variantAttributes: 'variantAttributes',
+    sortOrder: 'sortOrder'
 };
 export const ShopProductComponentScalarFieldEnum = {
     id: 'id',

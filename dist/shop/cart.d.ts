@@ -5,6 +5,7 @@ export interface CartItem {
     contentsSummary?: string | null;
     productId: string;
     productName: string;
+    variantLabel?: string | null;
     productType: string;
     productCategory: string;
     quantity: number;
@@ -31,68 +32,14 @@ export declare function getCart(guildId: string, userId: string): CartSession | 
 export declare function setCart(session: CartSession): void;
 export declare function deleteCart(guildId: string, userId: string): void;
 export declare function cartTotal(items: CartItem[]): number;
-export declare function queryCartProducts(guildId: string): Promise<({
-    components: ({
-        material: {
-            createdAt: Date;
-            id: string;
-            guildId: string;
-            name: string;
-            updatedAt: Date;
-            isActive: boolean;
-            baseUnit: string;
-            stackSize: number;
-        };
-    } & {
-        id: string;
-        quantityRequired: number;
-        productId: string;
-        materialId: string;
-    })[];
-    baseMaterial: {
-        createdAt: Date;
-        id: string;
-        guildId: string;
-        name: string;
-        updatedAt: Date;
-        isActive: boolean;
-        baseUnit: string;
-        stackSize: number;
-    } | null;
-    prices: {
-        id: string;
-        productId: string;
-        price: Decimal;
-        currency: string;
-        validFrom: Date;
-        validTo: Date | null;
-        changedByUserId: string | null;
-    }[];
-} & {
-    createdAt: Date;
-    id: string;
-    guildId: string;
-    name: string;
-    updatedAt: Date;
-    description: string | null;
-    isActive: boolean;
-    category: string;
-    productType: string;
-    subcategory: string;
-    baseMaterialId: string | null;
-    presentationType: string;
-    presentationQuantity: number;
-    presentationLabel: string | null;
-    additionalCategories: string[];
-    additionalCategoryAssignments: import("@prisma/client/runtime/client").JsonValue;
-})[]>;
+export declare function queryCartProducts(guildId: string): Promise<import("./catalog.js").CatalogProduct[]>;
 export type CartProductOption = Awaited<ReturnType<typeof queryCartProducts>>[number];
 export declare function buildCartEmbed(session: CartSession): EmbedBuilder;
 export declare function buildCartSearchView(session: CartSession, results: CartProductOption[], query: string): {
     components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>>;
     embeds: EmbedBuilder[];
 };
-export declare function buildCartView(session: CartSession, products: CartProductOption[]): {
+export declare function buildCartView(session: CartSession, products: CartProductOption[], selectedProductId?: string | null): {
     components: Array<ActionRowBuilder<MessageActionRowComponentBuilder>>;
     embeds: EmbedBuilder[];
     state: CatalogViewState;
