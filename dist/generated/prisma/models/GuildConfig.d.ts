@@ -28,6 +28,8 @@ export type GuildConfigMinAggregateOutputType = {
     coLiderRoleId: string | null;
     aquarisRoleId: string | null;
     staffRoleId: string | null;
+    reclutadorRoleId: string | null;
+    comercianteRoleId: string | null;
     levelUpChannelId: string | null;
     boostChannelId: string | null;
     shopStaffChannelId: string | null;
@@ -56,6 +58,8 @@ export type GuildConfigMaxAggregateOutputType = {
     coLiderRoleId: string | null;
     aquarisRoleId: string | null;
     staffRoleId: string | null;
+    reclutadorRoleId: string | null;
+    comercianteRoleId: string | null;
     levelUpChannelId: string | null;
     boostChannelId: string | null;
     shopStaffChannelId: string | null;
@@ -84,6 +88,8 @@ export type GuildConfigCountAggregateOutputType = {
     coLiderRoleId: number;
     aquarisRoleId: number;
     staffRoleId: number;
+    reclutadorRoleId: number;
+    comercianteRoleId: number;
     levelUpChannelId: number;
     boostChannelId: number;
     shopStaffChannelId: number;
@@ -115,6 +121,8 @@ export type GuildConfigMinAggregateInputType = {
     coLiderRoleId?: true;
     aquarisRoleId?: true;
     staffRoleId?: true;
+    reclutadorRoleId?: true;
+    comercianteRoleId?: true;
     levelUpChannelId?: true;
     boostChannelId?: true;
     shopStaffChannelId?: true;
@@ -143,6 +151,8 @@ export type GuildConfigMaxAggregateInputType = {
     coLiderRoleId?: true;
     aquarisRoleId?: true;
     staffRoleId?: true;
+    reclutadorRoleId?: true;
+    comercianteRoleId?: true;
     levelUpChannelId?: true;
     boostChannelId?: true;
     shopStaffChannelId?: true;
@@ -171,6 +181,8 @@ export type GuildConfigCountAggregateInputType = {
     coLiderRoleId?: true;
     aquarisRoleId?: true;
     staffRoleId?: true;
+    reclutadorRoleId?: true;
+    comercianteRoleId?: true;
     levelUpChannelId?: true;
     boostChannelId?: true;
     shopStaffChannelId?: true;
@@ -264,6 +276,8 @@ export type GuildConfigGroupByOutputType = {
     coLiderRoleId: string | null;
     aquarisRoleId: string | null;
     staffRoleId: string | null;
+    reclutadorRoleId: string | null;
+    comercianteRoleId: string | null;
     levelUpChannelId: string | null;
     boostChannelId: string | null;
     shopStaffChannelId: string | null;
@@ -303,6 +317,8 @@ export type GuildConfigWhereInput = {
     coLiderRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     aquarisRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     staffRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
+    reclutadorRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
+    comercianteRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     levelUpChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     boostChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     shopStaffChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
@@ -333,6 +349,8 @@ export type GuildConfigOrderByWithRelationInput = {
     coLiderRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
     aquarisRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
     staffRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
+    reclutadorRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
+    comercianteRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
     levelUpChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     boostChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     shopStaffChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -366,6 +384,8 @@ export type GuildConfigWhereUniqueInput = Prisma.AtLeast<{
     coLiderRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     aquarisRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     staffRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
+    reclutadorRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
+    comercianteRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     levelUpChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     boostChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     shopStaffChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
@@ -396,6 +416,8 @@ export type GuildConfigOrderByWithAggregationInput = {
     coLiderRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
     aquarisRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
     staffRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
+    reclutadorRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
+    comercianteRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
     levelUpChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     boostChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     shopStaffChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -432,6 +454,8 @@ export type GuildConfigScalarWhereWithAggregatesInput = {
     coLiderRoleId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     aquarisRoleId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     staffRoleId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
+    reclutadorRoleId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
+    comercianteRoleId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     levelUpChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     boostChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     shopStaffChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
@@ -462,6 +486,8 @@ export type GuildConfigCreateInput = {
     coLiderRoleId?: string | null;
     aquarisRoleId?: string | null;
     staffRoleId?: string | null;
+    reclutadorRoleId?: string | null;
+    comercianteRoleId?: string | null;
     levelUpChannelId?: string | null;
     boostChannelId?: string | null;
     shopStaffChannelId?: string | null;
@@ -492,6 +518,8 @@ export type GuildConfigUncheckedCreateInput = {
     coLiderRoleId?: string | null;
     aquarisRoleId?: string | null;
     staffRoleId?: string | null;
+    reclutadorRoleId?: string | null;
+    comercianteRoleId?: string | null;
     levelUpChannelId?: string | null;
     boostChannelId?: string | null;
     shopStaffChannelId?: string | null;
@@ -522,6 +550,8 @@ export type GuildConfigUpdateInput = {
     coLiderRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     aquarisRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    reclutadorRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    comercianteRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     levelUpChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     boostChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     shopStaffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -552,6 +582,8 @@ export type GuildConfigUncheckedUpdateInput = {
     coLiderRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     aquarisRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    reclutadorRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    comercianteRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     levelUpChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     boostChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     shopStaffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -582,6 +614,8 @@ export type GuildConfigCreateManyInput = {
     coLiderRoleId?: string | null;
     aquarisRoleId?: string | null;
     staffRoleId?: string | null;
+    reclutadorRoleId?: string | null;
+    comercianteRoleId?: string | null;
     levelUpChannelId?: string | null;
     boostChannelId?: string | null;
     shopStaffChannelId?: string | null;
@@ -612,6 +646,8 @@ export type GuildConfigUpdateManyMutationInput = {
     coLiderRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     aquarisRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    reclutadorRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    comercianteRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     levelUpChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     boostChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     shopStaffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -642,6 +678,8 @@ export type GuildConfigUncheckedUpdateManyInput = {
     coLiderRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     aquarisRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    reclutadorRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    comercianteRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     levelUpChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     boostChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     shopStaffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -672,6 +710,8 @@ export type GuildConfigCountOrderByAggregateInput = {
     coLiderRoleId?: Prisma.SortOrder;
     aquarisRoleId?: Prisma.SortOrder;
     staffRoleId?: Prisma.SortOrder;
+    reclutadorRoleId?: Prisma.SortOrder;
+    comercianteRoleId?: Prisma.SortOrder;
     levelUpChannelId?: Prisma.SortOrder;
     boostChannelId?: Prisma.SortOrder;
     shopStaffChannelId?: Prisma.SortOrder;
@@ -702,6 +742,8 @@ export type GuildConfigMaxOrderByAggregateInput = {
     coLiderRoleId?: Prisma.SortOrder;
     aquarisRoleId?: Prisma.SortOrder;
     staffRoleId?: Prisma.SortOrder;
+    reclutadorRoleId?: Prisma.SortOrder;
+    comercianteRoleId?: Prisma.SortOrder;
     levelUpChannelId?: Prisma.SortOrder;
     boostChannelId?: Prisma.SortOrder;
     shopStaffChannelId?: Prisma.SortOrder;
@@ -730,6 +772,8 @@ export type GuildConfigMinOrderByAggregateInput = {
     coLiderRoleId?: Prisma.SortOrder;
     aquarisRoleId?: Prisma.SortOrder;
     staffRoleId?: Prisma.SortOrder;
+    reclutadorRoleId?: Prisma.SortOrder;
+    comercianteRoleId?: Prisma.SortOrder;
     levelUpChannelId?: Prisma.SortOrder;
     boostChannelId?: Prisma.SortOrder;
     shopStaffChannelId?: Prisma.SortOrder;
@@ -767,6 +811,8 @@ export type GuildConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalA
     coLiderRoleId?: boolean;
     aquarisRoleId?: boolean;
     staffRoleId?: boolean;
+    reclutadorRoleId?: boolean;
+    comercianteRoleId?: boolean;
     levelUpChannelId?: boolean;
     boostChannelId?: boolean;
     shopStaffChannelId?: boolean;
@@ -797,6 +843,8 @@ export type GuildConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
     coLiderRoleId?: boolean;
     aquarisRoleId?: boolean;
     staffRoleId?: boolean;
+    reclutadorRoleId?: boolean;
+    comercianteRoleId?: boolean;
     levelUpChannelId?: boolean;
     boostChannelId?: boolean;
     shopStaffChannelId?: boolean;
@@ -827,6 +875,8 @@ export type GuildConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
     coLiderRoleId?: boolean;
     aquarisRoleId?: boolean;
     staffRoleId?: boolean;
+    reclutadorRoleId?: boolean;
+    comercianteRoleId?: boolean;
     levelUpChannelId?: boolean;
     boostChannelId?: boolean;
     shopStaffChannelId?: boolean;
@@ -857,6 +907,8 @@ export type GuildConfigSelectScalar = {
     coLiderRoleId?: boolean;
     aquarisRoleId?: boolean;
     staffRoleId?: boolean;
+    reclutadorRoleId?: boolean;
+    comercianteRoleId?: boolean;
     levelUpChannelId?: boolean;
     boostChannelId?: boolean;
     shopStaffChannelId?: boolean;
@@ -869,7 +921,7 @@ export type GuildConfigSelectScalar = {
     notifPanelChannelId?: boolean;
     notifPanelMessageId?: boolean;
 };
-export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "welcomeChannelId" | "logsChannelId" | "logsModChannelId" | "logsAutomodChannelId" | "logsRecruitChannelId" | "logsJoinsChannelId" | "logsLeavesChannelId" | "suggestionsChannelId" | "recruitmentCategoryId" | "visitorRoleId" | "aspirantRoleId" | "liderRoleId" | "coLiderRoleId" | "aquarisRoleId" | "staffRoleId" | "levelUpChannelId" | "boostChannelId" | "shopStaffChannelId" | "shopCategoryId" | "createdAt" | "updatedAt" | "farewellChannelId" | "notifRoles" | "expulsionReasons" | "notifPanelChannelId" | "notifPanelMessageId", ExtArgs["result"]["guildConfig"]>;
+export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "welcomeChannelId" | "logsChannelId" | "logsModChannelId" | "logsAutomodChannelId" | "logsRecruitChannelId" | "logsJoinsChannelId" | "logsLeavesChannelId" | "suggestionsChannelId" | "recruitmentCategoryId" | "visitorRoleId" | "aspirantRoleId" | "liderRoleId" | "coLiderRoleId" | "aquarisRoleId" | "staffRoleId" | "reclutadorRoleId" | "comercianteRoleId" | "levelUpChannelId" | "boostChannelId" | "shopStaffChannelId" | "shopCategoryId" | "createdAt" | "updatedAt" | "farewellChannelId" | "notifRoles" | "expulsionReasons" | "notifPanelChannelId" | "notifPanelMessageId", ExtArgs["result"]["guildConfig"]>;
 export type $GuildConfigPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "GuildConfig";
     objects: {};
@@ -891,6 +943,8 @@ export type $GuildConfigPayload<ExtArgs extends runtime.Types.Extensions.Interna
         coLiderRoleId: string | null;
         aquarisRoleId: string | null;
         staffRoleId: string | null;
+        reclutadorRoleId: string | null;
+        comercianteRoleId: string | null;
         levelUpChannelId: string | null;
         boostChannelId: string | null;
         shopStaffChannelId: string | null;
@@ -1273,6 +1327,8 @@ export interface GuildConfigFieldRefs {
     readonly coLiderRoleId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly aquarisRoleId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly staffRoleId: Prisma.FieldRef<"GuildConfig", 'String'>;
+    readonly reclutadorRoleId: Prisma.FieldRef<"GuildConfig", 'String'>;
+    readonly comercianteRoleId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly levelUpChannelId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly boostChannelId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly shopStaffChannelId: Prisma.FieldRef<"GuildConfig", 'String'>;

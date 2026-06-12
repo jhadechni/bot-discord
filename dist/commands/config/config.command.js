@@ -75,7 +75,7 @@ export const configCommand = {
         .setName('tipo')
         .setDescription('Función del rol')
         .setRequired(true)
-        .addChoices({ name: 'Visitante (autorol)', value: 'visitorRoleId' }, { name: 'Aspirante (reclutamiento)', value: 'aspirantRoleId' }, { name: 'Lider', value: 'liderRoleId' }, { name: 'Co-Lider', value: 'coLiderRoleId' }, { name: 'Aquaris (miembro)', value: 'aquarisRoleId' }, { name: 'Staff', value: 'staffRoleId' }))
+        .addChoices({ name: 'Visitante (autorol)', value: 'visitorRoleId' }, { name: 'Aspirante (reclutamiento)', value: 'aspirantRoleId' }, { name: 'Lider', value: 'liderRoleId' }, { name: 'Co-Lider', value: 'coLiderRoleId' }, { name: 'Aquaris (miembro)', value: 'aquarisRoleId' }, { name: 'Staff', value: 'staffRoleId' }, { name: 'Reclutador', value: 'reclutadorRoleId' }, { name: 'Comerciante', value: 'comercianteRoleId' }))
         .addRoleOption(opt => opt.setName('rol').setDescription('Rol de Discord').setRequired(true)))
         .addSubcommand(sub => sub
         .setName('nick-rol-agregar')

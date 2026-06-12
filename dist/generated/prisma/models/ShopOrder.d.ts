@@ -15,11 +15,13 @@ export type AggregateShopOrder = {
 export type ShopOrderAvgAggregateOutputType = {
     subtotalAmount: runtime.Decimal | null;
     totalDiscountAmount: runtime.Decimal | null;
+    surchargesAmount: runtime.Decimal | null;
     totalAmount: runtime.Decimal | null;
 };
 export type ShopOrderSumAggregateOutputType = {
     subtotalAmount: runtime.Decimal | null;
     totalDiscountAmount: runtime.Decimal | null;
+    surchargesAmount: runtime.Decimal | null;
     totalAmount: runtime.Decimal | null;
 };
 export type ShopOrderMinAggregateOutputType = {
@@ -28,6 +30,7 @@ export type ShopOrderMinAggregateOutputType = {
     orderCode: string | null;
     customerUserId: string | null;
     status: string | null;
+    source: string | null;
     ticketChannelId: string | null;
     staffChannelId: string | null;
     acceptedByUserId: string | null;
@@ -37,6 +40,7 @@ export type ShopOrderMinAggregateOutputType = {
     cancelReason: string | null;
     subtotalAmount: runtime.Decimal | null;
     totalDiscountAmount: runtime.Decimal | null;
+    surchargesAmount: runtime.Decimal | null;
     totalAmount: runtime.Decimal | null;
     createdAt: Date | null;
     acceptedAt: Date | null;
@@ -50,6 +54,7 @@ export type ShopOrderMaxAggregateOutputType = {
     orderCode: string | null;
     customerUserId: string | null;
     status: string | null;
+    source: string | null;
     ticketChannelId: string | null;
     staffChannelId: string | null;
     acceptedByUserId: string | null;
@@ -59,6 +64,7 @@ export type ShopOrderMaxAggregateOutputType = {
     cancelReason: string | null;
     subtotalAmount: runtime.Decimal | null;
     totalDiscountAmount: runtime.Decimal | null;
+    surchargesAmount: runtime.Decimal | null;
     totalAmount: runtime.Decimal | null;
     createdAt: Date | null;
     acceptedAt: Date | null;
@@ -72,6 +78,7 @@ export type ShopOrderCountAggregateOutputType = {
     orderCode: number;
     customerUserId: number;
     status: number;
+    source: number;
     ticketChannelId: number;
     staffChannelId: number;
     acceptedByUserId: number;
@@ -81,6 +88,7 @@ export type ShopOrderCountAggregateOutputType = {
     cancelReason: number;
     subtotalAmount: number;
     totalDiscountAmount: number;
+    surchargesAmount: number;
     totalAmount: number;
     createdAt: number;
     acceptedAt: number;
@@ -92,11 +100,13 @@ export type ShopOrderCountAggregateOutputType = {
 export type ShopOrderAvgAggregateInputType = {
     subtotalAmount?: true;
     totalDiscountAmount?: true;
+    surchargesAmount?: true;
     totalAmount?: true;
 };
 export type ShopOrderSumAggregateInputType = {
     subtotalAmount?: true;
     totalDiscountAmount?: true;
+    surchargesAmount?: true;
     totalAmount?: true;
 };
 export type ShopOrderMinAggregateInputType = {
@@ -105,6 +115,7 @@ export type ShopOrderMinAggregateInputType = {
     orderCode?: true;
     customerUserId?: true;
     status?: true;
+    source?: true;
     ticketChannelId?: true;
     staffChannelId?: true;
     acceptedByUserId?: true;
@@ -114,6 +125,7 @@ export type ShopOrderMinAggregateInputType = {
     cancelReason?: true;
     subtotalAmount?: true;
     totalDiscountAmount?: true;
+    surchargesAmount?: true;
     totalAmount?: true;
     createdAt?: true;
     acceptedAt?: true;
@@ -127,6 +139,7 @@ export type ShopOrderMaxAggregateInputType = {
     orderCode?: true;
     customerUserId?: true;
     status?: true;
+    source?: true;
     ticketChannelId?: true;
     staffChannelId?: true;
     acceptedByUserId?: true;
@@ -136,6 +149,7 @@ export type ShopOrderMaxAggregateInputType = {
     cancelReason?: true;
     subtotalAmount?: true;
     totalDiscountAmount?: true;
+    surchargesAmount?: true;
     totalAmount?: true;
     createdAt?: true;
     acceptedAt?: true;
@@ -149,6 +163,7 @@ export type ShopOrderCountAggregateInputType = {
     orderCode?: true;
     customerUserId?: true;
     status?: true;
+    source?: true;
     ticketChannelId?: true;
     staffChannelId?: true;
     acceptedByUserId?: true;
@@ -158,6 +173,7 @@ export type ShopOrderCountAggregateInputType = {
     cancelReason?: true;
     subtotalAmount?: true;
     totalDiscountAmount?: true;
+    surchargesAmount?: true;
     totalAmount?: true;
     createdAt?: true;
     acceptedAt?: true;
@@ -248,6 +264,7 @@ export type ShopOrderGroupByOutputType = {
     orderCode: string;
     customerUserId: string;
     status: string;
+    source: string;
     ticketChannelId: string | null;
     staffChannelId: string | null;
     acceptedByUserId: string | null;
@@ -257,6 +274,7 @@ export type ShopOrderGroupByOutputType = {
     cancelReason: string | null;
     subtotalAmount: runtime.Decimal;
     totalDiscountAmount: runtime.Decimal;
+    surchargesAmount: runtime.Decimal;
     totalAmount: runtime.Decimal;
     createdAt: Date;
     acceptedAt: Date | null;
@@ -281,6 +299,7 @@ export type ShopOrderWhereInput = {
     orderCode?: Prisma.StringFilter<"ShopOrder"> | string;
     customerUserId?: Prisma.StringFilter<"ShopOrder"> | string;
     status?: Prisma.StringFilter<"ShopOrder"> | string;
+    source?: Prisma.StringFilter<"ShopOrder"> | string;
     ticketChannelId?: Prisma.StringNullableFilter<"ShopOrder"> | string | null;
     staffChannelId?: Prisma.StringNullableFilter<"ShopOrder"> | string | null;
     acceptedByUserId?: Prisma.StringNullableFilter<"ShopOrder"> | string | null;
@@ -290,6 +309,7 @@ export type ShopOrderWhereInput = {
     cancelReason?: Prisma.StringNullableFilter<"ShopOrder"> | string | null;
     subtotalAmount?: Prisma.DecimalFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFilter<"ShopOrder"> | Date | string;
     acceptedAt?: Prisma.DateTimeNullableFilter<"ShopOrder"> | Date | string | null;
@@ -304,6 +324,7 @@ export type ShopOrderWhereInput = {
     rejectedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
     events?: Prisma.ShopOrderEventListRelationFilter;
     items?: Prisma.ShopOrderItemListRelationFilter;
+    surcharges?: Prisma.ShopOrderSurchargeListRelationFilter;
     sale?: Prisma.XOR<Prisma.ShopSaleNullableScalarRelationFilter, Prisma.ShopSaleWhereInput> | null;
 };
 export type ShopOrderOrderByWithRelationInput = {
@@ -312,6 +333,7 @@ export type ShopOrderOrderByWithRelationInput = {
     orderCode?: Prisma.SortOrder;
     customerUserId?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
+    source?: Prisma.SortOrder;
     ticketChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     staffChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     acceptedByUserId?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -321,6 +343,7 @@ export type ShopOrderOrderByWithRelationInput = {
     cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder;
     subtotalAmount?: Prisma.SortOrder;
     totalDiscountAmount?: Prisma.SortOrder;
+    surchargesAmount?: Prisma.SortOrder;
     totalAmount?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     acceptedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -335,6 +358,7 @@ export type ShopOrderOrderByWithRelationInput = {
     rejectedBy?: Prisma.ShopUserOrderByWithRelationInput;
     events?: Prisma.ShopOrderEventOrderByRelationAggregateInput;
     items?: Prisma.ShopOrderItemOrderByRelationAggregateInput;
+    surcharges?: Prisma.ShopOrderSurchargeOrderByRelationAggregateInput;
     sale?: Prisma.ShopSaleOrderByWithRelationInput;
 };
 export type ShopOrderWhereUniqueInput = Prisma.AtLeast<{
@@ -346,6 +370,7 @@ export type ShopOrderWhereUniqueInput = Prisma.AtLeast<{
     guildId?: Prisma.StringFilter<"ShopOrder"> | string;
     customerUserId?: Prisma.StringFilter<"ShopOrder"> | string;
     status?: Prisma.StringFilter<"ShopOrder"> | string;
+    source?: Prisma.StringFilter<"ShopOrder"> | string;
     ticketChannelId?: Prisma.StringNullableFilter<"ShopOrder"> | string | null;
     staffChannelId?: Prisma.StringNullableFilter<"ShopOrder"> | string | null;
     acceptedByUserId?: Prisma.StringNullableFilter<"ShopOrder"> | string | null;
@@ -355,6 +380,7 @@ export type ShopOrderWhereUniqueInput = Prisma.AtLeast<{
     cancelReason?: Prisma.StringNullableFilter<"ShopOrder"> | string | null;
     subtotalAmount?: Prisma.DecimalFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFilter<"ShopOrder"> | Date | string;
     acceptedAt?: Prisma.DateTimeNullableFilter<"ShopOrder"> | Date | string | null;
@@ -369,6 +395,7 @@ export type ShopOrderWhereUniqueInput = Prisma.AtLeast<{
     rejectedBy?: Prisma.XOR<Prisma.ShopUserNullableScalarRelationFilter, Prisma.ShopUserWhereInput> | null;
     events?: Prisma.ShopOrderEventListRelationFilter;
     items?: Prisma.ShopOrderItemListRelationFilter;
+    surcharges?: Prisma.ShopOrderSurchargeListRelationFilter;
     sale?: Prisma.XOR<Prisma.ShopSaleNullableScalarRelationFilter, Prisma.ShopSaleWhereInput> | null;
 }, "id" | "orderCode">;
 export type ShopOrderOrderByWithAggregationInput = {
@@ -377,6 +404,7 @@ export type ShopOrderOrderByWithAggregationInput = {
     orderCode?: Prisma.SortOrder;
     customerUserId?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
+    source?: Prisma.SortOrder;
     ticketChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     staffChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     acceptedByUserId?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -386,6 +414,7 @@ export type ShopOrderOrderByWithAggregationInput = {
     cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder;
     subtotalAmount?: Prisma.SortOrder;
     totalDiscountAmount?: Prisma.SortOrder;
+    surchargesAmount?: Prisma.SortOrder;
     totalAmount?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     acceptedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -407,6 +436,7 @@ export type ShopOrderScalarWhereWithAggregatesInput = {
     orderCode?: Prisma.StringWithAggregatesFilter<"ShopOrder"> | string;
     customerUserId?: Prisma.StringWithAggregatesFilter<"ShopOrder"> | string;
     status?: Prisma.StringWithAggregatesFilter<"ShopOrder"> | string;
+    source?: Prisma.StringWithAggregatesFilter<"ShopOrder"> | string;
     ticketChannelId?: Prisma.StringNullableWithAggregatesFilter<"ShopOrder"> | string | null;
     staffChannelId?: Prisma.StringNullableWithAggregatesFilter<"ShopOrder"> | string | null;
     acceptedByUserId?: Prisma.StringNullableWithAggregatesFilter<"ShopOrder"> | string | null;
@@ -416,6 +446,7 @@ export type ShopOrderScalarWhereWithAggregatesInput = {
     cancelReason?: Prisma.StringNullableWithAggregatesFilter<"ShopOrder"> | string | null;
     subtotalAmount?: Prisma.DecimalWithAggregatesFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalWithAggregatesFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalWithAggregatesFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalWithAggregatesFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeWithAggregatesFilter<"ShopOrder"> | Date | string;
     acceptedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ShopOrder"> | Date | string | null;
@@ -428,12 +459,14 @@ export type ShopOrderCreateInput = {
     guildId: string;
     orderCode: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     rejectionReason?: string | null;
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -448,6 +481,7 @@ export type ShopOrderCreateInput = {
     rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
     events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateInput = {
@@ -456,6 +490,7 @@ export type ShopOrderUncheckedCreateInput = {
     orderCode: string;
     customerUserId: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     acceptedByUserId?: string | null;
@@ -465,6 +500,7 @@ export type ShopOrderUncheckedCreateInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -475,6 +511,7 @@ export type ShopOrderUncheckedCreateInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
     events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUpdateInput = {
@@ -482,12 +519,14 @@ export type ShopOrderUpdateInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -502,6 +541,7 @@ export type ShopOrderUpdateInput = {
     rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
     events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateInput = {
@@ -510,6 +550,7 @@ export type ShopOrderUncheckedUpdateInput = {
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -519,6 +560,7 @@ export type ShopOrderUncheckedUpdateInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -529,6 +571,7 @@ export type ShopOrderUncheckedUpdateInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
     events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderCreateManyInput = {
@@ -537,6 +580,7 @@ export type ShopOrderCreateManyInput = {
     orderCode: string;
     customerUserId: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     acceptedByUserId?: string | null;
@@ -546,6 +590,7 @@ export type ShopOrderCreateManyInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -558,12 +603,14 @@ export type ShopOrderUpdateManyMutationInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -577,6 +624,7 @@ export type ShopOrderUncheckedUpdateManyInput = {
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -586,6 +634,7 @@ export type ShopOrderUncheckedUpdateManyInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -607,6 +656,7 @@ export type ShopOrderCountOrderByAggregateInput = {
     orderCode?: Prisma.SortOrder;
     customerUserId?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
+    source?: Prisma.SortOrder;
     ticketChannelId?: Prisma.SortOrder;
     staffChannelId?: Prisma.SortOrder;
     acceptedByUserId?: Prisma.SortOrder;
@@ -616,6 +666,7 @@ export type ShopOrderCountOrderByAggregateInput = {
     cancelReason?: Prisma.SortOrder;
     subtotalAmount?: Prisma.SortOrder;
     totalDiscountAmount?: Prisma.SortOrder;
+    surchargesAmount?: Prisma.SortOrder;
     totalAmount?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     acceptedAt?: Prisma.SortOrder;
@@ -626,6 +677,7 @@ export type ShopOrderCountOrderByAggregateInput = {
 export type ShopOrderAvgOrderByAggregateInput = {
     subtotalAmount?: Prisma.SortOrder;
     totalDiscountAmount?: Prisma.SortOrder;
+    surchargesAmount?: Prisma.SortOrder;
     totalAmount?: Prisma.SortOrder;
 };
 export type ShopOrderMaxOrderByAggregateInput = {
@@ -634,6 +686,7 @@ export type ShopOrderMaxOrderByAggregateInput = {
     orderCode?: Prisma.SortOrder;
     customerUserId?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
+    source?: Prisma.SortOrder;
     ticketChannelId?: Prisma.SortOrder;
     staffChannelId?: Prisma.SortOrder;
     acceptedByUserId?: Prisma.SortOrder;
@@ -643,6 +696,7 @@ export type ShopOrderMaxOrderByAggregateInput = {
     cancelReason?: Prisma.SortOrder;
     subtotalAmount?: Prisma.SortOrder;
     totalDiscountAmount?: Prisma.SortOrder;
+    surchargesAmount?: Prisma.SortOrder;
     totalAmount?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     acceptedAt?: Prisma.SortOrder;
@@ -656,6 +710,7 @@ export type ShopOrderMinOrderByAggregateInput = {
     orderCode?: Prisma.SortOrder;
     customerUserId?: Prisma.SortOrder;
     status?: Prisma.SortOrder;
+    source?: Prisma.SortOrder;
     ticketChannelId?: Prisma.SortOrder;
     staffChannelId?: Prisma.SortOrder;
     acceptedByUserId?: Prisma.SortOrder;
@@ -665,6 +720,7 @@ export type ShopOrderMinOrderByAggregateInput = {
     cancelReason?: Prisma.SortOrder;
     subtotalAmount?: Prisma.SortOrder;
     totalDiscountAmount?: Prisma.SortOrder;
+    surchargesAmount?: Prisma.SortOrder;
     totalAmount?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     acceptedAt?: Prisma.SortOrder;
@@ -675,6 +731,7 @@ export type ShopOrderMinOrderByAggregateInput = {
 export type ShopOrderSumOrderByAggregateInput = {
     subtotalAmount?: Prisma.SortOrder;
     totalDiscountAmount?: Prisma.SortOrder;
+    surchargesAmount?: Prisma.SortOrder;
     totalAmount?: Prisma.SortOrder;
 };
 export type ShopOrderScalarRelationFilter = {
@@ -901,17 +958,31 @@ export type ShopOrderUpdateOneRequiredWithoutEventsNestedInput = {
     connect?: Prisma.ShopOrderWhereUniqueInput;
     update?: Prisma.XOR<Prisma.XOR<Prisma.ShopOrderUpdateToOneWithWhereWithoutEventsInput, Prisma.ShopOrderUpdateWithoutEventsInput>, Prisma.ShopOrderUncheckedUpdateWithoutEventsInput>;
 };
+export type ShopOrderCreateNestedOneWithoutSurchargesInput = {
+    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutSurchargesInput, Prisma.ShopOrderUncheckedCreateWithoutSurchargesInput>;
+    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutSurchargesInput;
+    connect?: Prisma.ShopOrderWhereUniqueInput;
+};
+export type ShopOrderUpdateOneRequiredWithoutSurchargesNestedInput = {
+    create?: Prisma.XOR<Prisma.ShopOrderCreateWithoutSurchargesInput, Prisma.ShopOrderUncheckedCreateWithoutSurchargesInput>;
+    connectOrCreate?: Prisma.ShopOrderCreateOrConnectWithoutSurchargesInput;
+    upsert?: Prisma.ShopOrderUpsertWithoutSurchargesInput;
+    connect?: Prisma.ShopOrderWhereUniqueInput;
+    update?: Prisma.XOR<Prisma.XOR<Prisma.ShopOrderUpdateToOneWithWhereWithoutSurchargesInput, Prisma.ShopOrderUpdateWithoutSurchargesInput>, Prisma.ShopOrderUncheckedUpdateWithoutSurchargesInput>;
+};
 export type ShopOrderCreateWithoutAcceptedByInput = {
     id?: string;
     guildId: string;
     orderCode: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     rejectionReason?: string | null;
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -925,6 +996,7 @@ export type ShopOrderCreateWithoutAcceptedByInput = {
     rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
     events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutAcceptedByInput = {
@@ -933,6 +1005,7 @@ export type ShopOrderUncheckedCreateWithoutAcceptedByInput = {
     orderCode: string;
     customerUserId: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     rejectedByUserId?: string | null;
@@ -941,6 +1014,7 @@ export type ShopOrderUncheckedCreateWithoutAcceptedByInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -951,6 +1025,7 @@ export type ShopOrderUncheckedCreateWithoutAcceptedByInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
     events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutAcceptedByInput = {
@@ -966,12 +1041,14 @@ export type ShopOrderCreateWithoutClosedByInput = {
     guildId: string;
     orderCode: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     rejectionReason?: string | null;
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -985,6 +1062,7 @@ export type ShopOrderCreateWithoutClosedByInput = {
     rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
     events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutClosedByInput = {
@@ -993,6 +1071,7 @@ export type ShopOrderUncheckedCreateWithoutClosedByInput = {
     orderCode: string;
     customerUserId: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     acceptedByUserId?: string | null;
@@ -1001,6 +1080,7 @@ export type ShopOrderUncheckedCreateWithoutClosedByInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1011,6 +1091,7 @@ export type ShopOrderUncheckedCreateWithoutClosedByInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
     events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutClosedByInput = {
@@ -1026,12 +1107,14 @@ export type ShopOrderCreateWithoutCustomerInput = {
     guildId: string;
     orderCode: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     rejectionReason?: string | null;
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1045,6 +1128,7 @@ export type ShopOrderCreateWithoutCustomerInput = {
     rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
     events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutCustomerInput = {
@@ -1052,6 +1136,7 @@ export type ShopOrderUncheckedCreateWithoutCustomerInput = {
     guildId: string;
     orderCode: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     acceptedByUserId?: string | null;
@@ -1061,6 +1146,7 @@ export type ShopOrderUncheckedCreateWithoutCustomerInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1071,6 +1157,7 @@ export type ShopOrderUncheckedCreateWithoutCustomerInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
     events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutCustomerInput = {
@@ -1086,12 +1173,14 @@ export type ShopOrderCreateWithoutRejectedByInput = {
     guildId: string;
     orderCode: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     rejectionReason?: string | null;
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1105,6 +1194,7 @@ export type ShopOrderCreateWithoutRejectedByInput = {
     customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
     events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutRejectedByInput = {
@@ -1113,6 +1203,7 @@ export type ShopOrderUncheckedCreateWithoutRejectedByInput = {
     orderCode: string;
     customerUserId: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     acceptedByUserId?: string | null;
@@ -1121,6 +1212,7 @@ export type ShopOrderUncheckedCreateWithoutRejectedByInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1131,6 +1223,7 @@ export type ShopOrderUncheckedCreateWithoutRejectedByInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
     events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutRejectedByInput = {
@@ -1163,6 +1256,7 @@ export type ShopOrderScalarWhereInput = {
     orderCode?: Prisma.StringFilter<"ShopOrder"> | string;
     customerUserId?: Prisma.StringFilter<"ShopOrder"> | string;
     status?: Prisma.StringFilter<"ShopOrder"> | string;
+    source?: Prisma.StringFilter<"ShopOrder"> | string;
     ticketChannelId?: Prisma.StringNullableFilter<"ShopOrder"> | string | null;
     staffChannelId?: Prisma.StringNullableFilter<"ShopOrder"> | string | null;
     acceptedByUserId?: Prisma.StringNullableFilter<"ShopOrder"> | string | null;
@@ -1172,6 +1266,7 @@ export type ShopOrderScalarWhereInput = {
     cancelReason?: Prisma.StringNullableFilter<"ShopOrder"> | string | null;
     subtotalAmount?: Prisma.DecimalFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFilter<"ShopOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFilter<"ShopOrder"> | Date | string;
     acceptedAt?: Prisma.DateTimeNullableFilter<"ShopOrder"> | Date | string | null;
@@ -1223,12 +1318,14 @@ export type ShopOrderCreateWithoutItemsInput = {
     guildId: string;
     orderCode: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     rejectionReason?: string | null;
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1242,6 +1339,7 @@ export type ShopOrderCreateWithoutItemsInput = {
     customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
     rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
     events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutItemsInput = {
@@ -1250,6 +1348,7 @@ export type ShopOrderUncheckedCreateWithoutItemsInput = {
     orderCode: string;
     customerUserId: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     acceptedByUserId?: string | null;
@@ -1259,6 +1358,7 @@ export type ShopOrderUncheckedCreateWithoutItemsInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1268,6 +1368,7 @@ export type ShopOrderUncheckedCreateWithoutItemsInput = {
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
     events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutItemsInput = {
@@ -1288,12 +1389,14 @@ export type ShopOrderUpdateWithoutItemsInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1307,6 +1410,7 @@ export type ShopOrderUpdateWithoutItemsInput = {
     customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
     rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
     events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutItemsInput = {
@@ -1315,6 +1419,7 @@ export type ShopOrderUncheckedUpdateWithoutItemsInput = {
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1324,6 +1429,7 @@ export type ShopOrderUncheckedUpdateWithoutItemsInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1333,6 +1439,7 @@ export type ShopOrderUncheckedUpdateWithoutItemsInput = {
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
     events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderCreateWithoutMovementsInput = {
@@ -1340,12 +1447,14 @@ export type ShopOrderCreateWithoutMovementsInput = {
     guildId: string;
     orderCode: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     rejectionReason?: string | null;
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1359,6 +1468,7 @@ export type ShopOrderCreateWithoutMovementsInput = {
     rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
     events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutMovementsInput = {
@@ -1367,6 +1477,7 @@ export type ShopOrderUncheckedCreateWithoutMovementsInput = {
     orderCode: string;
     customerUserId: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     acceptedByUserId?: string | null;
@@ -1376,6 +1487,7 @@ export type ShopOrderUncheckedCreateWithoutMovementsInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1385,6 +1497,7 @@ export type ShopOrderUncheckedCreateWithoutMovementsInput = {
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
     events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutMovementsInput = {
@@ -1405,12 +1518,14 @@ export type ShopOrderUpdateWithoutMovementsInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1424,6 +1539,7 @@ export type ShopOrderUpdateWithoutMovementsInput = {
     rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
     events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutMovementsInput = {
@@ -1432,6 +1548,7 @@ export type ShopOrderUncheckedUpdateWithoutMovementsInput = {
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1441,6 +1558,7 @@ export type ShopOrderUncheckedUpdateWithoutMovementsInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1450,6 +1568,7 @@ export type ShopOrderUncheckedUpdateWithoutMovementsInput = {
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
     events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderCreateWithoutSaleInput = {
@@ -1457,12 +1576,14 @@ export type ShopOrderCreateWithoutSaleInput = {
     guildId: string;
     orderCode: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     rejectionReason?: string | null;
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1477,6 +1598,7 @@ export type ShopOrderCreateWithoutSaleInput = {
     rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
     events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeCreateNestedManyWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutSaleInput = {
     id?: string;
@@ -1484,6 +1606,7 @@ export type ShopOrderUncheckedCreateWithoutSaleInput = {
     orderCode: string;
     customerUserId: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     acceptedByUserId?: string | null;
@@ -1493,6 +1616,7 @@ export type ShopOrderUncheckedCreateWithoutSaleInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1503,6 +1627,7 @@ export type ShopOrderUncheckedCreateWithoutSaleInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
     events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedCreateNestedManyWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutSaleInput = {
     where: Prisma.ShopOrderWhereUniqueInput;
@@ -1522,12 +1647,14 @@ export type ShopOrderUpdateWithoutSaleInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1542,6 +1669,7 @@ export type ShopOrderUpdateWithoutSaleInput = {
     rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
     events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUpdateManyWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutSaleInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1549,6 +1677,7 @@ export type ShopOrderUncheckedUpdateWithoutSaleInput = {
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1558,6 +1687,7 @@ export type ShopOrderUncheckedUpdateWithoutSaleInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1568,18 +1698,21 @@ export type ShopOrderUncheckedUpdateWithoutSaleInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
     events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedUpdateManyWithoutOrderNestedInput;
 };
 export type ShopOrderCreateWithoutAppliedDiscountsInput = {
     id?: string;
     guildId: string;
     orderCode: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     rejectionReason?: string | null;
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1593,6 +1726,7 @@ export type ShopOrderCreateWithoutAppliedDiscountsInput = {
     rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
     events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutAppliedDiscountsInput = {
@@ -1601,6 +1735,7 @@ export type ShopOrderUncheckedCreateWithoutAppliedDiscountsInput = {
     orderCode: string;
     customerUserId: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     acceptedByUserId?: string | null;
@@ -1610,6 +1745,7 @@ export type ShopOrderUncheckedCreateWithoutAppliedDiscountsInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1619,6 +1755,7 @@ export type ShopOrderUncheckedCreateWithoutAppliedDiscountsInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
     events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
     items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutAppliedDiscountsInput = {
@@ -1639,12 +1776,14 @@ export type ShopOrderUpdateWithoutAppliedDiscountsInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1658,6 +1797,7 @@ export type ShopOrderUpdateWithoutAppliedDiscountsInput = {
     rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
     events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutAppliedDiscountsInput = {
@@ -1666,6 +1806,7 @@ export type ShopOrderUncheckedUpdateWithoutAppliedDiscountsInput = {
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1675,6 +1816,7 @@ export type ShopOrderUncheckedUpdateWithoutAppliedDiscountsInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1684,6 +1826,7 @@ export type ShopOrderUncheckedUpdateWithoutAppliedDiscountsInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
     events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderCreateWithoutEventsInput = {
@@ -1691,12 +1834,14 @@ export type ShopOrderCreateWithoutEventsInput = {
     guildId: string;
     orderCode: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     rejectionReason?: string | null;
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1710,6 +1855,7 @@ export type ShopOrderCreateWithoutEventsInput = {
     customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
     rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
     items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderUncheckedCreateWithoutEventsInput = {
@@ -1718,6 +1864,7 @@ export type ShopOrderUncheckedCreateWithoutEventsInput = {
     orderCode: string;
     customerUserId: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     acceptedByUserId?: string | null;
@@ -1727,6 +1874,7 @@ export type ShopOrderUncheckedCreateWithoutEventsInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1736,6 +1884,7 @@ export type ShopOrderUncheckedCreateWithoutEventsInput = {
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
     movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
     items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedCreateNestedManyWithoutOrderInput;
     sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
 };
 export type ShopOrderCreateOrConnectWithoutEventsInput = {
@@ -1756,12 +1905,14 @@ export type ShopOrderUpdateWithoutEventsInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1775,6 +1926,7 @@ export type ShopOrderUpdateWithoutEventsInput = {
     customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
     rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
     items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutEventsInput = {
@@ -1783,6 +1935,7 @@ export type ShopOrderUncheckedUpdateWithoutEventsInput = {
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1792,6 +1945,7 @@ export type ShopOrderUncheckedUpdateWithoutEventsInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1801,6 +1955,136 @@ export type ShopOrderUncheckedUpdateWithoutEventsInput = {
     appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
     items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
+};
+export type ShopOrderCreateWithoutSurchargesInput = {
+    id?: string;
+    guildId: string;
+    orderCode: string;
+    status?: string;
+    source?: string;
+    ticketChannelId?: string | null;
+    staffChannelId?: string | null;
+    rejectionReason?: string | null;
+    cancelReason?: string | null;
+    subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Date | string;
+    acceptedAt?: Date | string | null;
+    rejectedAt?: Date | string | null;
+    closedAt?: Date | string | null;
+    cancelledAt?: Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutRelatedOrderInput;
+    acceptedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersAcceptedInput;
+    closedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersClosedInput;
+    customer: Prisma.ShopUserCreateNestedOneWithoutOrdersAsCustomerInput;
+    rejectedBy?: Prisma.ShopUserCreateNestedOneWithoutOrdersRejectedInput;
+    events?: Prisma.ShopOrderEventCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleCreateNestedOneWithoutOrderInput;
+};
+export type ShopOrderUncheckedCreateWithoutSurchargesInput = {
+    id?: string;
+    guildId: string;
+    orderCode: string;
+    customerUserId: string;
+    status?: string;
+    source?: string;
+    ticketChannelId?: string | null;
+    staffChannelId?: string | null;
+    acceptedByUserId?: string | null;
+    rejectedByUserId?: string | null;
+    closedByUserId?: string | null;
+    rejectionReason?: string | null;
+    cancelReason?: string | null;
+    subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Date | string;
+    acceptedAt?: Date | string | null;
+    rejectedAt?: Date | string | null;
+    closedAt?: Date | string | null;
+    cancelledAt?: Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutOrderInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutRelatedOrderInput;
+    events?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutOrderInput;
+    items?: Prisma.ShopOrderItemUncheckedCreateNestedManyWithoutOrderInput;
+    sale?: Prisma.ShopSaleUncheckedCreateNestedOneWithoutOrderInput;
+};
+export type ShopOrderCreateOrConnectWithoutSurchargesInput = {
+    where: Prisma.ShopOrderWhereUniqueInput;
+    create: Prisma.XOR<Prisma.ShopOrderCreateWithoutSurchargesInput, Prisma.ShopOrderUncheckedCreateWithoutSurchargesInput>;
+};
+export type ShopOrderUpsertWithoutSurchargesInput = {
+    update: Prisma.XOR<Prisma.ShopOrderUpdateWithoutSurchargesInput, Prisma.ShopOrderUncheckedUpdateWithoutSurchargesInput>;
+    create: Prisma.XOR<Prisma.ShopOrderCreateWithoutSurchargesInput, Prisma.ShopOrderUncheckedCreateWithoutSurchargesInput>;
+    where?: Prisma.ShopOrderWhereInput;
+};
+export type ShopOrderUpdateToOneWithWhereWithoutSurchargesInput = {
+    where?: Prisma.ShopOrderWhereInput;
+    data: Prisma.XOR<Prisma.ShopOrderUpdateWithoutSurchargesInput, Prisma.ShopOrderUncheckedUpdateWithoutSurchargesInput>;
+};
+export type ShopOrderUpdateWithoutSurchargesInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
+    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
+    status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
+    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutRelatedOrderNestedInput;
+    acceptedBy?: Prisma.ShopUserUpdateOneWithoutOrdersAcceptedNestedInput;
+    closedBy?: Prisma.ShopUserUpdateOneWithoutOrdersClosedNestedInput;
+    customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
+    rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
+    events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
+};
+export type ShopOrderUncheckedUpdateWithoutSurchargesInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
+    orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
+    customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
+    status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
+    ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    rejectedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    closedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    rejectedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutOrderNestedInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
+    events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
+    items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderCreateManyAcceptedByInput = {
@@ -1809,6 +2093,7 @@ export type ShopOrderCreateManyAcceptedByInput = {
     orderCode: string;
     customerUserId: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     rejectedByUserId?: string | null;
@@ -1817,6 +2102,7 @@ export type ShopOrderCreateManyAcceptedByInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1830,6 +2116,7 @@ export type ShopOrderCreateManyClosedByInput = {
     orderCode: string;
     customerUserId: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     acceptedByUserId?: string | null;
@@ -1838,6 +2125,7 @@ export type ShopOrderCreateManyClosedByInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1850,6 +2138,7 @@ export type ShopOrderCreateManyCustomerInput = {
     guildId: string;
     orderCode: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     acceptedByUserId?: string | null;
@@ -1859,6 +2148,7 @@ export type ShopOrderCreateManyCustomerInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1872,6 +2162,7 @@ export type ShopOrderCreateManyRejectedByInput = {
     orderCode: string;
     customerUserId: string;
     status?: string;
+    source?: string;
     ticketChannelId?: string | null;
     staffChannelId?: string | null;
     acceptedByUserId?: string | null;
@@ -1880,6 +2171,7 @@ export type ShopOrderCreateManyRejectedByInput = {
     cancelReason?: string | null;
     subtotalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Date | string;
     acceptedAt?: Date | string | null;
@@ -1892,12 +2184,14 @@ export type ShopOrderUpdateWithoutAcceptedByInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1911,6 +2205,7 @@ export type ShopOrderUpdateWithoutAcceptedByInput = {
     rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
     events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutAcceptedByInput = {
@@ -1919,6 +2214,7 @@ export type ShopOrderUncheckedUpdateWithoutAcceptedByInput = {
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1927,6 +2223,7 @@ export type ShopOrderUncheckedUpdateWithoutAcceptedByInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1937,6 +2234,7 @@ export type ShopOrderUncheckedUpdateWithoutAcceptedByInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
     events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateManyWithoutAcceptedByInput = {
@@ -1945,6 +2243,7 @@ export type ShopOrderUncheckedUpdateManyWithoutAcceptedByInput = {
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -1953,6 +2252,7 @@ export type ShopOrderUncheckedUpdateManyWithoutAcceptedByInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1965,12 +2265,14 @@ export type ShopOrderUpdateWithoutClosedByInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -1984,6 +2286,7 @@ export type ShopOrderUpdateWithoutClosedByInput = {
     rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
     events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutClosedByInput = {
@@ -1992,6 +2295,7 @@ export type ShopOrderUncheckedUpdateWithoutClosedByInput = {
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2000,6 +2304,7 @@ export type ShopOrderUncheckedUpdateWithoutClosedByInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -2010,6 +2315,7 @@ export type ShopOrderUncheckedUpdateWithoutClosedByInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
     events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateManyWithoutClosedByInput = {
@@ -2018,6 +2324,7 @@ export type ShopOrderUncheckedUpdateManyWithoutClosedByInput = {
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2026,6 +2333,7 @@ export type ShopOrderUncheckedUpdateManyWithoutClosedByInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -2038,12 +2346,14 @@ export type ShopOrderUpdateWithoutCustomerInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -2057,6 +2367,7 @@ export type ShopOrderUpdateWithoutCustomerInput = {
     rejectedBy?: Prisma.ShopUserUpdateOneWithoutOrdersRejectedNestedInput;
     events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutCustomerInput = {
@@ -2064,6 +2375,7 @@ export type ShopOrderUncheckedUpdateWithoutCustomerInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2073,6 +2385,7 @@ export type ShopOrderUncheckedUpdateWithoutCustomerInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -2083,6 +2396,7 @@ export type ShopOrderUncheckedUpdateWithoutCustomerInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
     events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateManyWithoutCustomerInput = {
@@ -2090,6 +2404,7 @@ export type ShopOrderUncheckedUpdateManyWithoutCustomerInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2099,6 +2414,7 @@ export type ShopOrderUncheckedUpdateManyWithoutCustomerInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -2111,12 +2427,14 @@ export type ShopOrderUpdateWithoutRejectedByInput = {
     guildId?: Prisma.StringFieldUpdateOperationsInput | string;
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -2130,6 +2448,7 @@ export type ShopOrderUpdateWithoutRejectedByInput = {
     customer?: Prisma.ShopUserUpdateOneRequiredWithoutOrdersAsCustomerNestedInput;
     events?: Prisma.ShopOrderEventUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateWithoutRejectedByInput = {
@@ -2138,6 +2457,7 @@ export type ShopOrderUncheckedUpdateWithoutRejectedByInput = {
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2146,6 +2466,7 @@ export type ShopOrderUncheckedUpdateWithoutRejectedByInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -2156,6 +2477,7 @@ export type ShopOrderUncheckedUpdateWithoutRejectedByInput = {
     movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutRelatedOrderNestedInput;
     events?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutOrderNestedInput;
     items?: Prisma.ShopOrderItemUncheckedUpdateManyWithoutOrderNestedInput;
+    surcharges?: Prisma.ShopOrderSurchargeUncheckedUpdateManyWithoutOrderNestedInput;
     sale?: Prisma.ShopSaleUncheckedUpdateOneWithoutOrderNestedInput;
 };
 export type ShopOrderUncheckedUpdateManyWithoutRejectedByInput = {
@@ -2164,6 +2486,7 @@ export type ShopOrderUncheckedUpdateManyWithoutRejectedByInput = {
     orderCode?: Prisma.StringFieldUpdateOperationsInput | string;
     customerUserId?: Prisma.StringFieldUpdateOperationsInput | string;
     status?: Prisma.StringFieldUpdateOperationsInput | string;
+    source?: Prisma.StringFieldUpdateOperationsInput | string;
     ticketChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     staffChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     acceptedByUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -2172,6 +2495,7 @@ export type ShopOrderUncheckedUpdateManyWithoutRejectedByInput = {
     cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     subtotalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalDiscountAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
+    surchargesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     totalAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
@@ -2187,12 +2511,14 @@ export type ShopOrderCountOutputType = {
     movements: number;
     events: number;
     items: number;
+    surcharges: number;
 };
 export type ShopOrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     appliedDiscounts?: boolean | ShopOrderCountOutputTypeCountAppliedDiscountsArgs;
     movements?: boolean | ShopOrderCountOutputTypeCountMovementsArgs;
     events?: boolean | ShopOrderCountOutputTypeCountEventsArgs;
     items?: boolean | ShopOrderCountOutputTypeCountItemsArgs;
+    surcharges?: boolean | ShopOrderCountOutputTypeCountSurchargesArgs;
 };
 /**
  * ShopOrderCountOutputType without action
@@ -2227,12 +2553,19 @@ export type ShopOrderCountOutputTypeCountEventsArgs<ExtArgs extends runtime.Type
 export type ShopOrderCountOutputTypeCountItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     where?: Prisma.ShopOrderItemWhereInput;
 };
+/**
+ * ShopOrderCountOutputType without action
+ */
+export type ShopOrderCountOutputTypeCountSurchargesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.ShopOrderSurchargeWhereInput;
+};
 export type ShopOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     guildId?: boolean;
     orderCode?: boolean;
     customerUserId?: boolean;
     status?: boolean;
+    source?: boolean;
     ticketChannelId?: boolean;
     staffChannelId?: boolean;
     acceptedByUserId?: boolean;
@@ -2242,6 +2575,7 @@ export type ShopOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
     cancelReason?: boolean;
     subtotalAmount?: boolean;
     totalDiscountAmount?: boolean;
+    surchargesAmount?: boolean;
     totalAmount?: boolean;
     createdAt?: boolean;
     acceptedAt?: boolean;
@@ -2256,6 +2590,7 @@ export type ShopOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
     rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
     events?: boolean | Prisma.ShopOrder$eventsArgs<ExtArgs>;
     items?: boolean | Prisma.ShopOrder$itemsArgs<ExtArgs>;
+    surcharges?: boolean | Prisma.ShopOrder$surchargesArgs<ExtArgs>;
     sale?: boolean | Prisma.ShopOrder$saleArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopOrderCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopOrder"]>;
@@ -2265,6 +2600,7 @@ export type ShopOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
     orderCode?: boolean;
     customerUserId?: boolean;
     status?: boolean;
+    source?: boolean;
     ticketChannelId?: boolean;
     staffChannelId?: boolean;
     acceptedByUserId?: boolean;
@@ -2274,6 +2610,7 @@ export type ShopOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
     cancelReason?: boolean;
     subtotalAmount?: boolean;
     totalDiscountAmount?: boolean;
+    surchargesAmount?: boolean;
     totalAmount?: boolean;
     createdAt?: boolean;
     acceptedAt?: boolean;
@@ -2291,6 +2628,7 @@ export type ShopOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
     orderCode?: boolean;
     customerUserId?: boolean;
     status?: boolean;
+    source?: boolean;
     ticketChannelId?: boolean;
     staffChannelId?: boolean;
     acceptedByUserId?: boolean;
@@ -2300,6 +2638,7 @@ export type ShopOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
     cancelReason?: boolean;
     subtotalAmount?: boolean;
     totalDiscountAmount?: boolean;
+    surchargesAmount?: boolean;
     totalAmount?: boolean;
     createdAt?: boolean;
     acceptedAt?: boolean;
@@ -2317,6 +2656,7 @@ export type ShopOrderSelectScalar = {
     orderCode?: boolean;
     customerUserId?: boolean;
     status?: boolean;
+    source?: boolean;
     ticketChannelId?: boolean;
     staffChannelId?: boolean;
     acceptedByUserId?: boolean;
@@ -2326,6 +2666,7 @@ export type ShopOrderSelectScalar = {
     cancelReason?: boolean;
     subtotalAmount?: boolean;
     totalDiscountAmount?: boolean;
+    surchargesAmount?: boolean;
     totalAmount?: boolean;
     createdAt?: boolean;
     acceptedAt?: boolean;
@@ -2333,7 +2674,7 @@ export type ShopOrderSelectScalar = {
     closedAt?: boolean;
     cancelledAt?: boolean;
 };
-export type ShopOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "orderCode" | "customerUserId" | "status" | "ticketChannelId" | "staffChannelId" | "acceptedByUserId" | "rejectedByUserId" | "closedByUserId" | "rejectionReason" | "cancelReason" | "subtotalAmount" | "totalDiscountAmount" | "totalAmount" | "createdAt" | "acceptedAt" | "rejectedAt" | "closedAt" | "cancelledAt", ExtArgs["result"]["shopOrder"]>;
+export type ShopOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "orderCode" | "customerUserId" | "status" | "source" | "ticketChannelId" | "staffChannelId" | "acceptedByUserId" | "rejectedByUserId" | "closedByUserId" | "rejectionReason" | "cancelReason" | "subtotalAmount" | "totalDiscountAmount" | "surchargesAmount" | "totalAmount" | "createdAt" | "acceptedAt" | "rejectedAt" | "closedAt" | "cancelledAt", ExtArgs["result"]["shopOrder"]>;
 export type ShopOrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     appliedDiscounts?: boolean | Prisma.ShopOrder$appliedDiscountsArgs<ExtArgs>;
     movements?: boolean | Prisma.ShopOrder$movementsArgs<ExtArgs>;
@@ -2343,6 +2684,7 @@ export type ShopOrderInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
     rejectedBy?: boolean | Prisma.ShopOrder$rejectedByArgs<ExtArgs>;
     events?: boolean | Prisma.ShopOrder$eventsArgs<ExtArgs>;
     items?: boolean | Prisma.ShopOrder$itemsArgs<ExtArgs>;
+    surcharges?: boolean | Prisma.ShopOrder$surchargesArgs<ExtArgs>;
     sale?: boolean | Prisma.ShopOrder$saleArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopOrderCountOutputTypeDefaultArgs<ExtArgs>;
 };
@@ -2369,6 +2711,7 @@ export type $ShopOrderPayload<ExtArgs extends runtime.Types.Extensions.InternalA
         rejectedBy: Prisma.$ShopUserPayload<ExtArgs> | null;
         events: Prisma.$ShopOrderEventPayload<ExtArgs>[];
         items: Prisma.$ShopOrderItemPayload<ExtArgs>[];
+        surcharges: Prisma.$ShopOrderSurchargePayload<ExtArgs>[];
         sale: Prisma.$ShopSalePayload<ExtArgs> | null;
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -2377,6 +2720,7 @@ export type $ShopOrderPayload<ExtArgs extends runtime.Types.Extensions.InternalA
         orderCode: string;
         customerUserId: string;
         status: string;
+        source: string;
         ticketChannelId: string | null;
         staffChannelId: string | null;
         acceptedByUserId: string | null;
@@ -2386,6 +2730,7 @@ export type $ShopOrderPayload<ExtArgs extends runtime.Types.Extensions.InternalA
         cancelReason: string | null;
         subtotalAmount: runtime.Decimal;
         totalDiscountAmount: runtime.Decimal;
+        surchargesAmount: runtime.Decimal;
         totalAmount: runtime.Decimal;
         createdAt: Date;
         acceptedAt: Date | null;
@@ -2729,6 +3074,7 @@ export interface Prisma__ShopOrderClient<T, Null = never, ExtArgs extends runtim
     rejectedBy<T extends Prisma.ShopOrder$rejectedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$rejectedByArgs<ExtArgs>>): Prisma.Prisma__ShopUserClient<runtime.Types.Result.GetResult<Prisma.$ShopUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
     events<T extends Prisma.ShopOrder$eventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$eventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopOrderEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     items<T extends Prisma.ShopOrder$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopOrderItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    surcharges<T extends Prisma.ShopOrder$surchargesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$surchargesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopOrderSurchargePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     sale<T extends Prisma.ShopOrder$saleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopOrder$saleArgs<ExtArgs>>): Prisma.Prisma__ShopSaleClient<runtime.Types.Result.GetResult<Prisma.$ShopSalePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -2760,6 +3106,7 @@ export interface ShopOrderFieldRefs {
     readonly orderCode: Prisma.FieldRef<"ShopOrder", 'String'>;
     readonly customerUserId: Prisma.FieldRef<"ShopOrder", 'String'>;
     readonly status: Prisma.FieldRef<"ShopOrder", 'String'>;
+    readonly source: Prisma.FieldRef<"ShopOrder", 'String'>;
     readonly ticketChannelId: Prisma.FieldRef<"ShopOrder", 'String'>;
     readonly staffChannelId: Prisma.FieldRef<"ShopOrder", 'String'>;
     readonly acceptedByUserId: Prisma.FieldRef<"ShopOrder", 'String'>;
@@ -2769,6 +3116,7 @@ export interface ShopOrderFieldRefs {
     readonly cancelReason: Prisma.FieldRef<"ShopOrder", 'String'>;
     readonly subtotalAmount: Prisma.FieldRef<"ShopOrder", 'Decimal'>;
     readonly totalDiscountAmount: Prisma.FieldRef<"ShopOrder", 'Decimal'>;
+    readonly surchargesAmount: Prisma.FieldRef<"ShopOrder", 'Decimal'>;
     readonly totalAmount: Prisma.FieldRef<"ShopOrder", 'Decimal'>;
     readonly createdAt: Prisma.FieldRef<"ShopOrder", 'DateTime'>;
     readonly acceptedAt: Prisma.FieldRef<"ShopOrder", 'DateTime'>;
@@ -3303,6 +3651,29 @@ export type ShopOrder$itemsArgs<ExtArgs extends runtime.Types.Extensions.Interna
     take?: number;
     skip?: number;
     distinct?: Prisma.ShopOrderItemScalarFieldEnum | Prisma.ShopOrderItemScalarFieldEnum[];
+};
+/**
+ * ShopOrder.surcharges
+ */
+export type ShopOrder$surchargesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ShopOrderSurcharge
+     */
+    select?: Prisma.ShopOrderSurchargeSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the ShopOrderSurcharge
+     */
+    omit?: Prisma.ShopOrderSurchargeOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.ShopOrderSurchargeInclude<ExtArgs> | null;
+    where?: Prisma.ShopOrderSurchargeWhereInput;
+    orderBy?: Prisma.ShopOrderSurchargeOrderByWithRelationInput | Prisma.ShopOrderSurchargeOrderByWithRelationInput[];
+    cursor?: Prisma.ShopOrderSurchargeWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: Prisma.ShopOrderSurchargeScalarFieldEnum | Prisma.ShopOrderSurchargeScalarFieldEnum[];
 };
 /**
  * ShopOrder.sale

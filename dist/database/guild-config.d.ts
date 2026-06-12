@@ -17,6 +17,8 @@ export declare function getOrCreateGuildConfig(guildId: string): Promise<{
     coLiderRoleId: string | null;
     aquarisRoleId: string | null;
     staffRoleId: string | null;
+    reclutadorRoleId: string | null;
+    comercianteRoleId: string | null;
     levelUpChannelId: string | null;
     boostChannelId: string | null;
     shopStaffChannelId: string | null;

@@ -129,6 +129,8 @@ export const configCommand: Command = {
               { name: 'Co-Lider', value: 'coLiderRoleId' },
               { name: 'Aquaris (miembro)', value: 'aquarisRoleId' },
               { name: 'Staff', value: 'staffRoleId' },
+              { name: 'Reclutador', value: 'reclutadorRoleId' },
+              { name: 'Comerciante', value: 'comercianteRoleId' },
             ),
         )
         .addRoleOption(opt =>
@@ -309,7 +311,9 @@ export const configCommand: Command = {
         | 'liderRoleId'
         | 'coLiderRoleId'
         | 'aquarisRoleId'
-        | 'staffRoleId';
+        | 'staffRoleId'
+        | 'reclutadorRoleId'
+        | 'comercianteRoleId';
       const rol = interaction.options.getRole('rol', true);
       await prisma.guildConfig.upsert({
         where: { guildId },

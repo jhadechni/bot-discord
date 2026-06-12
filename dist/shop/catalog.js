@@ -1,7 +1,7 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, } from 'discord.js';
 import { prisma } from '../database/prisma.js';
 import { resolveShopGuildScopes } from './scope.js';
-import { compareCategoryKeys, compareSubcategoryKeys, getCategoryDefinition, getSubcategoryDefinition, normalizeShopTaxonomyKey, } from './taxonomy.js';
+import { compareCategoryKeys, compareSubcategoryKeys, getCategoryDefinition, getSubcategoryDefinition, isValidCategory, normalizeShopTaxonomyKey, } from './taxonomy.js';
 import { formatPrice, SHOP_FOOTER } from '../utils/ui.js';
 import { SHOP_COLORS } from '../utils/shop-ui.js';
 import { resolvePresentationLabel, resolvePresentationTypeName } from './quantities.js';
@@ -75,7 +75,9 @@ export async function queryCatalogProducts(guildId) {
             }
         }
     }
-    return [...productsByName.values()].sort((left, right) => left.category.localeCompare(right.category, 'es')
+    return [...productsByName.values()]
+        .filter(p => isValidCategory(p.category))
+        .sort((left, right) => left.category.localeCompare(right.category, 'es')
         || left.subcategory.localeCompare(right.subcategory, 'es')
         || left.name.localeCompare(right.name, 'es'));
 }
@@ -366,7 +368,7 @@ export function buildCategorySelectRow(prefix, mode, categoryKeys, currentCatego
         .addOptions(categoryKeys.map(categoryKey => {
         const category = getCategoryDefinition(categoryKey);
         return new StringSelectMenuOptionBuilder()
-            .setLabel(`${category.emoji} ${category.label}`.slice(0, 100))
+            .setLabel(category.label.slice(0, 100))
             .setValue(categoryKey)
             .setDefault(categoryKey === currentCategory);
     }));
@@ -412,15 +414,15 @@ function buildProductOptionDescription(product) {
             : null;
         const currency = product.variants[0]?.prices[0]?.currency ?? '$';
         const priceStr = minPrice ? `desde ${formatPrice(minPrice, currency)}` : 'S/P';
-        return `🔀 ${count} variante${count !== 1 ? 's' : ''}  ·  💰 ${priceStr}`.slice(0, 100);
+        return `${count} variante${count !== 1 ? 's' : ''}  ·  ${priceStr}`.slice(0, 100);
     }
     const price = product.prices[0];
     const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
     if (product.productType === 'service') {
-        return `💰 ${priceStr}`;
+        return priceStr;
     }
     const typeName = resolvePresentationTypeName(product.presentationType);
-    return `${typeName}  ·  💰 ${priceStr}`.slice(0, 100);
+    return `${typeName}  ·  ${priceStr}`.slice(0, 100);
 }
 export function buildVariantSelectRow(variants, parentProductId, context, selectedVariantId) {
     const customId = context === 'tienda'
@@ -437,8 +439,8 @@ export function buildVariantSelectRow(variants, parentProductId, context, select
             ? resolvePresentationTypeName(variant.presentationType)
             : null;
         const desc = typeName
-            ? `${typeName}  ·  💰 ${priceStr}`.slice(0, 100)
-            : `💰 ${priceStr}`;
+            ? `${typeName}  ·  ${priceStr}`.slice(0, 100)
+            : priceStr;
         return new StringSelectMenuOptionBuilder()
             .setLabel(label)
             .setValue(variant.id)
@@ -491,7 +493,7 @@ export function buildVariantDetailEmbed(variant, parent, categoryKey, subcategor
 function buildProductSelectRow(products, mode, category, subcategory, selectedProductId) {
     const select = new StringSelectMenuBuilder()
         .setCustomId(`tienda:catalog:product:${mode}:${category}:${subcategory}`)
-        .setPlaceholder('🔍 Busca o selecciona un producto…')
+        .setPlaceholder('Busca o selecciona un producto…')
         .addOptions(products.slice(0, PRODUCT_SELECT_THRESHOLD).map(product => {
         const icon = getProductEmoji(product);
         return new StringSelectMenuOptionBuilder()
@@ -514,7 +516,7 @@ function buildBrowseHintEmbed(state) {
     const count = state.totalSubcategoryProducts;
     const itemLabel = state.currentMode === 'services' ? 'servicio' : 'producto';
     return applyTaxonomyImages(new EmbedBuilder()
-        .setTitle(`${category.emoji} ${category.label} / ${subcategory.label}`)
+        .setTitle(`${category.label} / ${subcategory.label}`)
         .setDescription(`${count} ${itemLabel}${count !== 1 ? 's' : ''} disponibles. Selecciona uno del menú para ver el detalle.`)
         .setColor(SHOP_COLORS.info)
         .setFooter({ text: SHOP_FOOTER.text })

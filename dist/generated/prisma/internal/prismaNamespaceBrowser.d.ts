@@ -54,9 +54,12 @@ export declare const ModelName: {
     readonly ShopCategory: "ShopCategory";
     readonly ShopSubcategory: "ShopSubcategory";
     readonly ShopOrderEvent: "ShopOrderEvent";
+    readonly ShopOrderSurcharge: "ShopOrderSurcharge";
     readonly Poll: "Poll";
     readonly MapBackground: "MapBackground";
     readonly ProtectionMember: "ProtectionMember";
+    readonly CommandUsage: "CommandUsage";
+    readonly ShopFreeRequest: "ShopFreeRequest";
     readonly WorldProtection: "WorldProtection";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -85,6 +88,8 @@ export declare const GuildConfigScalarFieldEnum: {
     readonly coLiderRoleId: "coLiderRoleId";
     readonly aquarisRoleId: "aquarisRoleId";
     readonly staffRoleId: "staffRoleId";
+    readonly reclutadorRoleId: "reclutadorRoleId";
+    readonly comercianteRoleId: "comercianteRoleId";
     readonly levelUpChannelId: "levelUpChannelId";
     readonly boostChannelId: "boostChannelId";
     readonly shopStaffChannelId: "shopStaffChannelId";
@@ -296,6 +301,7 @@ export declare const ShopOrderScalarFieldEnum: {
     readonly orderCode: "orderCode";
     readonly customerUserId: "customerUserId";
     readonly status: "status";
+    readonly source: "source";
     readonly ticketChannelId: "ticketChannelId";
     readonly staffChannelId: "staffChannelId";
     readonly acceptedByUserId: "acceptedByUserId";
@@ -305,6 +311,7 @@ export declare const ShopOrderScalarFieldEnum: {
     readonly cancelReason: "cancelReason";
     readonly subtotalAmount: "subtotalAmount";
     readonly totalDiscountAmount: "totalDiscountAmount";
+    readonly surchargesAmount: "surchargesAmount";
     readonly totalAmount: "totalAmount";
     readonly createdAt: "createdAt";
     readonly acceptedAt: "acceptedAt";
@@ -428,6 +435,16 @@ export declare const ShopOrderEventScalarFieldEnum: {
     readonly createdAt: "createdAt";
 };
 export type ShopOrderEventScalarFieldEnum = (typeof ShopOrderEventScalarFieldEnum)[keyof typeof ShopOrderEventScalarFieldEnum];
+export declare const ShopOrderSurchargeScalarFieldEnum: {
+    readonly id: "id";
+    readonly orderId: "orderId";
+    readonly label: "label";
+    readonly isPercent: "isPercent";
+    readonly rate: "rate";
+    readonly amount: "amount";
+    readonly createdAt: "createdAt";
+};
+export type ShopOrderSurchargeScalarFieldEnum = (typeof ShopOrderSurchargeScalarFieldEnum)[keyof typeof ShopOrderSurchargeScalarFieldEnum];
 export declare const PollScalarFieldEnum: {
     readonly id: "id";
     readonly guildId: "guildId";
@@ -460,6 +477,24 @@ export declare const ProtectionMemberScalarFieldEnum: {
     readonly addedAt: "addedAt";
 };
 export type ProtectionMemberScalarFieldEnum = (typeof ProtectionMemberScalarFieldEnum)[keyof typeof ProtectionMemberScalarFieldEnum];
+export declare const CommandUsageScalarFieldEnum: {
+    readonly id: "id";
+    readonly guildId: "guildId";
+    readonly userId: "userId";
+    readonly commandName: "commandName";
+    readonly subcommandGroup: "subcommandGroup";
+    readonly subcommand: "subcommand";
+    readonly createdAt: "createdAt";
+};
+export type CommandUsageScalarFieldEnum = (typeof CommandUsageScalarFieldEnum)[keyof typeof CommandUsageScalarFieldEnum];
+export declare const ShopFreeRequestScalarFieldEnum: {
+    readonly id: "id";
+    readonly guildId: "guildId";
+    readonly userId: "userId";
+    readonly requestText: "requestText";
+    readonly createdAt: "createdAt";
+};
+export type ShopFreeRequestScalarFieldEnum = (typeof ShopFreeRequestScalarFieldEnum)[keyof typeof ShopFreeRequestScalarFieldEnum];
 export declare const WorldProtectionScalarFieldEnum: {
     readonly id: "id";
     readonly alias: "alias";

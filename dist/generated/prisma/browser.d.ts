@@ -143,6 +143,11 @@ export type ShopSubcategory = Prisma.ShopSubcategoryModel;
  */
 export type ShopOrderEvent = Prisma.ShopOrderEventModel;
 /**
+ * Model ShopOrderSurcharge
+ *
+ */
+export type ShopOrderSurcharge = Prisma.ShopOrderSurchargeModel;
+/**
  * Model Poll
  *
  */
@@ -157,6 +162,16 @@ export type MapBackground = Prisma.MapBackgroundModel;
  * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
  */
 export type ProtectionMember = Prisma.ProtectionMemberModel;
+/**
+ * Model CommandUsage
+ *
+ */
+export type CommandUsage = Prisma.CommandUsageModel;
+/**
+ * Model ShopFreeRequest
+ *
+ */
+export type ShopFreeRequest = Prisma.ShopFreeRequestModel;
 /**
  * Model WorldProtection
  * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.

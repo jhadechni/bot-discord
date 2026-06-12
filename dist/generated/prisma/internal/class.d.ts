@@ -424,6 +424,17 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
         omit: OmitOpts;
     }>;
     /**
+     * `prisma.shopOrderSurcharge`: Exposes CRUD operations for the **ShopOrderSurcharge** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more ShopOrderSurcharges
+      * const shopOrderSurcharges = await prisma.shopOrderSurcharge.findMany()
+      * ```
+      */
+    get shopOrderSurcharge(): Prisma.ShopOrderSurchargeDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
+    /**
      * `prisma.poll`: Exposes CRUD operations for the **Poll** model.
       * Example usage:
       * ```ts
@@ -454,6 +465,28 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
       * ```
       */
     get protectionMember(): Prisma.ProtectionMemberDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
+    /**
+     * `prisma.commandUsage`: Exposes CRUD operations for the **CommandUsage** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more CommandUsages
+      * const commandUsages = await prisma.commandUsage.findMany()
+      * ```
+      */
+    get commandUsage(): Prisma.CommandUsageDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
+    /**
+     * `prisma.shopFreeRequest`: Exposes CRUD operations for the **ShopFreeRequest** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more ShopFreeRequests
+      * const shopFreeRequests = await prisma.shopFreeRequest.findMany()
+      * ```
+      */
+    get shopFreeRequest(): Prisma.ShopFreeRequestDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
     /**

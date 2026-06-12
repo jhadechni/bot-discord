@@ -78,6 +78,9 @@ export async function getOrderFull(orderCode) {
                 orderBy: { appliedAt: 'asc' },
             },
             customer: true,
+            surcharges: {
+                orderBy: { createdAt: 'asc' },
+            },
             items: {
                 include: {
                     appliedDiscounts: {
@@ -101,6 +104,36 @@ export async function getOrderFull(orderCode) {
         },
     });
 }
+/** Agrega un recargo al pedido y recalcula el total. */
+export async function addSurchargeToOrder(orderCode, label, isPercent, rate) {
+    const order = await prisma.shopOrder.findUnique({ where: { orderCode } });
+    if (!order)
+        throw new Error('Pedido no encontrado');
+    const base = new Prisma.Decimal(order.subtotalAmount);
+    const amount = isPercent
+        ? base.mul(rate).div(100).toDecimalPlaces(2)
+        : new Prisma.Decimal(rate).toDecimalPlaces(2);
+    const newSurcharges = new Prisma.Decimal(order.surchargesAmount).add(amount);
+    const newTotal = base
+        .sub(order.totalDiscountAmount)
+        .add(newSurcharges)
+        .toDecimalPlaces(2);
+    await prisma.$transaction([
+        prisma.shopOrderSurcharge.create({
+            data: {
+                orderId: order.id,
+                label,
+                isPercent,
+                rate: isPercent ? new Prisma.Decimal(rate) : null,
+                amount,
+            },
+        }),
+        prisma.shopOrder.update({
+            where: { orderCode },
+            data: { surchargesAmount: newSurcharges, totalAmount: newTotal },
+        }),
+    ]);
+}
 /** Genera un código único con formato AQ-XXXXXX. */
 export async function generateOrderCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -115,7 +148,7 @@ export async function generateOrderCode() {
 }
 /** Crea un pedido pendiente congelando precio y descuentos al momento de crear la orden. */
 export async function createPendingOrder(params) {
-    const { customerUserId, guildId, items, staffChannelId = null } = params;
+    const { customerUserId, guildId, items, staffChannelId = null, source = 'direct' } = params;
     if (items.length === 0) {
         throw new Error('No se puede crear un pedido sin productos.');
     }
@@ -160,6 +193,7 @@ export async function createPendingOrder(params) {
                 customerUserId,
                 staffChannelId,
                 status: 'pending',
+                source,
                 subtotalAmount: pricing.subtotalAmount,
                 totalDiscountAmount: pricing.totalDiscountAmount,
                 totalAmount: pricing.totalAmount,
@@ -587,6 +621,13 @@ export function buildOrderEmbed(order, stockAssessment) {
     if (orderDiscountLines.length > 0) {
         embed.addFields({ name: 'Descuentos del pedido', value: orderDiscountLines.join('\n') });
     }
+    if (order.surcharges.length > 0) {
+        const surchargeLines = order.surcharges.map(s => {
+            const rateStr = s.isPercent && s.rate != null ? ` (${s.rate}%)` : '';
+            return `• ${s.label}${rateStr}: +${formatPrice(s.amount)}`;
+        });
+        embed.addFields({ name: 'Servicios adicionales', value: surchargeLines.join('\n') });
+    }
     if ((order.status === 'pending' || order.status === 'accepted') && stockAssessment) {
         embed.addFields({
             name: stockAssessment.isFullyAvailable ? 'Stock actual' : 'Preparación',
@@ -648,6 +689,9 @@ export function buildPendingButtons(orderCode) {
 /** Botones para pedido aceptado (en canal de staff). */
 export function buildAcceptedButtons(orderCode) {
     return new ActionRowBuilder().addComponents(new ButtonBuilder()
+        .setCustomId(`shop:add_service:${orderCode}`)
+        .setLabel('➕ Agregar servicio')
+        .setStyle(ButtonStyle.Secondary), new ButtonBuilder()
         .setCustomId(`shop:discount:${orderCode}`)
         .setLabel('🏷️ Aplicar descuento')
         .setStyle(ButtonStyle.Secondary), new ButtonBuilder()

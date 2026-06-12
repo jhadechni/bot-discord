@@ -105,6 +105,15 @@ export declare function getOrderFull(orderCode: string): Promise<({
         deliveredQuantity: number;
         notes: string | null;
     })[];
+    surcharges: {
+        createdAt: Date;
+        id: string;
+        label: string;
+        amount: import("@prisma/client-runtime-utils").Decimal;
+        orderId: string;
+        isPercent: boolean;
+        rate: import("@prisma/client-runtime-utils").Decimal | null;
+    }[];
 } & {
     createdAt: Date;
     id: string;
@@ -112,6 +121,7 @@ export declare function getOrderFull(orderCode: string): Promise<({
     status: string;
     orderCode: string;
     customerUserId: string;
+    source: string;
     ticketChannelId: string | null;
     staffChannelId: string | null;
     acceptedByUserId: string | null;
@@ -121,12 +131,15 @@ export declare function getOrderFull(orderCode: string): Promise<({
     cancelReason: string | null;
     subtotalAmount: import("@prisma/client-runtime-utils").Decimal;
     totalDiscountAmount: import("@prisma/client-runtime-utils").Decimal;
+    surchargesAmount: import("@prisma/client-runtime-utils").Decimal;
     totalAmount: import("@prisma/client-runtime-utils").Decimal;
     acceptedAt: Date | null;
     rejectedAt: Date | null;
     closedAt: Date | null;
     cancelledAt: Date | null;
 }) | null>;
+/** Agrega un recargo al pedido y recalcula el total. */
+export declare function addSurchargeToOrder(orderCode: string, label: string, isPercent: boolean, rate: number): Promise<void>;
 /** Genera un código único con formato AQ-XXXXXX. */
 export declare function generateOrderCode(): Promise<string>;
 /** Crea un pedido pendiente congelando precio y descuentos al momento de crear la orden. */
@@ -135,6 +148,7 @@ export declare function createPendingOrder(params: {
     guildId: string;
     items: PendingOrderItemInput[];
     staffChannelId?: string | null;
+    source?: 'cart' | 'direct';
 }): Promise<{
     createdAt: Date;
     id: string;
@@ -142,6 +156,7 @@ export declare function createPendingOrder(params: {
     status: string;
     orderCode: string;
     customerUserId: string;
+    source: string;
     ticketChannelId: string | null;
     staffChannelId: string | null;
     acceptedByUserId: string | null;
@@ -151,6 +166,7 @@ export declare function createPendingOrder(params: {
     cancelReason: string | null;
     subtotalAmount: import("@prisma/client-runtime-utils").Decimal;
     totalDiscountAmount: import("@prisma/client-runtime-utils").Decimal;
+    surchargesAmount: import("@prisma/client-runtime-utils").Decimal;
     totalAmount: import("@prisma/client-runtime-utils").Decimal;
     acceptedAt: Date | null;
     rejectedAt: Date | null;

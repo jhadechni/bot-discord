@@ -174,6 +174,7 @@ export type ShopUserWhereInput = {
     salesAsBuyer?: Prisma.ShopSaleListRelationFilter;
     salesRegistered?: Prisma.ShopSaleListRelationFilter;
     withdrawals?: Prisma.ShopWithdrawalListRelationFilter;
+    freeRequests?: Prisma.ShopFreeRequestListRelationFilter;
 };
 export type ShopUserOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -196,6 +197,7 @@ export type ShopUserOrderByWithRelationInput = {
     salesAsBuyer?: Prisma.ShopSaleOrderByRelationAggregateInput;
     salesRegistered?: Prisma.ShopSaleOrderByRelationAggregateInput;
     withdrawals?: Prisma.ShopWithdrawalOrderByRelationAggregateInput;
+    freeRequests?: Prisma.ShopFreeRequestOrderByRelationAggregateInput;
 };
 export type ShopUserWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -222,6 +224,7 @@ export type ShopUserWhereUniqueInput = Prisma.AtLeast<{
     salesAsBuyer?: Prisma.ShopSaleListRelationFilter;
     salesRegistered?: Prisma.ShopSaleListRelationFilter;
     withdrawals?: Prisma.ShopWithdrawalListRelationFilter;
+    freeRequests?: Prisma.ShopFreeRequestListRelationFilter;
 }, "id" | "guildId_discordUserId">;
 export type ShopUserOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -270,6 +273,7 @@ export type ShopUserCreateInput = {
     salesAsBuyer?: Prisma.ShopSaleCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUncheckedCreateInput = {
     id?: string;
@@ -292,6 +296,7 @@ export type ShopUserUncheckedCreateInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -314,6 +319,7 @@ export type ShopUserUpdateInput = {
     salesAsBuyer?: Prisma.ShopSaleUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -336,6 +342,7 @@ export type ShopUserUncheckedUpdateInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUncheckedUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserCreateManyInput = {
     id?: string;
@@ -569,6 +576,18 @@ export type ShopUserUpdateOneWithoutOrderEventsNestedInput = {
     connect?: Prisma.ShopUserWhereUniqueInput;
     update?: Prisma.XOR<Prisma.XOR<Prisma.ShopUserUpdateToOneWithWhereWithoutOrderEventsInput, Prisma.ShopUserUpdateWithoutOrderEventsInput>, Prisma.ShopUserUncheckedUpdateWithoutOrderEventsInput>;
 };
+export type ShopUserCreateNestedOneWithoutFreeRequestsInput = {
+    create?: Prisma.XOR<Prisma.ShopUserCreateWithoutFreeRequestsInput, Prisma.ShopUserUncheckedCreateWithoutFreeRequestsInput>;
+    connectOrCreate?: Prisma.ShopUserCreateOrConnectWithoutFreeRequestsInput;
+    connect?: Prisma.ShopUserWhereUniqueInput;
+};
+export type ShopUserUpdateOneRequiredWithoutFreeRequestsNestedInput = {
+    create?: Prisma.XOR<Prisma.ShopUserCreateWithoutFreeRequestsInput, Prisma.ShopUserUncheckedCreateWithoutFreeRequestsInput>;
+    connectOrCreate?: Prisma.ShopUserCreateOrConnectWithoutFreeRequestsInput;
+    upsert?: Prisma.ShopUserUpsertWithoutFreeRequestsInput;
+    connect?: Prisma.ShopUserWhereUniqueInput;
+    update?: Prisma.XOR<Prisma.XOR<Prisma.ShopUserUpdateToOneWithWhereWithoutFreeRequestsInput, Prisma.ShopUserUpdateWithoutFreeRequestsInput>, Prisma.ShopUserUncheckedUpdateWithoutFreeRequestsInput>;
+};
 export type ShopUserCreateWithoutPriceChangesInput = {
     id?: string;
     guildId: string;
@@ -589,6 +608,7 @@ export type ShopUserCreateWithoutPriceChangesInput = {
     salesAsBuyer?: Prisma.ShopSaleCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUncheckedCreateWithoutPriceChangesInput = {
     id?: string;
@@ -610,6 +630,7 @@ export type ShopUserUncheckedCreateWithoutPriceChangesInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedCreateNestedManyWithoutUserInput;
 };
 export type ShopUserCreateOrConnectWithoutPriceChangesInput = {
     where: Prisma.ShopUserWhereUniqueInput;
@@ -644,6 +665,7 @@ export type ShopUserUpdateWithoutPriceChangesInput = {
     salesAsBuyer?: Prisma.ShopSaleUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUncheckedUpdateWithoutPriceChangesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -665,6 +687,7 @@ export type ShopUserUncheckedUpdateWithoutPriceChangesInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUncheckedUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserCreateWithoutOrdersAcceptedInput = {
     id?: string;
@@ -686,6 +709,7 @@ export type ShopUserCreateWithoutOrdersAcceptedInput = {
     salesAsBuyer?: Prisma.ShopSaleCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUncheckedCreateWithoutOrdersAcceptedInput = {
     id?: string;
@@ -707,6 +731,7 @@ export type ShopUserUncheckedCreateWithoutOrdersAcceptedInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedCreateNestedManyWithoutUserInput;
 };
 export type ShopUserCreateOrConnectWithoutOrdersAcceptedInput = {
     where: Prisma.ShopUserWhereUniqueInput;
@@ -732,6 +757,7 @@ export type ShopUserCreateWithoutOrdersClosedInput = {
     salesAsBuyer?: Prisma.ShopSaleCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUncheckedCreateWithoutOrdersClosedInput = {
     id?: string;
@@ -753,6 +779,7 @@ export type ShopUserUncheckedCreateWithoutOrdersClosedInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedCreateNestedManyWithoutUserInput;
 };
 export type ShopUserCreateOrConnectWithoutOrdersClosedInput = {
     where: Prisma.ShopUserWhereUniqueInput;
@@ -778,6 +805,7 @@ export type ShopUserCreateWithoutOrdersAsCustomerInput = {
     salesAsBuyer?: Prisma.ShopSaleCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUncheckedCreateWithoutOrdersAsCustomerInput = {
     id?: string;
@@ -799,6 +827,7 @@ export type ShopUserUncheckedCreateWithoutOrdersAsCustomerInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedCreateNestedManyWithoutUserInput;
 };
 export type ShopUserCreateOrConnectWithoutOrdersAsCustomerInput = {
     where: Prisma.ShopUserWhereUniqueInput;
@@ -824,6 +853,7 @@ export type ShopUserCreateWithoutOrdersRejectedInput = {
     salesAsBuyer?: Prisma.ShopSaleCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUncheckedCreateWithoutOrdersRejectedInput = {
     id?: string;
@@ -845,6 +875,7 @@ export type ShopUserUncheckedCreateWithoutOrdersRejectedInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedCreateNestedManyWithoutUserInput;
 };
 export type ShopUserCreateOrConnectWithoutOrdersRejectedInput = {
     where: Prisma.ShopUserWhereUniqueInput;
@@ -879,6 +910,7 @@ export type ShopUserUpdateWithoutOrdersAcceptedInput = {
     salesAsBuyer?: Prisma.ShopSaleUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUncheckedUpdateWithoutOrdersAcceptedInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -900,6 +932,7 @@ export type ShopUserUncheckedUpdateWithoutOrdersAcceptedInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUncheckedUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUpsertWithoutOrdersClosedInput = {
     update: Prisma.XOR<Prisma.ShopUserUpdateWithoutOrdersClosedInput, Prisma.ShopUserUncheckedUpdateWithoutOrdersClosedInput>;
@@ -930,6 +963,7 @@ export type ShopUserUpdateWithoutOrdersClosedInput = {
     salesAsBuyer?: Prisma.ShopSaleUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUncheckedUpdateWithoutOrdersClosedInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -951,6 +985,7 @@ export type ShopUserUncheckedUpdateWithoutOrdersClosedInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUncheckedUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUpsertWithoutOrdersAsCustomerInput = {
     update: Prisma.XOR<Prisma.ShopUserUpdateWithoutOrdersAsCustomerInput, Prisma.ShopUserUncheckedUpdateWithoutOrdersAsCustomerInput>;
@@ -981,6 +1016,7 @@ export type ShopUserUpdateWithoutOrdersAsCustomerInput = {
     salesAsBuyer?: Prisma.ShopSaleUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUncheckedUpdateWithoutOrdersAsCustomerInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1002,6 +1038,7 @@ export type ShopUserUncheckedUpdateWithoutOrdersAsCustomerInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUncheckedUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUpsertWithoutOrdersRejectedInput = {
     update: Prisma.XOR<Prisma.ShopUserUpdateWithoutOrdersRejectedInput, Prisma.ShopUserUncheckedUpdateWithoutOrdersRejectedInput>;
@@ -1032,6 +1069,7 @@ export type ShopUserUpdateWithoutOrdersRejectedInput = {
     salesAsBuyer?: Prisma.ShopSaleUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUncheckedUpdateWithoutOrdersRejectedInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1053,6 +1091,7 @@ export type ShopUserUncheckedUpdateWithoutOrdersRejectedInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUncheckedUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserCreateWithoutMovementsInput = {
     id?: string;
@@ -1074,6 +1113,7 @@ export type ShopUserCreateWithoutMovementsInput = {
     salesAsBuyer?: Prisma.ShopSaleCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUncheckedCreateWithoutMovementsInput = {
     id?: string;
@@ -1095,6 +1135,7 @@ export type ShopUserUncheckedCreateWithoutMovementsInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedCreateNestedManyWithoutUserInput;
 };
 export type ShopUserCreateOrConnectWithoutMovementsInput = {
     where: Prisma.ShopUserWhereUniqueInput;
@@ -1129,6 +1170,7 @@ export type ShopUserUpdateWithoutMovementsInput = {
     salesAsBuyer?: Prisma.ShopSaleUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUncheckedUpdateWithoutMovementsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1150,6 +1192,7 @@ export type ShopUserUncheckedUpdateWithoutMovementsInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUncheckedUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserCreateWithoutSalesAsBuyerInput = {
     id?: string;
@@ -1171,6 +1214,7 @@ export type ShopUserCreateWithoutSalesAsBuyerInput = {
     priceChanges?: Prisma.ShopProductPriceCreateNestedManyWithoutChangedByUserInput;
     salesRegistered?: Prisma.ShopSaleCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUncheckedCreateWithoutSalesAsBuyerInput = {
     id?: string;
@@ -1192,6 +1236,7 @@ export type ShopUserUncheckedCreateWithoutSalesAsBuyerInput = {
     priceChanges?: Prisma.ShopProductPriceUncheckedCreateNestedManyWithoutChangedByUserInput;
     salesRegistered?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedCreateNestedManyWithoutUserInput;
 };
 export type ShopUserCreateOrConnectWithoutSalesAsBuyerInput = {
     where: Prisma.ShopUserWhereUniqueInput;
@@ -1217,6 +1262,7 @@ export type ShopUserCreateWithoutSalesRegisteredInput = {
     priceChanges?: Prisma.ShopProductPriceCreateNestedManyWithoutChangedByUserInput;
     salesAsBuyer?: Prisma.ShopSaleCreateNestedManyWithoutBuyerInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUncheckedCreateWithoutSalesRegisteredInput = {
     id?: string;
@@ -1238,6 +1284,7 @@ export type ShopUserUncheckedCreateWithoutSalesRegisteredInput = {
     priceChanges?: Prisma.ShopProductPriceUncheckedCreateNestedManyWithoutChangedByUserInput;
     salesAsBuyer?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutBuyerInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedCreateNestedManyWithoutUserInput;
 };
 export type ShopUserCreateOrConnectWithoutSalesRegisteredInput = {
     where: Prisma.ShopUserWhereUniqueInput;
@@ -1272,6 +1319,7 @@ export type ShopUserUpdateWithoutSalesAsBuyerInput = {
     priceChanges?: Prisma.ShopProductPriceUpdateManyWithoutChangedByUserNestedInput;
     salesRegistered?: Prisma.ShopSaleUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUncheckedUpdateWithoutSalesAsBuyerInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1293,6 +1341,7 @@ export type ShopUserUncheckedUpdateWithoutSalesAsBuyerInput = {
     priceChanges?: Prisma.ShopProductPriceUncheckedUpdateManyWithoutChangedByUserNestedInput;
     salesRegistered?: Prisma.ShopSaleUncheckedUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUpsertWithoutSalesRegisteredInput = {
     update: Prisma.XOR<Prisma.ShopUserUpdateWithoutSalesRegisteredInput, Prisma.ShopUserUncheckedUpdateWithoutSalesRegisteredInput>;
@@ -1323,6 +1372,7 @@ export type ShopUserUpdateWithoutSalesRegisteredInput = {
     priceChanges?: Prisma.ShopProductPriceUpdateManyWithoutChangedByUserNestedInput;
     salesAsBuyer?: Prisma.ShopSaleUpdateManyWithoutBuyerNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUncheckedUpdateWithoutSalesRegisteredInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1344,6 +1394,7 @@ export type ShopUserUncheckedUpdateWithoutSalesRegisteredInput = {
     priceChanges?: Prisma.ShopProductPriceUncheckedUpdateManyWithoutChangedByUserNestedInput;
     salesAsBuyer?: Prisma.ShopSaleUncheckedUpdateManyWithoutBuyerNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserCreateWithoutWithdrawalsInput = {
     id?: string;
@@ -1365,6 +1416,7 @@ export type ShopUserCreateWithoutWithdrawalsInput = {
     priceChanges?: Prisma.ShopProductPriceCreateNestedManyWithoutChangedByUserInput;
     salesAsBuyer?: Prisma.ShopSaleCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleCreateNestedManyWithoutRegisteredByInput;
+    freeRequests?: Prisma.ShopFreeRequestCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUncheckedCreateWithoutWithdrawalsInput = {
     id?: string;
@@ -1386,6 +1438,7 @@ export type ShopUserUncheckedCreateWithoutWithdrawalsInput = {
     priceChanges?: Prisma.ShopProductPriceUncheckedCreateNestedManyWithoutChangedByUserInput;
     salesAsBuyer?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutRegisteredByInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedCreateNestedManyWithoutUserInput;
 };
 export type ShopUserCreateOrConnectWithoutWithdrawalsInput = {
     where: Prisma.ShopUserWhereUniqueInput;
@@ -1420,6 +1473,7 @@ export type ShopUserUpdateWithoutWithdrawalsInput = {
     priceChanges?: Prisma.ShopProductPriceUpdateManyWithoutChangedByUserNestedInput;
     salesAsBuyer?: Prisma.ShopSaleUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUpdateManyWithoutRegisteredByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUncheckedUpdateWithoutWithdrawalsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1441,6 +1495,7 @@ export type ShopUserUncheckedUpdateWithoutWithdrawalsInput = {
     priceChanges?: Prisma.ShopProductPriceUncheckedUpdateManyWithoutChangedByUserNestedInput;
     salesAsBuyer?: Prisma.ShopSaleUncheckedUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUncheckedUpdateManyWithoutRegisteredByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserCreateWithoutDiscountPoliciesInput = {
     id?: string;
@@ -1462,6 +1517,7 @@ export type ShopUserCreateWithoutDiscountPoliciesInput = {
     salesAsBuyer?: Prisma.ShopSaleCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUncheckedCreateWithoutDiscountPoliciesInput = {
     id?: string;
@@ -1483,6 +1539,7 @@ export type ShopUserUncheckedCreateWithoutDiscountPoliciesInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedCreateNestedManyWithoutUserInput;
 };
 export type ShopUserCreateOrConnectWithoutDiscountPoliciesInput = {
     where: Prisma.ShopUserWhereUniqueInput;
@@ -1517,6 +1574,7 @@ export type ShopUserUpdateWithoutDiscountPoliciesInput = {
     salesAsBuyer?: Prisma.ShopSaleUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUncheckedUpdateWithoutDiscountPoliciesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1538,6 +1596,7 @@ export type ShopUserUncheckedUpdateWithoutDiscountPoliciesInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUncheckedUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserCreateWithoutAppliedDiscountsInput = {
     id?: string;
@@ -1559,6 +1618,7 @@ export type ShopUserCreateWithoutAppliedDiscountsInput = {
     salesAsBuyer?: Prisma.ShopSaleCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUncheckedCreateWithoutAppliedDiscountsInput = {
     id?: string;
@@ -1580,6 +1640,7 @@ export type ShopUserUncheckedCreateWithoutAppliedDiscountsInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedCreateNestedManyWithoutUserInput;
 };
 export type ShopUserCreateOrConnectWithoutAppliedDiscountsInput = {
     where: Prisma.ShopUserWhereUniqueInput;
@@ -1614,6 +1675,7 @@ export type ShopUserUpdateWithoutAppliedDiscountsInput = {
     salesAsBuyer?: Prisma.ShopSaleUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUncheckedUpdateWithoutAppliedDiscountsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1635,6 +1697,7 @@ export type ShopUserUncheckedUpdateWithoutAppliedDiscountsInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUncheckedUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserCreateWithoutOrderEventsInput = {
     id?: string;
@@ -1656,6 +1719,7 @@ export type ShopUserCreateWithoutOrderEventsInput = {
     salesAsBuyer?: Prisma.ShopSaleCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestCreateNestedManyWithoutUserInput;
 };
 export type ShopUserUncheckedCreateWithoutOrderEventsInput = {
     id?: string;
@@ -1677,6 +1741,7 @@ export type ShopUserUncheckedCreateWithoutOrderEventsInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutBuyerInput;
     salesRegistered?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutRegisteredByInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutPerformedByInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedCreateNestedManyWithoutUserInput;
 };
 export type ShopUserCreateOrConnectWithoutOrderEventsInput = {
     where: Prisma.ShopUserWhereUniqueInput;
@@ -1711,6 +1776,7 @@ export type ShopUserUpdateWithoutOrderEventsInput = {
     salesAsBuyer?: Prisma.ShopSaleUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUpdateManyWithoutUserNestedInput;
 };
 export type ShopUserUncheckedUpdateWithoutOrderEventsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -1732,6 +1798,108 @@ export type ShopUserUncheckedUpdateWithoutOrderEventsInput = {
     salesAsBuyer?: Prisma.ShopSaleUncheckedUpdateManyWithoutBuyerNestedInput;
     salesRegistered?: Prisma.ShopSaleUncheckedUpdateManyWithoutRegisteredByNestedInput;
     withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutPerformedByNestedInput;
+    freeRequests?: Prisma.ShopFreeRequestUncheckedUpdateManyWithoutUserNestedInput;
+};
+export type ShopUserCreateWithoutFreeRequestsInput = {
+    id?: string;
+    guildId: string;
+    discordUserId: string;
+    username: string;
+    displayName: string;
+    isStaff?: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountCreateNestedManyWithoutAppliedByInput;
+    discountPolicies?: Prisma.ShopDiscountPolicyCreateNestedManyWithoutCreatedByInput;
+    movements?: Prisma.ShopInventoryMovementCreateNestedManyWithoutPerformedByInput;
+    ordersAccepted?: Prisma.ShopOrderCreateNestedManyWithoutAcceptedByInput;
+    ordersClosed?: Prisma.ShopOrderCreateNestedManyWithoutClosedByInput;
+    ordersAsCustomer?: Prisma.ShopOrderCreateNestedManyWithoutCustomerInput;
+    ordersRejected?: Prisma.ShopOrderCreateNestedManyWithoutRejectedByInput;
+    orderEvents?: Prisma.ShopOrderEventCreateNestedManyWithoutPerformedByInput;
+    priceChanges?: Prisma.ShopProductPriceCreateNestedManyWithoutChangedByUserInput;
+    salesAsBuyer?: Prisma.ShopSaleCreateNestedManyWithoutBuyerInput;
+    salesRegistered?: Prisma.ShopSaleCreateNestedManyWithoutRegisteredByInput;
+    withdrawals?: Prisma.ShopWithdrawalCreateNestedManyWithoutPerformedByInput;
+};
+export type ShopUserUncheckedCreateWithoutFreeRequestsInput = {
+    id?: string;
+    guildId: string;
+    discordUserId: string;
+    username: string;
+    displayName: string;
+    isStaff?: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedCreateNestedManyWithoutAppliedByInput;
+    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedCreateNestedManyWithoutCreatedByInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedCreateNestedManyWithoutPerformedByInput;
+    ordersAccepted?: Prisma.ShopOrderUncheckedCreateNestedManyWithoutAcceptedByInput;
+    ordersClosed?: Prisma.ShopOrderUncheckedCreateNestedManyWithoutClosedByInput;
+    ordersAsCustomer?: Prisma.ShopOrderUncheckedCreateNestedManyWithoutCustomerInput;
+    ordersRejected?: Prisma.ShopOrderUncheckedCreateNestedManyWithoutRejectedByInput;
+    orderEvents?: Prisma.ShopOrderEventUncheckedCreateNestedManyWithoutPerformedByInput;
+    priceChanges?: Prisma.ShopProductPriceUncheckedCreateNestedManyWithoutChangedByUserInput;
+    salesAsBuyer?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutBuyerInput;
+    salesRegistered?: Prisma.ShopSaleUncheckedCreateNestedManyWithoutRegisteredByInput;
+    withdrawals?: Prisma.ShopWithdrawalUncheckedCreateNestedManyWithoutPerformedByInput;
+};
+export type ShopUserCreateOrConnectWithoutFreeRequestsInput = {
+    where: Prisma.ShopUserWhereUniqueInput;
+    create: Prisma.XOR<Prisma.ShopUserCreateWithoutFreeRequestsInput, Prisma.ShopUserUncheckedCreateWithoutFreeRequestsInput>;
+};
+export type ShopUserUpsertWithoutFreeRequestsInput = {
+    update: Prisma.XOR<Prisma.ShopUserUpdateWithoutFreeRequestsInput, Prisma.ShopUserUncheckedUpdateWithoutFreeRequestsInput>;
+    create: Prisma.XOR<Prisma.ShopUserCreateWithoutFreeRequestsInput, Prisma.ShopUserUncheckedCreateWithoutFreeRequestsInput>;
+    where?: Prisma.ShopUserWhereInput;
+};
+export type ShopUserUpdateToOneWithWhereWithoutFreeRequestsInput = {
+    where?: Prisma.ShopUserWhereInput;
+    data: Prisma.XOR<Prisma.ShopUserUpdateWithoutFreeRequestsInput, Prisma.ShopUserUncheckedUpdateWithoutFreeRequestsInput>;
+};
+export type ShopUserUpdateWithoutFreeRequestsInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
+    discordUserId?: Prisma.StringFieldUpdateOperationsInput | string;
+    username?: Prisma.StringFieldUpdateOperationsInput | string;
+    displayName?: Prisma.StringFieldUpdateOperationsInput | string;
+    isStaff?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUpdateManyWithoutAppliedByNestedInput;
+    discountPolicies?: Prisma.ShopDiscountPolicyUpdateManyWithoutCreatedByNestedInput;
+    movements?: Prisma.ShopInventoryMovementUpdateManyWithoutPerformedByNestedInput;
+    ordersAccepted?: Prisma.ShopOrderUpdateManyWithoutAcceptedByNestedInput;
+    ordersClosed?: Prisma.ShopOrderUpdateManyWithoutClosedByNestedInput;
+    ordersAsCustomer?: Prisma.ShopOrderUpdateManyWithoutCustomerNestedInput;
+    ordersRejected?: Prisma.ShopOrderUpdateManyWithoutRejectedByNestedInput;
+    orderEvents?: Prisma.ShopOrderEventUpdateManyWithoutPerformedByNestedInput;
+    priceChanges?: Prisma.ShopProductPriceUpdateManyWithoutChangedByUserNestedInput;
+    salesAsBuyer?: Prisma.ShopSaleUpdateManyWithoutBuyerNestedInput;
+    salesRegistered?: Prisma.ShopSaleUpdateManyWithoutRegisteredByNestedInput;
+    withdrawals?: Prisma.ShopWithdrawalUpdateManyWithoutPerformedByNestedInput;
+};
+export type ShopUserUncheckedUpdateWithoutFreeRequestsInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
+    discordUserId?: Prisma.StringFieldUpdateOperationsInput | string;
+    username?: Prisma.StringFieldUpdateOperationsInput | string;
+    displayName?: Prisma.StringFieldUpdateOperationsInput | string;
+    isStaff?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    appliedDiscounts?: Prisma.ShopAppliedDiscountUncheckedUpdateManyWithoutAppliedByNestedInput;
+    discountPolicies?: Prisma.ShopDiscountPolicyUncheckedUpdateManyWithoutCreatedByNestedInput;
+    movements?: Prisma.ShopInventoryMovementUncheckedUpdateManyWithoutPerformedByNestedInput;
+    ordersAccepted?: Prisma.ShopOrderUncheckedUpdateManyWithoutAcceptedByNestedInput;
+    ordersClosed?: Prisma.ShopOrderUncheckedUpdateManyWithoutClosedByNestedInput;
+    ordersAsCustomer?: Prisma.ShopOrderUncheckedUpdateManyWithoutCustomerNestedInput;
+    ordersRejected?: Prisma.ShopOrderUncheckedUpdateManyWithoutRejectedByNestedInput;
+    orderEvents?: Prisma.ShopOrderEventUncheckedUpdateManyWithoutPerformedByNestedInput;
+    priceChanges?: Prisma.ShopProductPriceUncheckedUpdateManyWithoutChangedByUserNestedInput;
+    salesAsBuyer?: Prisma.ShopSaleUncheckedUpdateManyWithoutBuyerNestedInput;
+    salesRegistered?: Prisma.ShopSaleUncheckedUpdateManyWithoutRegisteredByNestedInput;
+    withdrawals?: Prisma.ShopWithdrawalUncheckedUpdateManyWithoutPerformedByNestedInput;
 };
 /**
  * Count Type ShopUserCountOutputType
@@ -1749,6 +1917,7 @@ export type ShopUserCountOutputType = {
     salesAsBuyer: number;
     salesRegistered: number;
     withdrawals: number;
+    freeRequests: number;
 };
 export type ShopUserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     appliedDiscounts?: boolean | ShopUserCountOutputTypeCountAppliedDiscountsArgs;
@@ -1763,6 +1932,7 @@ export type ShopUserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
     salesAsBuyer?: boolean | ShopUserCountOutputTypeCountSalesAsBuyerArgs;
     salesRegistered?: boolean | ShopUserCountOutputTypeCountSalesRegisteredArgs;
     withdrawals?: boolean | ShopUserCountOutputTypeCountWithdrawalsArgs;
+    freeRequests?: boolean | ShopUserCountOutputTypeCountFreeRequestsArgs;
 };
 /**
  * ShopUserCountOutputType without action
@@ -1845,6 +2015,12 @@ export type ShopUserCountOutputTypeCountSalesRegisteredArgs<ExtArgs extends runt
 export type ShopUserCountOutputTypeCountWithdrawalsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     where?: Prisma.ShopWithdrawalWhereInput;
 };
+/**
+ * ShopUserCountOutputType without action
+ */
+export type ShopUserCountOutputTypeCountFreeRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.ShopFreeRequestWhereInput;
+};
 export type ShopUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     guildId?: boolean;
@@ -1866,6 +2042,7 @@ export type ShopUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
     salesAsBuyer?: boolean | Prisma.ShopUser$salesAsBuyerArgs<ExtArgs>;
     salesRegistered?: boolean | Prisma.ShopUser$salesRegisteredArgs<ExtArgs>;
     withdrawals?: boolean | Prisma.ShopUser$withdrawalsArgs<ExtArgs>;
+    freeRequests?: boolean | Prisma.ShopUser$freeRequestsArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopUserCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["shopUser"]>;
 export type ShopUserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1912,6 +2089,7 @@ export type ShopUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
     salesAsBuyer?: boolean | Prisma.ShopUser$salesAsBuyerArgs<ExtArgs>;
     salesRegistered?: boolean | Prisma.ShopUser$salesRegisteredArgs<ExtArgs>;
     withdrawals?: boolean | Prisma.ShopUser$withdrawalsArgs<ExtArgs>;
+    freeRequests?: boolean | Prisma.ShopUser$freeRequestsArgs<ExtArgs>;
     _count?: boolean | Prisma.ShopUserCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type ShopUserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {};
@@ -1931,6 +2109,7 @@ export type $ShopUserPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
         salesAsBuyer: Prisma.$ShopSalePayload<ExtArgs>[];
         salesRegistered: Prisma.$ShopSalePayload<ExtArgs>[];
         withdrawals: Prisma.$ShopWithdrawalPayload<ExtArgs>[];
+        freeRequests: Prisma.$ShopFreeRequestPayload<ExtArgs>[];
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
@@ -2282,6 +2461,7 @@ export interface Prisma__ShopUserClient<T, Null = never, ExtArgs extends runtime
     salesAsBuyer<T extends Prisma.ShopUser$salesAsBuyerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopUser$salesAsBuyerArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopSalePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     salesRegistered<T extends Prisma.ShopUser$salesRegisteredArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopUser$salesRegisteredArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopSalePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     withdrawals<T extends Prisma.ShopUser$withdrawalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopUser$withdrawalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopWithdrawalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    freeRequests<T extends Prisma.ShopUser$freeRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopUser$freeRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopFreeRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2965,6 +3145,29 @@ export type ShopUser$withdrawalsArgs<ExtArgs extends runtime.Types.Extensions.In
     take?: number;
     skip?: number;
     distinct?: Prisma.ShopWithdrawalScalarFieldEnum | Prisma.ShopWithdrawalScalarFieldEnum[];
+};
+/**
+ * ShopUser.freeRequests
+ */
+export type ShopUser$freeRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ShopFreeRequest
+     */
+    select?: Prisma.ShopFreeRequestSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the ShopFreeRequest
+     */
+    omit?: Prisma.ShopFreeRequestOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.ShopFreeRequestInclude<ExtArgs> | null;
+    where?: Prisma.ShopFreeRequestWhereInput;
+    orderBy?: Prisma.ShopFreeRequestOrderByWithRelationInput | Prisma.ShopFreeRequestOrderByWithRelationInput[];
+    cursor?: Prisma.ShopFreeRequestWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: Prisma.ShopFreeRequestScalarFieldEnum | Prisma.ShopFreeRequestScalarFieldEnum[];
 };
 /**
  * ShopUser without action

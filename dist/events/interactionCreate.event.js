@@ -11,7 +11,7 @@ import { parseTime, formatTime } from '../utils/time.js';
 import { logger } from '../core/logger.js';
 import { upsertShopUser } from '../database/shop-user.js';
 import { applyManualVolumeDiscounts, getEligibleManualVolumeDiscounts, normalizeDiscountType, } from '../shop/discounts.js';
-import { getOrderFull, buildOrderEmbed, buildAcceptedButtons, buildPendingButtons, createPendingOrder, formatOrderStockStatusLine, getOrderStockAssessment, releaseOrderStock, consumeOrderStock, } from '../shop/order-utils.js';
+import { getOrderFull, buildOrderEmbed, buildAcceptedButtons, buildPendingButtons, createPendingOrder, formatOrderStockStatusLine, getOrderStockAssessment, releaseOrderStock, consumeOrderStock, addSurchargeToOrder, } from '../shop/order-utils.js';
 import { buildCatalogEntryView, buildCatalogView, buildProductDetailEmbed, buildSearchView, buildVariantDetailEmbed, buildVariantSelectRow, isParentProduct, queryCatalogProducts, searchCatalogProducts, } from '../shop/catalog.js';
 import { getCart, setCart, deleteCart, buildCartView, buildCartSearchView, buildQtyModal, queryCartProducts, } from '../shop/cart.js';
 import { buildProductContentsSummary } from '../shop/product-contents.js';
@@ -20,6 +20,7 @@ import { CLAN_PLAYER_CUSTOM_IDS, applyAdditionalModalValues, applyBasicsModalVal
 import { RECRUITMENT_COLORS, buildRecruitmentAcceptedApplicationEmbed, buildRecruitmentApplicationEmbed, buildRecruitmentErrorEmbed, buildRecruitmentLogEmbed, buildRecruitmentNoticeEmbed, buildRecruitmentRejectedApplicationEmbed, buildRecruitmentTicketWelcomeEmbed, buildRecruitmentUserMessageEmbed, normalizeRecruitmentReason, } from '../utils/recruitment-ui.js';
 import { REMINDER_COLORS, buildKitReminderListEmbed, buildReminderErrorEmbed, buildReminderNoticeEmbed, } from '../utils/reminder-ui.js';
 import { SHOP_COLORS, buildOrderReceivedEmbed, buildShopErrorEmbed, buildShopNoticeEmbed, } from '../utils/shop-ui.js';
+import { formatPrice } from '../utils/ui.js';
 import { buildSystemErrorEmbed } from '../utils/system-ui.js';
 import { parseNotifRoles, buildNotifEphemeral } from '../commands/notif/notif.command.js';
 import { parseExpulsionReasons, pendingExpulsions, buildExpulsionConfirmEmbed, buildReasonSelectMenu, buildConfirmRow, executeExpulsion, } from '../commands/expulsion/expulsion.command.js';
@@ -160,6 +161,17 @@ const interactionCreateEvent = {
                 const command = client.commands.get(interaction.commandName);
                 if (!command)
                     return;
+                if (interaction.guildId) {
+                    void prisma.commandUsage.create({
+                        data: {
+                            guildId: interaction.guildId,
+                            userId: interaction.user.id,
+                            commandName: interaction.commandName,
+                            subcommandGroup: interaction.options.getSubcommandGroup(false) ?? null,
+                            subcommand: interaction.options.getSubcommand(false) ?? null,
+                        },
+                    }).catch(() => null);
+                }
                 try {
                     await command.execute(interaction);
                 }
@@ -818,7 +830,10 @@ const interactionCreateEvent = {
                     });
                     return;
                 }
-                await upsertShopUser(guildId, interaction.user);
+                const shopUser = await upsertShopUser(guildId, interaction.user);
+                await prisma.shopFreeRequest.create({
+                    data: { guildId, userId: shopUser.id, requestText },
+                });
                 const embed = buildShopNoticeEmbed({
                     title: 'Solicitud libre de tienda',
                     description: requestText,
@@ -1006,6 +1021,10 @@ const interactionCreateEvent = {
                                     id: interaction.user.id,
                                     allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
                                 },
+                                ...(config.staffRoleId ? [{ id: config.staffRoleId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }] : []),
+                                ...(config.liderRoleId ? [{ id: config.liderRoleId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }] : []),
+                                ...(config.coLiderRoleId ? [{ id: config.coLiderRoleId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }] : []),
+                                ...(config.reclutadorRoleId ? [{ id: config.reclutadorRoleId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }] : []),
                             ],
                         });
                         channelId = ticketChannel.id;
@@ -1439,11 +1458,11 @@ const interactionCreateEvent = {
                         where: { id: ticketId },
                         data: { status: 'ACCEPTED', staleAlertedAt: null },
                     });
-                    // Quitar rol aspirante
+                    // Asignar rol Aspirante al aceptar
                     try {
                         const applicant = await guild.members.fetch(ticket.userId);
-                        if (cfg.aspirantRoleId && applicant.roles.cache.has(cfg.aspirantRoleId)) {
-                            await applicant.roles.remove(cfg.aspirantRoleId);
+                        if (cfg.aspirantRoleId && !applicant.roles.cache.has(cfg.aspirantRoleId)) {
+                            await applicant.roles.add(cfg.aspirantRoleId);
                         }
                         await applicant.user.send({
                             embeds: [
@@ -1550,10 +1569,10 @@ const interactionCreateEvent = {
                                         id: order.customer.discordUserId,
                                         allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
                                     },
-                                    ...(cfg.staffRoleId ? [{
-                                            id: cfg.staffRoleId,
-                                            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
-                                        }] : []),
+                                    ...(cfg.staffRoleId ? [{ id: cfg.staffRoleId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }] : []),
+                                    ...(cfg.liderRoleId ? [{ id: cfg.liderRoleId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }] : []),
+                                    ...(cfg.coLiderRoleId ? [{ id: cfg.coLiderRoleId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }] : []),
+                                    ...(cfg.comercianteRoleId ? [{ id: cfg.comercianteRoleId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }] : []),
                                 ],
                             });
                             ticketChannelId = ticketCh.id;
@@ -1662,6 +1681,34 @@ const interactionCreateEvent = {
                         ],
                         ephemeral: true,
                     });
+                    return;
+                }
+                // ── Agregar servicio adicional (abre modal) ────────────────────────────
+                if (action === 'add_service') {
+                    const order = await prisma.shopOrder.findUnique({ where: { orderCode } });
+                    if (!order || order.status !== 'accepted') {
+                        await interaction.reply({
+                            embeds: [buildShopNoticeEmbed({ title: 'No disponible', description: 'Solo se pueden agregar servicios a pedidos aceptados.', color: SHOP_COLORS.warning })],
+                            ephemeral: true,
+                        });
+                        return;
+                    }
+                    const serviceModal = new ModalBuilder()
+                        .setCustomId(`shop:service_modal:${orderCode}:${interaction.channelId}:${interaction.message.id}`)
+                        .setTitle('Agregar servicio al pedido');
+                    serviceModal.addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder()
+                        .setCustomId('service_label')
+                        .setLabel('Nombre del servicio (ej: Domicilio)')
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(true)
+                        .setMaxLength(80)), new ActionRowBuilder().addComponents(new TextInputBuilder()
+                        .setCustomId('service_amount')
+                        .setLabel('Monto (ej: 10% o 5000 para fijo)')
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(true)
+                        .setMaxLength(20)
+                        .setPlaceholder('10% o 5000')));
+                    await interaction.showModal(serviceModal);
                     return;
                 }
                 // ── Aplicar descuento manual ───────────────────────────────────────────
@@ -2676,6 +2723,7 @@ const interactionCreateEvent = {
                             notes: item.notes,
                         })),
                         staffChannelId: config.shopStaffChannelId ?? null,
+                        source: 'cart',
                     });
                 }
                 catch (err) {
@@ -2899,6 +2947,82 @@ const interactionCreateEvent = {
                             color: SHOP_COLORS.success,
                         }),
                     ],
+                });
+                return;
+            }
+            // --- Modal: agregar servicio adicional al pedido ---
+            if (interaction.isModalSubmit() && interaction.customId.startsWith('shop:service_modal:')) {
+                await interaction.deferReply({ ephemeral: true });
+                const guild = interaction.guild;
+                if (!guild)
+                    return;
+                // Formato: shop:service_modal:AQ-XXXXXX:channelId:messageId
+                const parts = interaction.customId.split(':');
+                const orderCode = parts[2];
+                const channelId = parts[3];
+                const messageId = parts[4];
+                const labelRaw = interaction.fields.getTextInputValue('service_label').trim();
+                const amountRaw = interaction.fields.getTextInputValue('service_amount').trim();
+                const isPercent = amountRaw.endsWith('%');
+                const rateStr = amountRaw.replace('%', '').replace(',', '.').trim();
+                const rate = parseFloat(rateStr);
+                if (isNaN(rate) || rate <= 0) {
+                    await interaction.editReply({
+                        embeds: [buildShopNoticeEmbed({ title: 'Monto inválido', description: 'Escribe un número válido, por ejemplo `10%` o `5000`.', color: SHOP_COLORS.warning })],
+                    });
+                    return;
+                }
+                try {
+                    await addSurchargeToOrder(orderCode, labelRaw, isPercent, rate);
+                }
+                catch (err) {
+                    logger.warn({ err }, 'Error al agregar servicio al pedido');
+                    await interaction.editReply({
+                        embeds: [buildShopNoticeEmbed({ title: 'Error', description: 'No se pudo agregar el servicio.', color: SHOP_COLORS.danger })],
+                    });
+                    return;
+                }
+                const updatedOrder = await getOrderFull(orderCode);
+                if (!updatedOrder)
+                    return;
+                // Actualizar embed en el canal de staff
+                try {
+                    const staffCh = guild.channels.cache.get(channelId);
+                    if (staffCh?.isTextBased()) {
+                        const msg = await staffCh.messages.fetch(messageId);
+                        await msg.edit({ embeds: [buildOrderEmbed(updatedOrder)], components: [buildAcceptedButtons(orderCode)] });
+                    }
+                }
+                catch (err) {
+                    logger.warn({ err }, 'No se pudo actualizar embed tras agregar servicio');
+                }
+                // Notificar en el canal privado del pedido
+                if (updatedOrder.ticketChannelId) {
+                    try {
+                        const ticketCh = guild.channels.cache.get(updatedOrder.ticketChannelId);
+                        if (ticketCh?.isTextBased()) {
+                            const surcharge = updatedOrder.surcharges.at(-1);
+                            const rateDisplay = surcharge?.isPercent && surcharge.rate != null ? ` (${surcharge.rate}%)` : '';
+                            await ticketCh.send({
+                                embeds: [
+                                    buildShopNoticeEmbed({
+                                        title: 'Servicio agregado al pedido',
+                                        description: [
+                                            `Se agregó **${labelRaw}**${rateDisplay} por **+${formatPrice(surcharge.amount)}** al pedido **${orderCode}**.`,
+                                            `Nuevo total: **${formatPrice(updatedOrder.totalAmount)}**`,
+                                        ].join('\n'),
+                                        color: SHOP_COLORS.info,
+                                    }),
+                                ],
+                            });
+                        }
+                    }
+                    catch (err) {
+                        logger.warn({ err }, 'No se pudo notificar en canal del pedido');
+                    }
+                }
+                await interaction.editReply({
+                    embeds: [buildShopNoticeEmbed({ title: 'Servicio agregado', description: `**${labelRaw}** (+${formatPrice(updatedOrder.surcharges.at(-1).amount)}) agregado. Nuevo total: **${formatPrice(updatedOrder.totalAmount)}**`, color: SHOP_COLORS.success })],
                 });
                 return;
             }

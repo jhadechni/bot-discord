@@ -2,7 +2,7 @@ import { SlashCommandBuilder, PermissionFlagsBits, } from 'discord.js';
 import { prisma } from '../../database/prisma.js';
 import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import { upsertShopUser } from '../../database/shop-user.js';
-import { buildCustomerOrderEmbed, buildOrderEmbed, buildPendingButtons, createPendingOrder, getOrderFull, getOrderStockAssessment, } from '../../shop/order-utils.js';
+import { buildAcceptedButtons, buildCustomerOrderEmbed, buildOrderEmbed, buildPendingButtons, createPendingOrder, getOrderFull, getOrderStockAssessment, } from '../../shop/order-utils.js';
 import { queryCartProducts, buildCartView, setCart, } from '../../shop/cart.js';
 import { buildShopGuildWhere, findFirstInShopScopes } from '../../shop/scope.js';
 import { SHOP_COLORS, buildActiveOrdersEmbed, buildOrderReceivedEmbed, buildShopErrorEmbed, buildShopNoticeEmbed, } from '../../utils/shop-ui.js';
@@ -98,6 +98,7 @@ export const pedidoCommand = {
                     customerUserId: customer.id,
                     items: [{ productId: product.id, quantity: cantidad, notes: notas }],
                     staffChannelId: config.shopStaffChannelId ?? null,
+                    source: 'direct',
                 });
             }
             catch (err) {
@@ -210,8 +211,11 @@ export const pedidosCommand = {
     data: new SlashCommandBuilder()
         .setName('pedidos')
         .setDescription('[Staff] Gestión interna de pedidos')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
-        .addSubcommand(sub => sub.setName('lista').setDescription('Lista los pedidos pendientes y aceptados')),
+        .addSubcommand(sub => sub.setName('lista').setDescription('Lista los pedidos pendientes y aceptados'))
+        .addSubcommand(sub => sub
+        .setName('refrescar')
+        .setDescription('Re-envía el embed actualizado de un pedido con todos sus botones')
+        .addStringOption(opt => opt.setName('codigo').setDescription('Código del pedido (ej: AQ-ABC123)').setRequired(true).setAutocomplete(true))),
     async execute(interaction) {
         const guildId = interaction.guildId;
         if (!guildId)
@@ -225,6 +229,52 @@ export const pedidosCommand = {
             return;
         }
         await interaction.deferReply({ ephemeral: true });
+        const sub = interaction.options.getSubcommand();
+        if (sub === 'refrescar') {
+            const rawCode = interaction.options.getString('codigo', true).trim().toUpperCase();
+            const orderCode = rawCode.startsWith('AQ-') ? rawCode : `AQ-${rawCode}`;
+            const guild = interaction.guild;
+            if (!guild)
+                return;
+            const order = await getOrderFull(orderCode);
+            if (!order || order.guildId !== guildId) {
+                await interaction.editReply({
+                    embeds: [buildShopErrorEmbed('Pedido no encontrado', `No se encontró el pedido **${orderCode}**.`)],
+                });
+                return;
+            }
+            if (!['pending', 'accepted'].includes(order.status)) {
+                await interaction.editReply({
+                    embeds: [buildShopNoticeEmbed({ title: 'Pedido ya cerrado', description: `El pedido **${orderCode}** ya está ${order.status}.`, color: SHOP_COLORS.neutral })],
+                });
+                return;
+            }
+            const channelId = order.ticketChannelId ?? order.staffChannelId;
+            if (!channelId) {
+                await interaction.editReply({
+                    embeds: [buildShopErrorEmbed('Sin canal', 'Este pedido no tiene canal de ticket asociado.')],
+                });
+                return;
+            }
+            const channel = guild.channels.cache.get(channelId);
+            if (!channel?.isTextBased()) {
+                await interaction.editReply({
+                    embeds: [buildShopErrorEmbed('Canal no encontrado', 'No se pudo acceder al canal del pedido.')],
+                });
+                return;
+            }
+            const buttons = order.status === 'accepted'
+                ? buildAcceptedButtons(orderCode)
+                : buildPendingButtons(orderCode);
+            await channel.send({
+                embeds: [buildOrderEmbed(order)],
+                components: [buttons],
+            });
+            await interaction.editReply({
+                embeds: [buildShopNoticeEmbed({ title: 'Embed re-enviado', description: `El embed de **${orderCode}** fue enviado a <#${channelId}> con los botones actualizados.`, color: SHOP_COLORS.success })],
+            });
+            return;
+        }
         const orders = await prisma.shopOrder.findMany({
             where: { guildId, status: { in: ['pending', 'accepted'] } },
             include: { customer: true, items: { include: { product: true } } },
@@ -244,6 +294,24 @@ export const pedidosCommand = {
             return;
         }
         await interaction.editReply({ embeds: [buildActiveOrdersEmbed(orders)] });
+    },
+    async autocomplete(interaction) {
+        const guildId = interaction.guildId;
+        if (!guildId) {
+            await interaction.respond([]);
+            return;
+        }
+        const value = interaction.options.getFocused().toLowerCase();
+        const orders = await prisma.shopOrder.findMany({
+            where: { guildId, status: { in: ['pending', 'accepted'] } },
+            orderBy: { createdAt: 'desc' },
+            take: 25,
+        });
+        const filtered = orders
+            .filter(o => o.orderCode.toLowerCase().includes(value))
+            .slice(0, 10)
+            .map(o => ({ name: o.orderCode, value: o.orderCode }));
+        await interaction.respond(filtered);
     },
 };
 //# sourceMappingURL=pedido.command.js.map

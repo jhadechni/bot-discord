@@ -67,9 +67,12 @@ export const ModelName = {
     ShopCategory: 'ShopCategory',
     ShopSubcategory: 'ShopSubcategory',
     ShopOrderEvent: 'ShopOrderEvent',
+    ShopOrderSurcharge: 'ShopOrderSurcharge',
     Poll: 'Poll',
     MapBackground: 'MapBackground',
     ProtectionMember: 'ProtectionMember',
+    CommandUsage: 'CommandUsage',
+    ShopFreeRequest: 'ShopFreeRequest',
     WorldProtection: 'WorldProtection'
 };
 /*
@@ -99,6 +102,8 @@ export const GuildConfigScalarFieldEnum = {
     coLiderRoleId: 'coLiderRoleId',
     aquarisRoleId: 'aquarisRoleId',
     staffRoleId: 'staffRoleId',
+    reclutadorRoleId: 'reclutadorRoleId',
+    comercianteRoleId: 'comercianteRoleId',
     levelUpChannelId: 'levelUpChannelId',
     boostChannelId: 'boostChannelId',
     shopStaffChannelId: 'shopStaffChannelId',
@@ -292,6 +297,7 @@ export const ShopOrderScalarFieldEnum = {
     orderCode: 'orderCode',
     customerUserId: 'customerUserId',
     status: 'status',
+    source: 'source',
     ticketChannelId: 'ticketChannelId',
     staffChannelId: 'staffChannelId',
     acceptedByUserId: 'acceptedByUserId',
@@ -301,6 +307,7 @@ export const ShopOrderScalarFieldEnum = {
     cancelReason: 'cancelReason',
     subtotalAmount: 'subtotalAmount',
     totalDiscountAmount: 'totalDiscountAmount',
+    surchargesAmount: 'surchargesAmount',
     totalAmount: 'totalAmount',
     createdAt: 'createdAt',
     acceptedAt: 'acceptedAt',
@@ -414,6 +421,15 @@ export const ShopOrderEventScalarFieldEnum = {
     notes: 'notes',
     createdAt: 'createdAt'
 };
+export const ShopOrderSurchargeScalarFieldEnum = {
+    id: 'id',
+    orderId: 'orderId',
+    label: 'label',
+    isPercent: 'isPercent',
+    rate: 'rate',
+    amount: 'amount',
+    createdAt: 'createdAt'
+};
 export const PollScalarFieldEnum = {
     id: 'id',
     guildId: 'guildId',
@@ -442,6 +458,22 @@ export const ProtectionMemberScalarFieldEnum = {
     playerName: 'playerName',
     level: 'level',
     addedAt: 'addedAt'
+};
+export const CommandUsageScalarFieldEnum = {
+    id: 'id',
+    guildId: 'guildId',
+    userId: 'userId',
+    commandName: 'commandName',
+    subcommandGroup: 'subcommandGroup',
+    subcommand: 'subcommand',
+    createdAt: 'createdAt'
+};
+export const ShopFreeRequestScalarFieldEnum = {
+    id: 'id',
+    guildId: 'guildId',
+    userId: 'userId',
+    requestText: 'requestText',
+    createdAt: 'createdAt'
 };
 export const WorldProtectionScalarFieldEnum = {
     id: 'id',

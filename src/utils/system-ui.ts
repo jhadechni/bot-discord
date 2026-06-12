@@ -60,6 +60,8 @@ export function buildConfigOverviewEmbeds(config: GuildConfig) {
         { name: 'Co-Lider', value: roleMention(config.coLiderRoleId), inline: true },
         { name: 'Aquaris', value: roleMention(config.aquarisRoleId), inline: true },
         { name: 'Staff', value: roleMention(config.staffRoleId), inline: true },
+        { name: 'Reclutador', value: roleMention(config.reclutadorRoleId), inline: true },
+        { name: 'Comerciante', value: roleMention(config.comercianteRoleId), inline: true },
         { name: 'Canal staff pedidos', value: channelMention(config.shopStaffChannelId), inline: true },
         { name: 'Categoria pedidos', value: rawId(config.shopCategoryId), inline: true },
       ],

@@ -25,6 +25,8 @@ model GuildConfig {
   coLiderRoleId         String?
   aquarisRoleId         String?
   staffRoleId           String?
+  reclutadorRoleId      String?
+  comercianteRoleId     String?
   levelUpChannelId      String?
   boostChannelId        String?
   shopStaffChannelId    String?
@@ -215,6 +217,7 @@ model ShopUser {
   salesAsBuyer     ShopSale[]              @relation("ShopSaleBuyer")
   salesRegistered  ShopSale[]              @relation("ShopSaleRegisteredBy")
   withdrawals      ShopWithdrawal[]
+  freeRequests     ShopFreeRequest[]
 
   @@unique([guildId, discordUserId])
 }
@@ -320,6 +323,7 @@ model ShopOrder {
   orderCode           String                  @unique
   customerUserId      String
   status              String                  @default("pending")
+  source              String                  @default("direct")
   ticketChannelId     String?
   staffChannelId      String?
   acceptedByUserId    String?
@@ -329,6 +333,7 @@ model ShopOrder {
   cancelReason        String?
   subtotalAmount      Decimal                 @default(0)
   totalDiscountAmount Decimal                 @default(0)
+  surchargesAmount    Decimal                 @default(0)
   totalAmount         Decimal                 @default(0)
   createdAt           DateTime                @default(now())
   acceptedAt          DateTime?
@@ -343,6 +348,7 @@ model ShopOrder {
   rejectedBy          ShopUser?               @relation("ShopOrderRejectedBy", fields: [rejectedByUserId], references: [id])
   events              ShopOrderEvent[]
   items               ShopOrderItem[]
+  surcharges          ShopOrderSurcharge[]
   sale                ShopSale?
 
   @@index([acceptedByUserId])
@@ -527,6 +533,19 @@ model ShopOrderEvent {
   @@index([performedById])
 }
 
+model ShopOrderSurcharge {
+  id        String    @id @default(cuid())
+  orderId   String
+  label     String
+  isPercent Boolean   @default(true)
+  rate      Decimal?
+  amount    Decimal
+  createdAt DateTime  @default(now())
+  order     ShopOrder @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+}
+
 model Poll {
   id        String   @id @default(cuid())
   guildId   String
@@ -566,6 +585,32 @@ model ProtectionMember {
   @@unique([protectionId, playerName])
   @@index([playerName])
   @@index([protectionId])
+}
+
+model CommandUsage {
+  id               String   @id @default(cuid())
+  guildId          String
+  userId           String
+  commandName      String
+  subcommandGroup  String?
+  subcommand       String?
+  createdAt        DateTime @default(now())
+
+  @@index([guildId, createdAt])
+  @@index([userId])
+  @@index([commandName, subcommandGroup, subcommand])
+}
+
+model ShopFreeRequest {
+  id          String   @id @default(cuid())
+  guildId     String
+  userId      String
+  requestText String
+  createdAt   DateTime @default(now())
+  user        ShopUser @relation(fields: [userId], references: [id])
+
+  @@index([guildId, createdAt])
+  @@index([userId])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.

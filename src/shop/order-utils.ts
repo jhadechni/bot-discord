@@ -156,6 +156,9 @@ export async function getOrderFull(orderCode: string) {
         orderBy: { appliedAt: 'asc' },
       },
       customer: true,
+      surcharges: {
+        orderBy: { createdAt: 'asc' },
+      },
       items:    {
         include: {
           appliedDiscounts: {
@@ -180,6 +183,44 @@ export async function getOrderFull(orderCode: string) {
   });
 }
 
+/** Agrega un recargo al pedido y recalcula el total. */
+export async function addSurchargeToOrder(
+  orderCode: string,
+  label: string,
+  isPercent: boolean,
+  rate: number,
+): Promise<void> {
+  const order = await prisma.shopOrder.findUnique({ where: { orderCode } });
+  if (!order) throw new Error('Pedido no encontrado');
+
+  const base = new Prisma.Decimal(order.subtotalAmount);
+  const amount = isPercent
+    ? base.mul(rate).div(100).toDecimalPlaces(2)
+    : new Prisma.Decimal(rate).toDecimalPlaces(2);
+
+  const newSurcharges = new Prisma.Decimal(order.surchargesAmount).add(amount);
+  const newTotal = base
+    .sub(order.totalDiscountAmount)
+    .add(newSurcharges)
+    .toDecimalPlaces(2);
+
+  await prisma.$transaction([
+    prisma.shopOrderSurcharge.create({
+      data: {
+        orderId:   order.id,
+        label,
+        isPercent,
+        rate:      isPercent ? new Prisma.Decimal(rate) : null,
+        amount,
+      },
+    }),
+    prisma.shopOrder.update({
+      where: { orderCode },
+      data:  { surchargesAmount: newSurcharges, totalAmount: newTotal },
+    }),
+  ]);
+}
+
 /** Genera un código único con formato AQ-XXXXXX. */
 export async function generateOrderCode(): Promise<string> {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -200,8 +241,9 @@ export async function createPendingOrder(params: {
   guildId: string;
   items: PendingOrderItemInput[];
   staffChannelId?: string | null;
+  source?: 'cart' | 'direct';
 }) {
-  const { customerUserId, guildId, items, staffChannelId = null } = params;
+  const { customerUserId, guildId, items, staffChannelId = null, source = 'direct' } = params;
 
   if (items.length === 0) {
     throw new Error('No se puede crear un pedido sin productos.');
@@ -255,6 +297,7 @@ export async function createPendingOrder(params: {
         customerUserId,
         staffChannelId,
         status: 'pending',
+        source,
         subtotalAmount: pricing.subtotalAmount,
         totalDiscountAmount: pricing.totalDiscountAmount,
         totalAmount: pricing.totalAmount,
@@ -730,15 +773,23 @@ export function buildOrderEmbed(
       { name: 'Estado',    value: label,                                 inline: true },
       { name: '\u200B',       value: '\u200B',                              inline: true },
       { name: 'Productos', value: itemLines.join('\n') || 'Sin productos' },
-      { name: 'Subtotal',  value: `**${formatPrice(order.subtotalAmount)}**`, inline: true },
+      { name: 'Subtotal',   value: `**${formatPrice(order.subtotalAmount)}**`,      inline: true },
       { name: 'Descuentos', value: `**-${formatPrice(order.totalDiscountAmount)}**`, inline: true },
-      { name: 'Total',     value: `**${formatPrice(order.totalAmount)}**`, inline: true },
+      { name: 'Total',      value: `**${formatPrice(order.totalAmount)}**`,          inline: true },
     )
     .setFooter(SHOP_FOOTER)
     .setTimestamp(order.createdAt);
 
   if (orderDiscountLines.length > 0) {
     embed.addFields({ name: 'Descuentos del pedido', value: orderDiscountLines.join('\n') });
+  }
+
+  if (order.surcharges.length > 0) {
+    const surchargeLines = order.surcharges.map(s => {
+      const rateStr = s.isPercent && s.rate != null ? ` (${s.rate}%)` : '';
+      return `• ${s.label}${rateStr}: +${formatPrice(s.amount)}`;
+    });
+    embed.addFields({ name: 'Servicios adicionales', value: surchargeLines.join('\n') });
   }
 
   if ((order.status === 'pending' || order.status === 'accepted') && stockAssessment) {
@@ -819,6 +870,10 @@ export function buildPendingButtons(orderCode: string) {
 /** Botones para pedido aceptado (en canal de staff). */
 export function buildAcceptedButtons(orderCode: string) {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`shop:add_service:${orderCode}`)
+      .setLabel('➕ Agregar servicio')
+      .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`shop:discount:${orderCode}`)
       .setLabel('🏷️ Aplicar descuento')
