@@ -1384,7 +1384,7 @@ const interactionCreateEvent = {
                     .setRequired(true)
                     .setMaxLength(150)), new ActionRowBuilder().addComponents(new TextInputBuilder()
                     .setCustomId('apply_colaborar')
-                    .setLabel('¿Colaboras en proyectos comunitarios?')
+                    .setLabel('¿Colaborarías en proyectos comunitarios?')
                     .setStyle(TextInputStyle.Short)
                     .setPlaceholder('¿Aunque no sean para tu base personal? Sí / No / A veces')
                     .setRequired(true)
