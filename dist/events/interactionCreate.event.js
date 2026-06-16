@@ -26,18 +26,19 @@ import { parseNotifRoles, buildNotifEphemeral } from '../commands/notif/notif.co
 import { parseExpulsionReasons, pendingExpulsions, buildExpulsionConfirmEmbed, buildReasonSelectMenu, buildConfirmRow, executeExpulsion, } from '../commands/expulsion/expulsion.command.js';
 import { buildAquarisEmbed, AQUARIS_COLORS } from '../utils/message-ui.js';
 // ── Votación de reclutamiento ────────────────────────────────────────────────
-function buildRecruitmentVoteComponents(approveCount, rejectCount, threshold, ticketId) {
+function buildRecruitmentVoteComponents(approveCount, rejectCount, eligibleCount, ticketId) {
+    const threshold = Math.floor(eligibleCount / 2) + 1;
     const approveReached = approveCount >= threshold;
     const rejectReached = rejectCount >= threshold;
     const votingClosed = approveReached || rejectReached;
     const row1 = new ActionRowBuilder().addComponents(new ButtonBuilder()
         .setCustomId(`apply_vote_approve_${ticketId}`)
-        .setLabel(`A favor (${approveCount}/${threshold})`)
+        .setLabel(`A favor (${approveCount}/${eligibleCount})`)
         .setEmoji('👍')
         .setStyle(ButtonStyle.Primary)
         .setDisabled(votingClosed), new ButtonBuilder()
         .setCustomId(`apply_vote_reject_${ticketId}`)
-        .setLabel(`En contra (${rejectCount}/${threshold})`)
+        .setLabel(`En contra (${rejectCount}/${eligibleCount})`)
         .setEmoji('👎')
         .setStyle(ButtonStyle.Secondary)
         .setDisabled(votingClosed));
@@ -1156,7 +1157,16 @@ const interactionCreateEvent = {
                     ticketId: ticket.id,
                     avatarUrl: interaction.user.displayAvatarURL(),
                 });
-                const buttons = buildRecruitmentVoteComponents(0, 0, 1, ticket.id);
+                const initialEligibleRoles = [config.liderRoleId, config.coLiderRoleId, config.staffRoleId, config.reclutadorRoleId].filter(Boolean);
+                const initialEligibleIds = new Set();
+                for (const roleId of initialEligibleRoles) {
+                    const role = interaction.guild.roles.cache.get(roleId);
+                    if (role)
+                        role.members.forEach(m => { if (!m.user.bot)
+                            initialEligibleIds.add(m.id); });
+                }
+                const initialEligibleCount = Math.max(initialEligibleIds.size, 1);
+                const buttons = buildRecruitmentVoteComponents(0, 0, initialEligibleCount, ticket.id);
                 // El canal del ticket es solo para el solicitante — bienvenida y entrevista
                 if (channelId) {
                     const ticketChannel = interaction.guild.channels.cache.get(channelId);
@@ -1521,7 +1531,7 @@ const interactionCreateEvent = {
                     }
                     const eligibleCount = Math.max(eligibleMemberIds.size, 1);
                     const threshold = Math.floor(eligibleCount / 2) + 1;
-                    const components = buildRecruitmentVoteComponents(approveCount, rejectCount, threshold, ticketId);
+                    const components = buildRecruitmentVoteComponents(approveCount, rejectCount, eligibleCount, ticketId);
                     await interaction.message.edit({ components });
                     const voteLabel = isApprove ? 'a favor' : 'en contra';
                     await interaction.editReply({
