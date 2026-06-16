@@ -160,6 +160,17 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
         omit: OmitOpts;
     }>;
     /**
+     * `prisma.recruitmentVote`: Exposes CRUD operations for the **RecruitmentVote** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more RecruitmentVotes
+      * const recruitmentVotes = await prisma.recruitmentVote.findMany()
+      * ```
+      */
+    get recruitmentVote(): Prisma.RecruitmentVoteDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
+    /**
      * `prisma.moderationLog`: Exposes CRUD operations for the **ModerationLog** model.
       * Example usage:
       * ```ts

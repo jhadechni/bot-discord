@@ -582,7 +582,7 @@ export async function consumeOrderStock(orderId, guildId, performedById) {
             });
         }
         return didReserve;
-    });
+    }, { timeout: 30_000 });
 }
 // ── Embeds y botones ──────────────────────────────────────────────────────────
 export function buildOrderEmbed(order, stockAssessment) {

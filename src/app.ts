@@ -21,6 +21,7 @@ import { jugadoresCommand } from "./commands/players/jugadores.command.js";
 import { kitCommand } from "./commands/kit/kit.command.js";
 import { notifCommand } from "./commands/notif/notif.command.js";
 import { expulsionCommand } from "./commands/expulsion/expulsion.command.js";
+import { anunciarCommand } from "./commands/anunciar/anunciar.command.js";
 
 // Events
 import readyEvent from "./events/ready.event.js";
@@ -53,6 +54,7 @@ for (const cmd of [
   kitCommand,
   notifCommand,
   expulsionCommand,
+  anunciarCommand,
 ]) {
   client.commands.set(cmd.data.name, cmd);
 }

@@ -22,6 +22,7 @@ export type GuildConfigMinAggregateOutputType = {
     logsLeavesChannelId: string | null;
     suggestionsChannelId: string | null;
     recruitmentCategoryId: string | null;
+    recruitmentReviewChannelId: string | null;
     visitorRoleId: string | null;
     aspirantRoleId: string | null;
     liderRoleId: string | null;
@@ -52,6 +53,7 @@ export type GuildConfigMaxAggregateOutputType = {
     logsLeavesChannelId: string | null;
     suggestionsChannelId: string | null;
     recruitmentCategoryId: string | null;
+    recruitmentReviewChannelId: string | null;
     visitorRoleId: string | null;
     aspirantRoleId: string | null;
     liderRoleId: string | null;
@@ -82,6 +84,7 @@ export type GuildConfigCountAggregateOutputType = {
     logsLeavesChannelId: number;
     suggestionsChannelId: number;
     recruitmentCategoryId: number;
+    recruitmentReviewChannelId: number;
     visitorRoleId: number;
     aspirantRoleId: number;
     liderRoleId: number;
@@ -115,6 +118,7 @@ export type GuildConfigMinAggregateInputType = {
     logsLeavesChannelId?: true;
     suggestionsChannelId?: true;
     recruitmentCategoryId?: true;
+    recruitmentReviewChannelId?: true;
     visitorRoleId?: true;
     aspirantRoleId?: true;
     liderRoleId?: true;
@@ -145,6 +149,7 @@ export type GuildConfigMaxAggregateInputType = {
     logsLeavesChannelId?: true;
     suggestionsChannelId?: true;
     recruitmentCategoryId?: true;
+    recruitmentReviewChannelId?: true;
     visitorRoleId?: true;
     aspirantRoleId?: true;
     liderRoleId?: true;
@@ -175,6 +180,7 @@ export type GuildConfigCountAggregateInputType = {
     logsLeavesChannelId?: true;
     suggestionsChannelId?: true;
     recruitmentCategoryId?: true;
+    recruitmentReviewChannelId?: true;
     visitorRoleId?: true;
     aspirantRoleId?: true;
     liderRoleId?: true;
@@ -270,6 +276,7 @@ export type GuildConfigGroupByOutputType = {
     logsLeavesChannelId: string | null;
     suggestionsChannelId: string | null;
     recruitmentCategoryId: string | null;
+    recruitmentReviewChannelId: string | null;
     visitorRoleId: string | null;
     aspirantRoleId: string | null;
     liderRoleId: string | null;
@@ -311,6 +318,7 @@ export type GuildConfigWhereInput = {
     logsLeavesChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     suggestionsChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     recruitmentCategoryId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
+    recruitmentReviewChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     visitorRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     aspirantRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     liderRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
@@ -343,6 +351,7 @@ export type GuildConfigOrderByWithRelationInput = {
     logsLeavesChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     suggestionsChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     recruitmentCategoryId?: Prisma.SortOrderInput | Prisma.SortOrder;
+    recruitmentReviewChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     visitorRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
     aspirantRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
     liderRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -378,6 +387,7 @@ export type GuildConfigWhereUniqueInput = Prisma.AtLeast<{
     logsLeavesChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     suggestionsChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     recruitmentCategoryId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
+    recruitmentReviewChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     visitorRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     aspirantRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     liderRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
@@ -410,6 +420,7 @@ export type GuildConfigOrderByWithAggregationInput = {
     logsLeavesChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     suggestionsChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     recruitmentCategoryId?: Prisma.SortOrderInput | Prisma.SortOrder;
+    recruitmentReviewChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     visitorRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
     aspirantRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
     liderRoleId?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -448,6 +459,7 @@ export type GuildConfigScalarWhereWithAggregatesInput = {
     logsLeavesChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     suggestionsChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     recruitmentCategoryId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
+    recruitmentReviewChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     visitorRoleId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     aspirantRoleId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     liderRoleId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
@@ -480,6 +492,7 @@ export type GuildConfigCreateInput = {
     logsLeavesChannelId?: string | null;
     suggestionsChannelId?: string | null;
     recruitmentCategoryId?: string | null;
+    recruitmentReviewChannelId?: string | null;
     visitorRoleId?: string | null;
     aspirantRoleId?: string | null;
     liderRoleId?: string | null;
@@ -512,6 +525,7 @@ export type GuildConfigUncheckedCreateInput = {
     logsLeavesChannelId?: string | null;
     suggestionsChannelId?: string | null;
     recruitmentCategoryId?: string | null;
+    recruitmentReviewChannelId?: string | null;
     visitorRoleId?: string | null;
     aspirantRoleId?: string | null;
     liderRoleId?: string | null;
@@ -544,6 +558,7 @@ export type GuildConfigUpdateInput = {
     logsLeavesChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     suggestionsChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     recruitmentCategoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    recruitmentReviewChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     visitorRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     aspirantRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     liderRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -576,6 +591,7 @@ export type GuildConfigUncheckedUpdateInput = {
     logsLeavesChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     suggestionsChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     recruitmentCategoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    recruitmentReviewChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     visitorRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     aspirantRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     liderRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -608,6 +624,7 @@ export type GuildConfigCreateManyInput = {
     logsLeavesChannelId?: string | null;
     suggestionsChannelId?: string | null;
     recruitmentCategoryId?: string | null;
+    recruitmentReviewChannelId?: string | null;
     visitorRoleId?: string | null;
     aspirantRoleId?: string | null;
     liderRoleId?: string | null;
@@ -640,6 +657,7 @@ export type GuildConfigUpdateManyMutationInput = {
     logsLeavesChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     suggestionsChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     recruitmentCategoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    recruitmentReviewChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     visitorRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     aspirantRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     liderRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -672,6 +690,7 @@ export type GuildConfigUncheckedUpdateManyInput = {
     logsLeavesChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     suggestionsChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     recruitmentCategoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    recruitmentReviewChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     visitorRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     aspirantRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     liderRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
@@ -704,6 +723,7 @@ export type GuildConfigCountOrderByAggregateInput = {
     logsLeavesChannelId?: Prisma.SortOrder;
     suggestionsChannelId?: Prisma.SortOrder;
     recruitmentCategoryId?: Prisma.SortOrder;
+    recruitmentReviewChannelId?: Prisma.SortOrder;
     visitorRoleId?: Prisma.SortOrder;
     aspirantRoleId?: Prisma.SortOrder;
     liderRoleId?: Prisma.SortOrder;
@@ -736,6 +756,7 @@ export type GuildConfigMaxOrderByAggregateInput = {
     logsLeavesChannelId?: Prisma.SortOrder;
     suggestionsChannelId?: Prisma.SortOrder;
     recruitmentCategoryId?: Prisma.SortOrder;
+    recruitmentReviewChannelId?: Prisma.SortOrder;
     visitorRoleId?: Prisma.SortOrder;
     aspirantRoleId?: Prisma.SortOrder;
     liderRoleId?: Prisma.SortOrder;
@@ -766,6 +787,7 @@ export type GuildConfigMinOrderByAggregateInput = {
     logsLeavesChannelId?: Prisma.SortOrder;
     suggestionsChannelId?: Prisma.SortOrder;
     recruitmentCategoryId?: Prisma.SortOrder;
+    recruitmentReviewChannelId?: Prisma.SortOrder;
     visitorRoleId?: Prisma.SortOrder;
     aspirantRoleId?: Prisma.SortOrder;
     liderRoleId?: Prisma.SortOrder;
@@ -805,6 +827,7 @@ export type GuildConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalA
     logsLeavesChannelId?: boolean;
     suggestionsChannelId?: boolean;
     recruitmentCategoryId?: boolean;
+    recruitmentReviewChannelId?: boolean;
     visitorRoleId?: boolean;
     aspirantRoleId?: boolean;
     liderRoleId?: boolean;
@@ -837,6 +860,7 @@ export type GuildConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
     logsLeavesChannelId?: boolean;
     suggestionsChannelId?: boolean;
     recruitmentCategoryId?: boolean;
+    recruitmentReviewChannelId?: boolean;
     visitorRoleId?: boolean;
     aspirantRoleId?: boolean;
     liderRoleId?: boolean;
@@ -869,6 +893,7 @@ export type GuildConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
     logsLeavesChannelId?: boolean;
     suggestionsChannelId?: boolean;
     recruitmentCategoryId?: boolean;
+    recruitmentReviewChannelId?: boolean;
     visitorRoleId?: boolean;
     aspirantRoleId?: boolean;
     liderRoleId?: boolean;
@@ -901,6 +926,7 @@ export type GuildConfigSelectScalar = {
     logsLeavesChannelId?: boolean;
     suggestionsChannelId?: boolean;
     recruitmentCategoryId?: boolean;
+    recruitmentReviewChannelId?: boolean;
     visitorRoleId?: boolean;
     aspirantRoleId?: boolean;
     liderRoleId?: boolean;
@@ -921,7 +947,7 @@ export type GuildConfigSelectScalar = {
     notifPanelChannelId?: boolean;
     notifPanelMessageId?: boolean;
 };
-export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "welcomeChannelId" | "logsChannelId" | "logsModChannelId" | "logsAutomodChannelId" | "logsRecruitChannelId" | "logsJoinsChannelId" | "logsLeavesChannelId" | "suggestionsChannelId" | "recruitmentCategoryId" | "visitorRoleId" | "aspirantRoleId" | "liderRoleId" | "coLiderRoleId" | "aquarisRoleId" | "staffRoleId" | "reclutadorRoleId" | "comercianteRoleId" | "levelUpChannelId" | "boostChannelId" | "shopStaffChannelId" | "shopCategoryId" | "createdAt" | "updatedAt" | "farewellChannelId" | "notifRoles" | "expulsionReasons" | "notifPanelChannelId" | "notifPanelMessageId", ExtArgs["result"]["guildConfig"]>;
+export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "welcomeChannelId" | "logsChannelId" | "logsModChannelId" | "logsAutomodChannelId" | "logsRecruitChannelId" | "logsJoinsChannelId" | "logsLeavesChannelId" | "suggestionsChannelId" | "recruitmentCategoryId" | "recruitmentReviewChannelId" | "visitorRoleId" | "aspirantRoleId" | "liderRoleId" | "coLiderRoleId" | "aquarisRoleId" | "staffRoleId" | "reclutadorRoleId" | "comercianteRoleId" | "levelUpChannelId" | "boostChannelId" | "shopStaffChannelId" | "shopCategoryId" | "createdAt" | "updatedAt" | "farewellChannelId" | "notifRoles" | "expulsionReasons" | "notifPanelChannelId" | "notifPanelMessageId", ExtArgs["result"]["guildConfig"]>;
 export type $GuildConfigPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "GuildConfig";
     objects: {};
@@ -937,6 +963,7 @@ export type $GuildConfigPayload<ExtArgs extends runtime.Types.Extensions.Interna
         logsLeavesChannelId: string | null;
         suggestionsChannelId: string | null;
         recruitmentCategoryId: string | null;
+        recruitmentReviewChannelId: string | null;
         visitorRoleId: string | null;
         aspirantRoleId: string | null;
         liderRoleId: string | null;
@@ -1321,6 +1348,7 @@ export interface GuildConfigFieldRefs {
     readonly logsLeavesChannelId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly suggestionsChannelId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly recruitmentCategoryId: Prisma.FieldRef<"GuildConfig", 'String'>;
+    readonly recruitmentReviewChannelId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly visitorRoleId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly aspirantRoleId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly liderRoleId: Prisma.FieldRef<"GuildConfig", 'String'>;

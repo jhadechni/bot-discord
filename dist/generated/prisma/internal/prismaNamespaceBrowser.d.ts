@@ -30,6 +30,7 @@ export declare const ModelName: {
     readonly Suggestion: "Suggestion";
     readonly SuggestionVote: "SuggestionVote";
     readonly RecruitmentTicket: "RecruitmentTicket";
+    readonly RecruitmentVote: "RecruitmentVote";
     readonly ModerationLog: "ModerationLog";
     readonly UserActivity: "UserActivity";
     readonly MonthlyActivity: "MonthlyActivity";
@@ -82,6 +83,7 @@ export declare const GuildConfigScalarFieldEnum: {
     readonly logsLeavesChannelId: "logsLeavesChannelId";
     readonly suggestionsChannelId: "suggestionsChannelId";
     readonly recruitmentCategoryId: "recruitmentCategoryId";
+    readonly recruitmentReviewChannelId: "recruitmentReviewChannelId";
     readonly visitorRoleId: "visitorRoleId";
     readonly aspirantRoleId: "aspirantRoleId";
     readonly liderRoleId: "liderRoleId";
@@ -134,6 +136,15 @@ export declare const RecruitmentTicketScalarFieldEnum: {
     readonly staleAlertedAt: "staleAlertedAt";
 };
 export type RecruitmentTicketScalarFieldEnum = (typeof RecruitmentTicketScalarFieldEnum)[keyof typeof RecruitmentTicketScalarFieldEnum];
+export declare const RecruitmentVoteScalarFieldEnum: {
+    readonly id: "id";
+    readonly ticketId: "ticketId";
+    readonly userId: "userId";
+    readonly username: "username";
+    readonly vote: "vote";
+    readonly createdAt: "createdAt";
+};
+export type RecruitmentVoteScalarFieldEnum = (typeof RecruitmentVoteScalarFieldEnum)[keyof typeof RecruitmentVoteScalarFieldEnum];
 export declare const ModerationLogScalarFieldEnum: {
     readonly id: "id";
     readonly guildId: "guildId";

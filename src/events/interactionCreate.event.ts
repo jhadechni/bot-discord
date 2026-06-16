@@ -125,6 +125,50 @@ import {
 } from '../commands/expulsion/expulsion.command.js';
 import { buildAquarisEmbed, AQUARIS_COLORS } from '../utils/message-ui.js';
 
+// ── Votación de reclutamiento ────────────────────────────────────────────────
+function buildRecruitmentVoteComponents(
+  approveCount: number,
+  rejectCount: number,
+  threshold: number,
+  ticketId: string,
+): ActionRowBuilder<ButtonBuilder>[] {
+  const approveReached = approveCount >= threshold;
+  const rejectReached  = rejectCount  >= threshold;
+  const votingClosed   = approveReached || rejectReached;
+
+  const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`apply_vote_approve_${ticketId}`)
+      .setLabel(`A favor (${approveCount}/${threshold})`)
+      .setEmoji('👍')
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(votingClosed),
+    new ButtonBuilder()
+      .setCustomId(`apply_vote_reject_${ticketId}`)
+      .setLabel(`En contra (${rejectCount}/${threshold})`)
+      .setEmoji('👎')
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(votingClosed),
+  );
+
+  const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`apply_finalize_accept_${ticketId}`)
+      .setLabel('Confirmar aceptación')
+      .setEmoji('✅')
+      .setStyle(ButtonStyle.Success)
+      .setDisabled(false),
+    new ButtonBuilder()
+      .setCustomId(`apply_finalize_reject_${ticketId}`)
+      .setLabel('Confirmar rechazo')
+      .setEmoji('❌')
+      .setStyle(ButtonStyle.Danger)
+      .setDisabled(false),
+  );
+
+  return [row1, row2];
+}
+
 // ── Cooldowns (en memoria para sugerencias, DB para apply) ───────────────────
 const SUGGEST_COOLDOWN_MS = 5 * 60 * 1000;  // 5 minutos
 const APPLY_COOLDOWN_MS   = 48 * 60 * 60 * 1000; // 48 horas
@@ -1055,6 +1099,72 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       return;
     }
 
+    // --- Modal anunciar ---
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('anunciar:modal:')) {
+      await interaction.deferReply({ ephemeral: true });
+
+      const guild = interaction.guild;
+      if (!guild) return;
+
+      const parts     = interaction.customId.split(':');
+      const channelId = parts[2];
+      const roleId    = parts[3];
+
+      const mensaje = interaction.fields.getTextInputValue('mensaje').trim();
+      if (!mensaje) {
+        await interaction.editReply({ content: 'El mensaje no puede estar vacío.' });
+        return;
+      }
+
+      const targetChannel = guild.channels.cache.get(channelId ?? '')
+        ?? (channelId ? await guild.channels.fetch(channelId).catch(() => null) : null);
+
+      if (!targetChannel?.isTextBased()) {
+        await interaction.editReply({ content: 'No se encontró el canal o no es un canal de texto.' });
+        return;
+      }
+
+      let contenido = mensaje
+        .replaceAll('{here}',     '@here')
+        .replaceAll('{everyone}', '@everyone');
+
+      if (roleId && roleId !== 'none') {
+        const mencion = `<@&${roleId}>`;
+        if (contenido.includes('{rol}')) {
+          contenido = contenido.replaceAll('{rol}', mencion);
+        } else {
+          contenido = `${mencion} ${contenido}`;
+        }
+      }
+
+      // Dividir en chunks de 2000 chars respetando saltos de línea y palabras
+      const chunks: string[] = [];
+      let restante = contenido;
+      while (restante.length > 2000) {
+        let corte = restante.lastIndexOf('\n', 2000);
+        if (corte < 1000) corte = restante.lastIndexOf(' ', 2000);
+        if (corte < 1) corte = 2000;
+        chunks.push(restante.slice(0, corte));
+        restante = restante.slice(corte).trimStart();
+      }
+      if (restante) chunks.push(restante);
+
+      try {
+        for (const chunk of chunks) {
+          await targetChannel.send({
+            content: chunk,
+            allowedMentions: { parse: ['roles', 'everyone', 'users'] },
+          });
+        }
+        const partes = chunks.length > 1 ? ` (${chunks.length} mensajes)` : '';
+        await interaction.editReply({ content: `Mensaje enviado a <#${channelId}>${partes}.` });
+      } catch (err) {
+        logger.error({ err }, 'Error al enviar anuncio');
+        await interaction.editReply({ content: 'No se pudo enviar el mensaje. Verifica que el bot tenga permisos en ese canal.' });
+      }
+      return;
+    }
+
     // --- Modal búsqueda en tienda ---
     if (interaction.isModalSubmit() && interaction.customId === 'tienda:catalog:search_modal') {
       await interaction.deferUpdate();
@@ -1384,25 +1494,13 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         avatarUrl: interaction.user.displayAvatarURL(),
       });
 
-      const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-          .setCustomId(`apply_accept_${ticket.id}`)
-          .setLabel('Aceptar')
-          .setEmoji('✅')
-          .setStyle(ButtonStyle.Success),
-        new ButtonBuilder()
-          .setCustomId(`apply_reject_${ticket.id}`)
-          .setLabel('Rechazar')
-          .setEmoji('❌')
-          .setStyle(ButtonStyle.Danger),
-      );
+      const buttons = buildRecruitmentVoteComponents(0, 0, 1, ticket.id);
 
+      // El canal del ticket es solo para el solicitante — bienvenida y entrevista
       if (channelId) {
         const ticketChannel = interaction.guild.channels.cache.get(channelId);
         if (ticketChannel?.isTextBased()) {
-          // Bienvenida al solicitante en su canal privado
-          const welcomeEmbed = buildRecruitmentTicketWelcomeEmbed(interaction.user.id);
-          await ticketChannel.send({ embeds: [welcomeEmbed] });
+          await ticketChannel.send({ embeds: [buildRecruitmentTicketWelcomeEmbed(interaction.user.id)] });
 
           if (role.split(',').includes('Builder')) {
             await ticketChannel.send({
@@ -1415,27 +1513,17 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
               ],
             });
           }
+        }
+      }
 
-          // Embed de revisión para el staff (sin mención al usuario para no notificarle otra vez)
-          await ticketChannel.send({ embeds: [staffEmbed], components: [buttons] });
-        }
-      } else {
-        const recruitLogCh = getLogChannel(interaction.guild, config, 'recruit');
-        if (recruitLogCh) {
-          await recruitLogCh.send({ embeds: [staffEmbed], components: [buttons] });
-          if (role.split(',').includes('Builder')) {
-            await recruitLogCh.send({
-              embeds: [
-                buildRecruitmentNoticeEmbed({
-                  title: '🏗️ Material adicional para Builder',
-                  description: `<@${interaction.user.id}> aplica como **Builder**. Puede aportar capturas de construcciones o proyectos.`,
-                  color: RECRUITMENT_COLORS.info,
-                  footer: 'logsRecruitment',
-                }),
-              ],
-            });
-          }
-        }
+      // El embed de votación va al canal de revisión de solicitudes (solo staff)
+      const reviewChId = config.recruitmentReviewChannelId;
+      const reviewCh = reviewChId
+        ? (interaction.guild.channels.cache.get(reviewChId) ?? await interaction.guild.channels.fetch(reviewChId).catch(() => null))
+        : null;
+      const reviewTarget = reviewCh?.isTextBased() ? reviewCh : getLogChannel(interaction.guild, config, 'recruit');
+      if (reviewTarget) {
+        await reviewTarget.send({ embeds: [staffEmbed], components: buttons });
       }
 
       await interaction.editReply({
@@ -1794,71 +1882,113 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
     if (interaction.isButton()) {
       const { customId } = interaction;
 
-      if (customId.startsWith('apply_accept_') || customId.startsWith('apply_reject_')) {
-        const isAccept = customId.startsWith('apply_accept_');
-        const ticketId = customId.replace(isAccept ? 'apply_accept_' : 'apply_reject_', '');
+      // ── Votos de reclutamiento ───────────────────────────────────────────────
+      if (customId.startsWith('apply_vote_approve_') || customId.startsWith('apply_vote_reject_')) {
+        const isApprove = customId.startsWith('apply_vote_approve_');
+        const ticketId = customId.replace(isApprove ? 'apply_vote_approve_' : 'apply_vote_reject_', '');
 
-        // Verificar permisos
+        const guild = interaction.guild;
+        if (!guild) return;
+
+        await interaction.deferReply({ ephemeral: true });
+
+        const cfg = await getOrCreateGuildConfig(guild.id);
+        const voter = await guild.members.fetch(interaction.user.id);
+        const eligibleRoles = [cfg.liderRoleId, cfg.coLiderRoleId, cfg.staffRoleId, cfg.reclutadorRoleId].filter(Boolean) as string[];
+        const hasRole = voter.permissions.has(PermissionFlagsBits.Administrator) || eligibleRoles.some(r => voter.roles.cache.has(r));
+
+        if (!hasRole) {
+          await interaction.editReply({ content: 'No tienes permiso para votar en solicitudes.' });
+          return;
+        }
+
+        const ticket = await prisma.recruitmentTicket.findUnique({ where: { id: ticketId } });
+        if (!ticket || ticket.status !== 'OPEN') {
+          await interaction.editReply({ content: 'Esta solicitud ya no está activa.' });
+          return;
+        }
+
+        const existingVote = await prisma.recruitmentVote.findUnique({
+          where: { ticketId_userId: { ticketId, userId: interaction.user.id } },
+        });
+
+        if (existingVote) {
+          await interaction.editReply({ content: 'Ya has votado en esta solicitud.' });
+          return;
+        }
+
+        await prisma.recruitmentVote.create({
+          data: {
+            ticketId,
+            userId: interaction.user.id,
+            username: interaction.user.username,
+            vote: isApprove ? 'APPROVE' : 'REJECT',
+          },
+        });
+
+        const votes = await prisma.recruitmentVote.findMany({ where: { ticketId } });
+        const approveCount = votes.filter(v => v.vote === 'APPROVE').length;
+        const rejectCount  = votes.filter(v => v.vote === 'REJECT').length;
+
+        // Contar elegibles desde la caché de roles (sin fetch masivo de miembros)
+        const eligibleMemberIds = new Set<string>();
+        for (const roleId of eligibleRoles) {
+          const role = guild.roles.cache.get(roleId);
+          if (role) role.members.forEach(m => { if (!m.user.bot) eligibleMemberIds.add(m.id); });
+        }
+        const eligibleCount = Math.max(eligibleMemberIds.size, 1);
+        const threshold = Math.floor(eligibleCount / 2) + 1;
+
+        const components = buildRecruitmentVoteComponents(approveCount, rejectCount, threshold, ticketId);
+        await interaction.message.edit({ components });
+
+        const voteLabel = isApprove ? 'a favor' : 'en contra';
+        await interaction.editReply({
+          content: `Voto registrado (${voteLabel}). Resultado: 👍 ${approveCount} / 👎 ${rejectCount} — se necesitan ${threshold}.`,
+        });
+      }
+
+      // ── Confirmar aceptación ─────────────────────────────────────────────────
+      if (customId.startsWith('apply_finalize_accept_')) {
+        const ticketId = customId.replace('apply_finalize_accept_', '');
+
         const guild = interaction.guild;
         if (!guild) return;
 
         const actor = await guild.members.fetch(interaction.user.id);
         const cfg = await getOrCreateGuildConfig(guild.id);
-
-        const hasPermission =
-          actor.permissions.has(PermissionFlagsBits.Administrator) ||
-          (cfg.staffRoleId != null && actor.roles.cache.has(cfg.staffRoleId)) ||
-          (cfg.liderRoleId != null && actor.roles.cache.has(cfg.liderRoleId)) ||
-          (cfg.coLiderRoleId != null && actor.roles.cache.has(cfg.coLiderRoleId));
+        const eligibleRoles = [cfg.liderRoleId, cfg.coLiderRoleId, cfg.staffRoleId, cfg.reclutadorRoleId].filter(Boolean) as string[];
+        const hasPermission = actor.permissions.has(PermissionFlagsBits.Administrator) || eligibleRoles.some(r => actor.roles.cache.has(r));
 
         if (!hasPermission) {
-          await interaction.reply({
-            embeds: [
-              buildRecruitmentErrorEmbed(
-                'Permiso insuficiente',
-                'Solo el staff puede aceptar o rechazar solicitudes.',
-              ),
-            ],
-            ephemeral: true,
-          });
+          await interaction.reply({ content: 'No tienes permiso para confirmar esta acción.', ephemeral: true });
           return;
         }
 
-        // Rechazo: mostrar modal para pedir motivo
-        if (!isAccept) {
-          const rejectModal = new ModalBuilder()
-            .setCustomId(`apply_reject_reason_${ticketId}_${interaction.channelId}_${interaction.message.id}`)
-            .setTitle('Rechazar solicitud');
-          rejectModal.addComponents(
-            new ActionRowBuilder<TextInputBuilder>().addComponents(
-              new TextInputBuilder()
-                .setCustomId('reject_reason')
-                .setLabel('Motivo del rechazo')
-                .setStyle(TextInputStyle.Paragraph)
-                .setRequired(true)
-                .setMaxLength(500)
-                .setPlaceholder('Explica brevemente el motivo del rechazo...'),
-            ),
-          );
-          await interaction.showModal(rejectModal);
-          return;
+        const isLider = actor.permissions.has(PermissionFlagsBits.Administrator)
+          || (cfg.liderRoleId != null && actor.roles.cache.has(cfg.liderRoleId));
+
+        if (!isLider) {
+          const votes = await prisma.recruitmentVote.findMany({ where: { ticketId } });
+          const approveCount = votes.filter(v => v.vote === 'APPROVE').length;
+          const eligibleRolesForCount = [cfg.liderRoleId, cfg.coLiderRoleId, cfg.staffRoleId, cfg.reclutadorRoleId].filter(Boolean) as string[];
+          let eligibleCount = 0;
+          for (const roleId of eligibleRolesForCount) {
+            const role = guild.roles.cache.get(roleId) ?? await guild.roles.fetch(roleId).catch(() => null);
+            if (role) eligibleCount += role.members.size;
+          }
+          const threshold = Math.floor(eligibleCount / 2) + 1;
+          if (approveCount < threshold) {
+            await interaction.reply({ content: `La votación aún no alcanzó el umbral necesario (👍 ${approveCount}/${threshold}). Sólo el Líder puede confirmar sin esperar el resultado.`, ephemeral: true });
+            return;
+          }
         }
 
-        // Aceptación
         await interaction.deferUpdate();
 
         const ticket = await prisma.recruitmentTicket.findUnique({ where: { id: ticketId } });
         if (!ticket || ticket.status !== 'OPEN') {
-          await interaction.followUp({
-            embeds: [
-              buildRecruitmentNoticeEmbed({
-                title: 'Ticket ya procesado',
-                description: 'Este ticket ya fue procesado.',
-                color: RECRUITMENT_COLORS.warning,
-              }),
-            ],
-            ephemeral: true,
-          });
+          await interaction.followUp({ content: 'Este ticket ya fue procesado.', ephemeral: true });
           return;
         }
 
@@ -1867,7 +1997,6 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           data: { status: 'ACCEPTED', staleAlertedAt: null },
         });
 
-        // Asignar rol Aspirante al aceptar
         try {
           const applicant = await guild.members.fetch(ticket.userId);
           if (cfg.aspirantRoleId && !applicant.roles.cache.has(cfg.aspirantRoleId)) {
@@ -1889,10 +2018,8 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           interaction.message.embeds[0] ?? new EmbedBuilder(),
           interaction.user.id,
         );
-
         await interaction.editReply({ embeds: [acceptedEmbed], components: [] });
 
-        // Log de aceptación al canal de reclutamiento
         const acceptLogCh = getLogChannel(guild, cfg, 'recruit');
         if (acceptLogCh) {
           await acceptLogCh.send({
@@ -1905,29 +2032,85 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           }).catch(() => undefined);
         }
 
-        // Mantener canal abierto para la entrevista
-        const ticketChannel = interaction.channel;
-        if (ticketChannel && ticketChannel.isTextBased() && 'setName' in ticketChannel) {
+        // Renombrar el canal privado del ticket (no el canal de revisión)
+        if (ticket.channelId) {
           try {
+            const privateChannel = guild.channels.cache.get(ticket.channelId)
+              ?? await guild.channels.fetch(ticket.channelId).catch(() => null);
             const applicantMember = await guild.members.fetch(ticket.userId).catch(() => null);
             const username = applicantMember?.user.username ?? ticket.userId;
-            await ticketChannel.setName(`entrevista-${username}`);
-            await ticketChannel.send({
-              embeds: [
-                buildRecruitmentNoticeEmbed({
-                  title: '✅ Solicitud aceptada — entrevista en curso',
-                  description:
-                    `Solicitud aceptada por <@${interaction.user.id}>.\n\n` +
-                    `<@${ticket.userId}> el staff se pondrá en contacto contigo aquí para coordinar la entrevista. ` +
-                    'Una vez aprobada la entrevista, el staff te asignará el rol **Aquaris** manualmente.',
-                  color: RECRUITMENT_COLORS.success,
-                }),
-              ],
-            });
+            if (privateChannel && privateChannel.isTextBased() && 'setName' in privateChannel) {
+              await privateChannel.setName(`entrevista-${username}`);
+              await privateChannel.send({
+                embeds: [
+                  buildRecruitmentNoticeEmbed({
+                    title: '✅ Solicitud aceptada — entrevista en curso',
+                    description:
+                      `Solicitud aceptada por <@${interaction.user.id}>.\n\n` +
+                      `<@${ticket.userId}> el staff se pondrá en contacto contigo aquí para coordinar la entrevista. ` +
+                      'Una vez aprobada la entrevista, el staff te asignará el rol **Aquaris** manualmente.',
+                    color: RECRUITMENT_COLORS.success,
+                  }),
+                ],
+              });
+            }
           } catch (err) {
             logger.warn({ err }, 'No se pudo renombrar el canal de entrevista');
           }
         }
+      }
+
+      // ── Confirmar rechazo (abre modal) ───────────────────────────────────────
+      if (customId.startsWith('apply_finalize_reject_') && !customId.startsWith('apply_finalize_reject_reason_')) {
+        const ticketId = customId.replace('apply_finalize_reject_', '');
+
+        const guild = interaction.guild;
+        if (!guild) return;
+
+        const actor = await guild.members.fetch(interaction.user.id);
+        const cfg = await getOrCreateGuildConfig(guild.id);
+        const eligibleRoles = [cfg.liderRoleId, cfg.coLiderRoleId, cfg.staffRoleId, cfg.reclutadorRoleId].filter(Boolean) as string[];
+        const hasPermission = actor.permissions.has(PermissionFlagsBits.Administrator) || eligibleRoles.some(r => actor.roles.cache.has(r));
+
+        if (!hasPermission) {
+          await interaction.reply({ content: 'No tienes permiso para confirmar esta acción.', ephemeral: true });
+          return;
+        }
+
+        const isLiderForReject = actor.permissions.has(PermissionFlagsBits.Administrator)
+          || (cfg.liderRoleId != null && actor.roles.cache.has(cfg.liderRoleId));
+
+        if (!isLiderForReject) {
+          const votes = await prisma.recruitmentVote.findMany({ where: { ticketId } });
+          const rejectCount = votes.filter(v => v.vote === 'REJECT').length;
+          const eligibleRolesForCount = [cfg.liderRoleId, cfg.coLiderRoleId, cfg.staffRoleId, cfg.reclutadorRoleId].filter(Boolean) as string[];
+          let eligibleCount = 0;
+          for (const roleId of eligibleRolesForCount) {
+            const role = guild.roles.cache.get(roleId) ?? await guild.roles.fetch(roleId).catch(() => null);
+            if (role) eligibleCount += role.members.size;
+          }
+          const threshold = Math.floor(eligibleCount / 2) + 1;
+          if (rejectCount < threshold) {
+            await interaction.reply({ content: `La votación aún no alcanzó el umbral necesario (👎 ${rejectCount}/${threshold}). Sólo el Líder puede confirmar sin esperar el resultado.`, ephemeral: true });
+            return;
+          }
+        }
+
+        const rejectModal = new ModalBuilder()
+          .setCustomId(`apply_finalize_reject_reason_${ticketId}_${interaction.channelId}_${interaction.message.id}`)
+          .setTitle('Rechazar solicitud');
+        rejectModal.addComponents(
+          new ActionRowBuilder<TextInputBuilder>().addComponents(
+            new TextInputBuilder()
+              .setCustomId('reject_reason')
+              .setLabel('Motivo del rechazo')
+              .setStyle(TextInputStyle.Paragraph)
+              .setRequired(true)
+              .setMaxLength(500)
+              .setPlaceholder('Explica brevemente el motivo del rechazo...'),
+          ),
+        );
+        await interaction.showModal(rejectModal);
       }
 
     }
@@ -3364,14 +3547,21 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
     }
 
     // --- Modal: rechazo de reclutamiento con motivo ---
-    if (interaction.isModalSubmit() && interaction.customId.startsWith('apply_reject_reason_')) {
+    if (interaction.isModalSubmit() && (
+      interaction.customId.startsWith('apply_finalize_reject_reason_') ||
+      interaction.customId.startsWith('apply_reject_reason_')
+    )) {
       await interaction.deferReply({ ephemeral: true });
 
       const guild = interaction.guild;
       if (!guild) return;
 
-      // Parsear customId: apply_reject_reason_<ticketId>_<channelId>_<messageId>
-      const parts = interaction.customId.replace('apply_reject_reason_', '').split('_');
+      // Parsear customId: apply_finalize_reject_reason_<ticketId>_<channelId>_<messageId>
+      //                or: apply_reject_reason_<ticketId>_<channelId>_<messageId>
+      const prefix = interaction.customId.startsWith('apply_finalize_reject_reason_')
+        ? 'apply_finalize_reject_reason_'
+        : 'apply_reject_reason_';
+      const parts = interaction.customId.replace(prefix, '').split('_');
       // ticketId es cuid (puede contener letras/números), channelId y messageId son snowflakes (solo dígitos)
       // Los snowflakes están al final, son los últimos 2 elementos
       const messageId = parts[parts.length - 1];

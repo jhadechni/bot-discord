@@ -174,6 +174,7 @@ export type RecruitmentTicketWhereInput = {
     createdAt?: Prisma.DateTimeFilter<"RecruitmentTicket"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"RecruitmentTicket"> | Date | string;
     staleAlertedAt?: Prisma.DateTimeNullableFilter<"RecruitmentTicket"> | Date | string | null;
+    votes?: Prisma.RecruitmentVoteListRelationFilter;
 };
 export type RecruitmentTicketOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -186,6 +187,7 @@ export type RecruitmentTicketOrderByWithRelationInput = {
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
     staleAlertedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
+    votes?: Prisma.RecruitmentVoteOrderByRelationAggregateInput;
 };
 export type RecruitmentTicketWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -201,6 +203,7 @@ export type RecruitmentTicketWhereUniqueInput = Prisma.AtLeast<{
     createdAt?: Prisma.DateTimeFilter<"RecruitmentTicket"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"RecruitmentTicket"> | Date | string;
     staleAlertedAt?: Prisma.DateTimeNullableFilter<"RecruitmentTicket"> | Date | string | null;
+    votes?: Prisma.RecruitmentVoteListRelationFilter;
 }, "id">;
 export type RecruitmentTicketOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -243,6 +246,7 @@ export type RecruitmentTicketCreateInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     staleAlertedAt?: Date | string | null;
+    votes?: Prisma.RecruitmentVoteCreateNestedManyWithoutTicketInput;
 };
 export type RecruitmentTicketUncheckedCreateInput = {
     id?: string;
@@ -255,6 +259,7 @@ export type RecruitmentTicketUncheckedCreateInput = {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     staleAlertedAt?: Date | string | null;
+    votes?: Prisma.RecruitmentVoteUncheckedCreateNestedManyWithoutTicketInput;
 };
 export type RecruitmentTicketUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -267,6 +272,7 @@ export type RecruitmentTicketUpdateInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     staleAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    votes?: Prisma.RecruitmentVoteUpdateManyWithoutTicketNestedInput;
 };
 export type RecruitmentTicketUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -279,6 +285,7 @@ export type RecruitmentTicketUncheckedUpdateInput = {
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     staleAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    votes?: Prisma.RecruitmentVoteUncheckedUpdateManyWithoutTicketNestedInput;
 };
 export type RecruitmentTicketCreateManyInput = {
     id?: string;
@@ -350,8 +357,109 @@ export type RecruitmentTicketMinOrderByAggregateInput = {
     updatedAt?: Prisma.SortOrder;
     staleAlertedAt?: Prisma.SortOrder;
 };
+export type RecruitmentTicketScalarRelationFilter = {
+    is?: Prisma.RecruitmentTicketWhereInput;
+    isNot?: Prisma.RecruitmentTicketWhereInput;
+};
 export type NullableDateTimeFieldUpdateOperationsInput = {
     set?: Date | string | null;
+};
+export type RecruitmentTicketCreateNestedOneWithoutVotesInput = {
+    create?: Prisma.XOR<Prisma.RecruitmentTicketCreateWithoutVotesInput, Prisma.RecruitmentTicketUncheckedCreateWithoutVotesInput>;
+    connectOrCreate?: Prisma.RecruitmentTicketCreateOrConnectWithoutVotesInput;
+    connect?: Prisma.RecruitmentTicketWhereUniqueInput;
+};
+export type RecruitmentTicketUpdateOneRequiredWithoutVotesNestedInput = {
+    create?: Prisma.XOR<Prisma.RecruitmentTicketCreateWithoutVotesInput, Prisma.RecruitmentTicketUncheckedCreateWithoutVotesInput>;
+    connectOrCreate?: Prisma.RecruitmentTicketCreateOrConnectWithoutVotesInput;
+    upsert?: Prisma.RecruitmentTicketUpsertWithoutVotesInput;
+    connect?: Prisma.RecruitmentTicketWhereUniqueInput;
+    update?: Prisma.XOR<Prisma.XOR<Prisma.RecruitmentTicketUpdateToOneWithWhereWithoutVotesInput, Prisma.RecruitmentTicketUpdateWithoutVotesInput>, Prisma.RecruitmentTicketUncheckedUpdateWithoutVotesInput>;
+};
+export type RecruitmentTicketCreateWithoutVotesInput = {
+    id?: string;
+    guildId: string;
+    userId: string;
+    channelId?: string | null;
+    minecraftRole?: string | null;
+    answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+    status?: string;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    staleAlertedAt?: Date | string | null;
+};
+export type RecruitmentTicketUncheckedCreateWithoutVotesInput = {
+    id?: string;
+    guildId: string;
+    userId: string;
+    channelId?: string | null;
+    minecraftRole?: string | null;
+    answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+    status?: string;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    staleAlertedAt?: Date | string | null;
+};
+export type RecruitmentTicketCreateOrConnectWithoutVotesInput = {
+    where: Prisma.RecruitmentTicketWhereUniqueInput;
+    create: Prisma.XOR<Prisma.RecruitmentTicketCreateWithoutVotesInput, Prisma.RecruitmentTicketUncheckedCreateWithoutVotesInput>;
+};
+export type RecruitmentTicketUpsertWithoutVotesInput = {
+    update: Prisma.XOR<Prisma.RecruitmentTicketUpdateWithoutVotesInput, Prisma.RecruitmentTicketUncheckedUpdateWithoutVotesInput>;
+    create: Prisma.XOR<Prisma.RecruitmentTicketCreateWithoutVotesInput, Prisma.RecruitmentTicketUncheckedCreateWithoutVotesInput>;
+    where?: Prisma.RecruitmentTicketWhereInput;
+};
+export type RecruitmentTicketUpdateToOneWithWhereWithoutVotesInput = {
+    where?: Prisma.RecruitmentTicketWhereInput;
+    data: Prisma.XOR<Prisma.RecruitmentTicketUpdateWithoutVotesInput, Prisma.RecruitmentTicketUncheckedUpdateWithoutVotesInput>;
+};
+export type RecruitmentTicketUpdateWithoutVotesInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
+    userId?: Prisma.StringFieldUpdateOperationsInput | string;
+    channelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    minecraftRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+    status?: Prisma.StringFieldUpdateOperationsInput | string;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    staleAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+};
+export type RecruitmentTicketUncheckedUpdateWithoutVotesInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    guildId?: Prisma.StringFieldUpdateOperationsInput | string;
+    userId?: Prisma.StringFieldUpdateOperationsInput | string;
+    channelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    minecraftRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    answers?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue;
+    status?: Prisma.StringFieldUpdateOperationsInput | string;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    staleAlertedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+};
+/**
+ * Count Type RecruitmentTicketCountOutputType
+ */
+export type RecruitmentTicketCountOutputType = {
+    votes: number;
+};
+export type RecruitmentTicketCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    votes?: boolean | RecruitmentTicketCountOutputTypeCountVotesArgs;
+};
+/**
+ * RecruitmentTicketCountOutputType without action
+ */
+export type RecruitmentTicketCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecruitmentTicketCountOutputType
+     */
+    select?: Prisma.RecruitmentTicketCountOutputTypeSelect<ExtArgs> | null;
+};
+/**
+ * RecruitmentTicketCountOutputType without action
+ */
+export type RecruitmentTicketCountOutputTypeCountVotesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.RecruitmentVoteWhereInput;
 };
 export type RecruitmentTicketSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -364,6 +472,8 @@ export type RecruitmentTicketSelect<ExtArgs extends runtime.Types.Extensions.Int
     createdAt?: boolean;
     updatedAt?: boolean;
     staleAlertedAt?: boolean;
+    votes?: boolean | Prisma.RecruitmentTicket$votesArgs<ExtArgs>;
+    _count?: boolean | Prisma.RecruitmentTicketCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["recruitmentTicket"]>;
 export type RecruitmentTicketSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -402,9 +512,17 @@ export type RecruitmentTicketSelectScalar = {
     staleAlertedAt?: boolean;
 };
 export type RecruitmentTicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "userId" | "channelId" | "minecraftRole" | "answers" | "status" | "createdAt" | "updatedAt" | "staleAlertedAt", ExtArgs["result"]["recruitmentTicket"]>;
+export type RecruitmentTicketInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    votes?: boolean | Prisma.RecruitmentTicket$votesArgs<ExtArgs>;
+    _count?: boolean | Prisma.RecruitmentTicketCountOutputTypeDefaultArgs<ExtArgs>;
+};
+export type RecruitmentTicketIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {};
+export type RecruitmentTicketIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {};
 export type $RecruitmentTicketPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "RecruitmentTicket";
-    objects: {};
+    objects: {
+        votes: Prisma.$RecruitmentVotePayload<ExtArgs>[];
+    };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
         guildId: string;
@@ -745,6 +863,7 @@ export interface RecruitmentTicketDelegate<ExtArgs extends runtime.Types.Extensi
  */
 export interface Prisma__RecruitmentTicketClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise";
+    votes<T extends Prisma.RecruitmentTicket$votesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RecruitmentTicket$votesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecruitmentVotePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -794,6 +913,10 @@ export type RecruitmentTicketFindUniqueArgs<ExtArgs extends runtime.Types.Extens
      */
     omit?: Prisma.RecruitmentTicketOmit<ExtArgs> | null;
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.RecruitmentTicketInclude<ExtArgs> | null;
+    /**
      * Filter, which RecruitmentTicket to fetch.
      */
     where: Prisma.RecruitmentTicketWhereUniqueInput;
@@ -811,6 +934,10 @@ export type RecruitmentTicketFindUniqueOrThrowArgs<ExtArgs extends runtime.Types
      */
     omit?: Prisma.RecruitmentTicketOmit<ExtArgs> | null;
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.RecruitmentTicketInclude<ExtArgs> | null;
+    /**
      * Filter, which RecruitmentTicket to fetch.
      */
     where: Prisma.RecruitmentTicketWhereUniqueInput;
@@ -827,6 +954,10 @@ export type RecruitmentTicketFindFirstArgs<ExtArgs extends runtime.Types.Extensi
      * Omit specific fields from the RecruitmentTicket
      */
     omit?: Prisma.RecruitmentTicketOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.RecruitmentTicketInclude<ExtArgs> | null;
     /**
      * Filter, which RecruitmentTicket to fetch.
      */
@@ -875,6 +1006,10 @@ export type RecruitmentTicketFindFirstOrThrowArgs<ExtArgs extends runtime.Types.
      */
     omit?: Prisma.RecruitmentTicketOmit<ExtArgs> | null;
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.RecruitmentTicketInclude<ExtArgs> | null;
+    /**
      * Filter, which RecruitmentTicket to fetch.
      */
     where?: Prisma.RecruitmentTicketWhereInput;
@@ -921,6 +1056,10 @@ export type RecruitmentTicketFindManyArgs<ExtArgs extends runtime.Types.Extensio
      * Omit specific fields from the RecruitmentTicket
      */
     omit?: Prisma.RecruitmentTicketOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.RecruitmentTicketInclude<ExtArgs> | null;
     /**
      * Filter, which RecruitmentTickets to fetch.
      */
@@ -969,6 +1108,10 @@ export type RecruitmentTicketCreateArgs<ExtArgs extends runtime.Types.Extensions
      */
     omit?: Prisma.RecruitmentTicketOmit<ExtArgs> | null;
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.RecruitmentTicketInclude<ExtArgs> | null;
+    /**
      * The data needed to create a RecruitmentTicket.
      */
     data: Prisma.XOR<Prisma.RecruitmentTicketCreateInput, Prisma.RecruitmentTicketUncheckedCreateInput>;
@@ -1013,6 +1156,10 @@ export type RecruitmentTicketUpdateArgs<ExtArgs extends runtime.Types.Extensions
      * Omit specific fields from the RecruitmentTicket
      */
     omit?: Prisma.RecruitmentTicketOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.RecruitmentTicketInclude<ExtArgs> | null;
     /**
      * The data needed to update a RecruitmentTicket.
      */
@@ -1077,6 +1224,10 @@ export type RecruitmentTicketUpsertArgs<ExtArgs extends runtime.Types.Extensions
      */
     omit?: Prisma.RecruitmentTicketOmit<ExtArgs> | null;
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.RecruitmentTicketInclude<ExtArgs> | null;
+    /**
      * The filter to search for the RecruitmentTicket to update in case it exists.
      */
     where: Prisma.RecruitmentTicketWhereUniqueInput;
@@ -1102,6 +1253,10 @@ export type RecruitmentTicketDeleteArgs<ExtArgs extends runtime.Types.Extensions
      */
     omit?: Prisma.RecruitmentTicketOmit<ExtArgs> | null;
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.RecruitmentTicketInclude<ExtArgs> | null;
+    /**
      * Filter which RecruitmentTicket to delete.
      */
     where: Prisma.RecruitmentTicketWhereUniqueInput;
@@ -1120,6 +1275,29 @@ export type RecruitmentTicketDeleteManyArgs<ExtArgs extends runtime.Types.Extens
     limit?: number;
 };
 /**
+ * RecruitmentTicket.votes
+ */
+export type RecruitmentTicket$votesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecruitmentVote
+     */
+    select?: Prisma.RecruitmentVoteSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the RecruitmentVote
+     */
+    omit?: Prisma.RecruitmentVoteOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.RecruitmentVoteInclude<ExtArgs> | null;
+    where?: Prisma.RecruitmentVoteWhereInput;
+    orderBy?: Prisma.RecruitmentVoteOrderByWithRelationInput | Prisma.RecruitmentVoteOrderByWithRelationInput[];
+    cursor?: Prisma.RecruitmentVoteWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: Prisma.RecruitmentVoteScalarFieldEnum | Prisma.RecruitmentVoteScalarFieldEnum[];
+};
+/**
  * RecruitmentTicket without action
  */
 export type RecruitmentTicketDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1131,5 +1309,9 @@ export type RecruitmentTicketDefaultArgs<ExtArgs extends runtime.Types.Extension
      * Omit specific fields from the RecruitmentTicket
      */
     omit?: Prisma.RecruitmentTicketOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.RecruitmentTicketInclude<ExtArgs> | null;
 };
 //# sourceMappingURL=RecruitmentTicket.d.ts.map

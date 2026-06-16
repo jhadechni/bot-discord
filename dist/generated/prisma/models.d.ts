@@ -2,6 +2,7 @@ export type * from './models/GuildConfig.js';
 export type * from './models/Suggestion.js';
 export type * from './models/SuggestionVote.js';
 export type * from './models/RecruitmentTicket.js';
+export type * from './models/RecruitmentVote.js';
 export type * from './models/ModerationLog.js';
 export type * from './models/UserActivity.js';
 export type * from './models/MonthlyActivity.js';

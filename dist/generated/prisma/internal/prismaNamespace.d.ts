@@ -235,6 +235,7 @@ export declare const ModelName: {
     readonly Suggestion: "Suggestion";
     readonly SuggestionVote: "SuggestionVote";
     readonly RecruitmentTicket: "RecruitmentTicket";
+    readonly RecruitmentVote: "RecruitmentVote";
     readonly ModerationLog: "ModerationLog";
     readonly UserActivity: "UserActivity";
     readonly MonthlyActivity: "MonthlyActivity";
@@ -278,7 +279,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         omit: GlobalOmitOptions;
     };
     meta: {
-        modelProps: "guildConfig" | "suggestion" | "suggestionVote" | "recruitmentTicket" | "moderationLog" | "userActivity" | "monthlyActivity" | "reminderTemplate" | "reminder" | "filterWord" | "nicknameRole" | "clanPlayer" | "shopUser" | "shopMaterial" | "shopInventory" | "shopProduct" | "shopProductComponent" | "shopProductPrice" | "shopOrder" | "shopOrderItem" | "shopInventoryMovement" | "shopSale" | "shopWithdrawal" | "shopDiscountPolicy" | "shopAppliedDiscount" | "shopCategory" | "shopSubcategory" | "shopOrderEvent" | "shopOrderSurcharge" | "poll" | "mapBackground" | "protectionMember" | "commandUsage" | "shopFreeRequest" | "worldProtection";
+        modelProps: "guildConfig" | "suggestion" | "suggestionVote" | "recruitmentTicket" | "recruitmentVote" | "moderationLog" | "userActivity" | "monthlyActivity" | "reminderTemplate" | "reminder" | "filterWord" | "nicknameRole" | "clanPlayer" | "shopUser" | "shopMaterial" | "shopInventory" | "shopProduct" | "shopProductComponent" | "shopProductPrice" | "shopOrder" | "shopOrderItem" | "shopInventoryMovement" | "shopSale" | "shopWithdrawal" | "shopDiscountPolicy" | "shopAppliedDiscount" | "shopCategory" | "shopSubcategory" | "shopOrderEvent" | "shopOrderSurcharge" | "poll" | "mapBackground" | "protectionMember" | "commandUsage" | "shopFreeRequest" | "worldProtection";
         txIsolationLevel: TransactionIsolationLevel;
     };
     model: {
@@ -575,6 +576,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
                 count: {
                     args: Prisma.RecruitmentTicketCountArgs<ExtArgs>;
                     result: runtime.Types.Utils.Optional<Prisma.RecruitmentTicketCountAggregateOutputType> | number;
+                };
+            };
+        };
+        RecruitmentVote: {
+            payload: Prisma.$RecruitmentVotePayload<ExtArgs>;
+            fields: Prisma.RecruitmentVoteFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.RecruitmentVoteFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$RecruitmentVotePayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.RecruitmentVoteFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$RecruitmentVotePayload>;
+                };
+                findFirst: {
+                    args: Prisma.RecruitmentVoteFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$RecruitmentVotePayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.RecruitmentVoteFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$RecruitmentVotePayload>;
+                };
+                findMany: {
+                    args: Prisma.RecruitmentVoteFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$RecruitmentVotePayload>[];
+                };
+                create: {
+                    args: Prisma.RecruitmentVoteCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$RecruitmentVotePayload>;
+                };
+                createMany: {
+                    args: Prisma.RecruitmentVoteCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.RecruitmentVoteCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$RecruitmentVotePayload>[];
+                };
+                delete: {
+                    args: Prisma.RecruitmentVoteDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$RecruitmentVotePayload>;
+                };
+                update: {
+                    args: Prisma.RecruitmentVoteUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$RecruitmentVotePayload>;
+                };
+                deleteMany: {
+                    args: Prisma.RecruitmentVoteDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.RecruitmentVoteUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.RecruitmentVoteUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$RecruitmentVotePayload>[];
+                };
+                upsert: {
+                    args: Prisma.RecruitmentVoteUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$RecruitmentVotePayload>;
+                };
+                aggregate: {
+                    args: Prisma.RecruitmentVoteAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateRecruitmentVote>;
+                };
+                groupBy: {
+                    args: Prisma.RecruitmentVoteGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.RecruitmentVoteGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.RecruitmentVoteCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.RecruitmentVoteCountAggregateOutputType> | number;
                 };
             };
         };
@@ -2918,6 +2993,7 @@ export declare const GuildConfigScalarFieldEnum: {
     readonly logsLeavesChannelId: "logsLeavesChannelId";
     readonly suggestionsChannelId: "suggestionsChannelId";
     readonly recruitmentCategoryId: "recruitmentCategoryId";
+    readonly recruitmentReviewChannelId: "recruitmentReviewChannelId";
     readonly visitorRoleId: "visitorRoleId";
     readonly aspirantRoleId: "aspirantRoleId";
     readonly liderRoleId: "liderRoleId";
@@ -2970,6 +3046,15 @@ export declare const RecruitmentTicketScalarFieldEnum: {
     readonly staleAlertedAt: "staleAlertedAt";
 };
 export type RecruitmentTicketScalarFieldEnum = (typeof RecruitmentTicketScalarFieldEnum)[keyof typeof RecruitmentTicketScalarFieldEnum];
+export declare const RecruitmentVoteScalarFieldEnum: {
+    readonly id: "id";
+    readonly ticketId: "ticketId";
+    readonly userId: "userId";
+    readonly username: "username";
+    readonly vote: "vote";
+    readonly createdAt: "createdAt";
+};
+export type RecruitmentVoteScalarFieldEnum = (typeof RecruitmentVoteScalarFieldEnum)[keyof typeof RecruitmentVoteScalarFieldEnum];
 export declare const ModerationLogScalarFieldEnum: {
     readonly id: "id";
     readonly guildId: "guildId";
@@ -3528,6 +3613,7 @@ export type GlobalOmitConfig = {
     suggestion?: Prisma.SuggestionOmit;
     suggestionVote?: Prisma.SuggestionVoteOmit;
     recruitmentTicket?: Prisma.RecruitmentTicketOmit;
+    recruitmentVote?: Prisma.RecruitmentVoteOmit;
     moderationLog?: Prisma.ModerationLogOmit;
     userActivity?: Prisma.UserActivityOmit;
     monthlyActivity?: Prisma.MonthlyActivityOmit;

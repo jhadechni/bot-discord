@@ -72,6 +72,7 @@ export const ModelName = {
     Suggestion: 'Suggestion',
     SuggestionVote: 'SuggestionVote',
     RecruitmentTicket: 'RecruitmentTicket',
+    RecruitmentVote: 'RecruitmentVote',
     ModerationLog: 'ModerationLog',
     UserActivity: 'UserActivity',
     MonthlyActivity: 'MonthlyActivity',
@@ -125,6 +126,7 @@ export const GuildConfigScalarFieldEnum = {
     logsLeavesChannelId: 'logsLeavesChannelId',
     suggestionsChannelId: 'suggestionsChannelId',
     recruitmentCategoryId: 'recruitmentCategoryId',
+    recruitmentReviewChannelId: 'recruitmentReviewChannelId',
     visitorRoleId: 'visitorRoleId',
     aspirantRoleId: 'aspirantRoleId',
     liderRoleId: 'liderRoleId',
@@ -172,6 +174,14 @@ export const RecruitmentTicketScalarFieldEnum = {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     staleAlertedAt: 'staleAlertedAt'
+};
+export const RecruitmentVoteScalarFieldEnum = {
+    id: 'id',
+    ticketId: 'ticketId',
+    userId: 'userId',
+    username: 'username',
+    vote: 'vote',
+    createdAt: 'createdAt'
 };
 export const ModerationLogScalarFieldEnum = {
     id: 'id',

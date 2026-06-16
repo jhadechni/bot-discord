@@ -80,6 +80,18 @@ export const configCommand: Command = {
     )
     .addSubcommand(sub =>
       sub
+        .setName('set-recruitment-review')
+        .setDescription('Canal donde el staff vota las solicitudes de reclutamiento')
+        .addChannelOption(opt =>
+          opt
+            .setName('canal')
+            .setDescription('Canal de texto exclusivo para el staff')
+            .addChannelTypes(ChannelType.GuildText)
+            .setRequired(true),
+        ),
+    )
+    .addSubcommand(sub =>
+      sub
         .setName('set-recruitment')
         .setDescription('Categoría para tickets de reclutamiento')
         .addStringOption(opt =>
@@ -261,6 +273,19 @@ export const configCommand: Command = {
       });
       await interaction.editReply({
         embeds: [buildSystemNoticeEmbed('Canal de sugerencias actualizado', `Nuevo canal: <#${channel.id}>`)],
+      });
+      return;
+    }
+
+    if (sub === 'set-recruitment-review') {
+      const channel = interaction.options.getChannel('canal', true);
+      await prisma.guildConfig.upsert({
+        where: { guildId },
+        update: { recruitmentReviewChannelId: channel.id },
+        create: { guildId, recruitmentReviewChannelId: channel.id },
+      });
+      await interaction.editReply({
+        embeds: [buildSystemNoticeEmbed('Canal de revisión de solicitudes actualizado', `El staff votará las solicitudes en <#${channel.id}>.`)],
       });
       return;
     }

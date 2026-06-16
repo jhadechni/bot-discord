@@ -27,6 +27,7 @@ export function buildConfigOverviewEmbeds(config) {
                 { name: 'Subida de nivel', value: channelMention(config.levelUpChannelId), inline: true },
                 { name: 'Boost', value: channelMention(config.boostChannelId), inline: true },
                 { name: 'Categoria reclutamiento', value: rawId(config.recruitmentCategoryId), inline: true },
+                { name: 'Canal revisión solicitudes', value: channelMention(config.recruitmentReviewChannelId), inline: true },
             ],
         }),
         buildAquarisEmbed({

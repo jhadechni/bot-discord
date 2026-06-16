@@ -11,6 +11,7 @@ export declare function getOrCreateGuildConfig(guildId: string): Promise<{
     logsLeavesChannelId: string | null;
     suggestionsChannelId: string | null;
     recruitmentCategoryId: string | null;
+    recruitmentReviewChannelId: string | null;
     visitorRoleId: string | null;
     aspirantRoleId: string | null;
     liderRoleId: string | null;

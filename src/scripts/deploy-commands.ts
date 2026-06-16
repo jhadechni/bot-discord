@@ -20,6 +20,7 @@ import { jugadoresCommand } from "../commands/players/jugadores.command.js";
 import { kitCommand } from "../commands/kit/kit.command.js";
 import { notifCommand } from "../commands/notif/notif.command.js";
 import { expulsionCommand } from "../commands/expulsion/expulsion.command.js";
+import { anunciarCommand } from "../commands/anunciar/anunciar.command.js";
 
 const commands = [
   pingCommand,
@@ -41,6 +42,7 @@ const commands = [
   kitCommand,
   notifCommand,
   expulsionCommand,
+  anunciarCommand,
 ].map((cmd) => cmd.data.toJSON());
 
 const rest = new REST().setToken(env.discordToken);

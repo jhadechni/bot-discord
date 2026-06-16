@@ -42,6 +42,11 @@ export type SuggestionVote = Prisma.SuggestionVoteModel;
  */
 export type RecruitmentTicket = Prisma.RecruitmentTicketModel;
 /**
+ * Model RecruitmentVote
+ *
+ */
+export type RecruitmentVote = Prisma.RecruitmentVoteModel;
+/**
  * Model ModerationLog
  *
  */

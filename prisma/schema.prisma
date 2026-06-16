@@ -18,7 +18,8 @@ model GuildConfig {
   logsJoinsChannelId    String?
   logsLeavesChannelId   String?
   suggestionsChannelId  String?
-  recruitmentCategoryId String?
+  recruitmentCategoryId   String?
+  recruitmentReviewChannelId String?
   visitorRoleId         String?
   aspirantRoleId        String?
   liderRoleId           String?
@@ -67,19 +68,33 @@ model SuggestionVote {
 }
 
 model RecruitmentTicket {
-  id             String    @id @default(cuid())
+  id             String             @id @default(cuid())
   guildId        String
   userId         String
   channelId      String?
   minecraftRole  String?
   answers        Json?
-  status         String    @default("OPEN")
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  status         String             @default("OPEN")
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
   staleAlertedAt DateTime?
+  votes          RecruitmentVote[]
 
   @@index([guildId, status, createdAt])
   @@index([guildId, userId])
+}
+
+model RecruitmentVote {
+  id        String            @id @default(cuid())
+  ticketId  String
+  userId    String
+  username  String
+  vote      String            // "APPROVE" | "REJECT"
+  createdAt DateTime          @default(now())
+  ticket    RecruitmentTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@unique([ticketId, userId])
+  @@index([ticketId])
 }
 
 model ModerationLog {

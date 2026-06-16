@@ -718,7 +718,7 @@ export async function consumeOrderStock(
     }
 
     return didReserve;
-  });
+  }, { timeout: 30_000 });
 }
 
 // ── Embeds y botones ──────────────────────────────────────────────────────────
