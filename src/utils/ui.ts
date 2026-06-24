@@ -22,19 +22,23 @@ export const COLORS = {
 // ── Estados de pedido ──────────────────────────────────────────────────────────
 
 export const ORDER_COLORS: Record<string, number> = {
-  pending:   COLORS.warning,
-  accepted:  COLORS.success,
-  rejected:  COLORS.danger,
-  completed: COLORS.blurple,
-  cancelled: COLORS.neutral,
+  pending:        COLORS.warning,
+  accepted:       COLORS.success,
+  in_preparation: COLORS.orange,
+  ready:          0x00b4d8,
+  rejected:       COLORS.danger,
+  completed:      COLORS.blurple,
+  cancelled:      COLORS.neutral,
 };
 
 export const ORDER_LABELS: Record<string, string> = {
-  pending:   '🟡 Pendiente',
-  accepted:  '🟢 Aceptado',
-  rejected:  '🔴 Rechazado',
-  completed: '🔵 Completado',
-  cancelled: '⚫ Cancelado',
+  pending:        '🟡 Pendiente',
+  accepted:       '🟢 Aceptado',
+  in_preparation: '🔶 En preparación',
+  ready:          '🔷 Listo',
+  rejected:       '🔴 Rechazado',
+  completed:      '🔵 Completado',
+  cancelled:      '⚫ Cancelado',
 };
 
 // ── Formatters ────────────────────────────────────────────────────────────────

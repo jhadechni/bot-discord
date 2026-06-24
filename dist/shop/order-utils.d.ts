@@ -58,6 +58,9 @@ export declare function getOrderFull(orderCode: string): Promise<({
                 productId: string;
                 materialId: string;
             })[];
+            baseMaterial: {
+                stackSize: number;
+            } | null;
         } & {
             createdAt: Date;
             id: string;
@@ -185,6 +188,10 @@ export declare function buildOrderEmbed(order: OrderFull, stockAssessment?: Orde
 export declare function buildCustomerOrderEmbed(order: OrderFull): EmbedBuilder;
 /** Botones para pedido pendiente (en canal de staff). */
 export declare function buildPendingButtons(orderCode: string): ActionRowBuilder<ButtonBuilder>;
-/** Botones para pedido aceptado (en canal de staff). */
+/** Botones para pedido aceptado — paso siguiente: iniciar preparación. */
 export declare function buildAcceptedButtons(orderCode: string): ActionRowBuilder<ButtonBuilder>;
+/** Botones para pedido en preparación — paso siguiente: marcar listo. */
+export declare function buildInPreparationButtons(orderCode: string): ActionRowBuilder<ButtonBuilder>;
+/** Botones para pedido listo — paso final: finalizar. */
+export declare function buildReadyButtons(orderCode: string): ActionRowBuilder<ButtonBuilder>;
 //# sourceMappingURL=order-utils.d.ts.map

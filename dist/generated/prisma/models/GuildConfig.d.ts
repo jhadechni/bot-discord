@@ -102,6 +102,7 @@ export type GuildConfigCountAggregateOutputType = {
     farewellChannelId: number;
     notifRoles: number;
     expulsionReasons: number;
+    rejectionReasons: number;
     notifPanelChannelId: number;
     notifPanelMessageId: number;
     _all: number;
@@ -198,6 +199,7 @@ export type GuildConfigCountAggregateInputType = {
     farewellChannelId?: true;
     notifRoles?: true;
     expulsionReasons?: true;
+    rejectionReasons?: true;
     notifPanelChannelId?: true;
     notifPanelMessageId?: true;
     _all?: true;
@@ -294,6 +296,7 @@ export type GuildConfigGroupByOutputType = {
     farewellChannelId: string | null;
     notifRoles: runtime.JsonValue;
     expulsionReasons: runtime.JsonValue;
+    rejectionReasons: runtime.JsonValue;
     notifPanelChannelId: string | null;
     notifPanelMessageId: string | null;
     _count: GuildConfigCountAggregateOutputType | null;
@@ -336,6 +339,7 @@ export type GuildConfigWhereInput = {
     farewellChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     notifRoles?: Prisma.JsonFilter<"GuildConfig">;
     expulsionReasons?: Prisma.JsonFilter<"GuildConfig">;
+    rejectionReasons?: Prisma.JsonFilter<"GuildConfig">;
     notifPanelChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     notifPanelMessageId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
 };
@@ -369,6 +373,7 @@ export type GuildConfigOrderByWithRelationInput = {
     farewellChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     notifRoles?: Prisma.SortOrder;
     expulsionReasons?: Prisma.SortOrder;
+    rejectionReasons?: Prisma.SortOrder;
     notifPanelChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     notifPanelMessageId?: Prisma.SortOrderInput | Prisma.SortOrder;
 };
@@ -405,6 +410,7 @@ export type GuildConfigWhereUniqueInput = Prisma.AtLeast<{
     farewellChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     notifRoles?: Prisma.JsonFilter<"GuildConfig">;
     expulsionReasons?: Prisma.JsonFilter<"GuildConfig">;
+    rejectionReasons?: Prisma.JsonFilter<"GuildConfig">;
     notifPanelChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
     notifPanelMessageId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null;
 }, "id" | "guildId">;
@@ -438,6 +444,7 @@ export type GuildConfigOrderByWithAggregationInput = {
     farewellChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     notifRoles?: Prisma.SortOrder;
     expulsionReasons?: Prisma.SortOrder;
+    rejectionReasons?: Prisma.SortOrder;
     notifPanelChannelId?: Prisma.SortOrderInput | Prisma.SortOrder;
     notifPanelMessageId?: Prisma.SortOrderInput | Prisma.SortOrder;
     _count?: Prisma.GuildConfigCountOrderByAggregateInput;
@@ -477,6 +484,7 @@ export type GuildConfigScalarWhereWithAggregatesInput = {
     farewellChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     notifRoles?: Prisma.JsonWithAggregatesFilter<"GuildConfig">;
     expulsionReasons?: Prisma.JsonWithAggregatesFilter<"GuildConfig">;
+    rejectionReasons?: Prisma.JsonWithAggregatesFilter<"GuildConfig">;
     notifPanelChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
     notifPanelMessageId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null;
 };
@@ -510,6 +518,7 @@ export type GuildConfigCreateInput = {
     farewellChannelId?: string | null;
     notifRoles?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     expulsionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    rejectionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     notifPanelChannelId?: string | null;
     notifPanelMessageId?: string | null;
 };
@@ -543,6 +552,7 @@ export type GuildConfigUncheckedCreateInput = {
     farewellChannelId?: string | null;
     notifRoles?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     expulsionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    rejectionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     notifPanelChannelId?: string | null;
     notifPanelMessageId?: string | null;
 };
@@ -576,6 +586,7 @@ export type GuildConfigUpdateInput = {
     farewellChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     notifRoles?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     expulsionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    rejectionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     notifPanelChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     notifPanelMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
@@ -609,6 +620,7 @@ export type GuildConfigUncheckedUpdateInput = {
     farewellChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     notifRoles?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     expulsionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    rejectionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     notifPanelChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     notifPanelMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
@@ -642,6 +654,7 @@ export type GuildConfigCreateManyInput = {
     farewellChannelId?: string | null;
     notifRoles?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     expulsionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    rejectionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     notifPanelChannelId?: string | null;
     notifPanelMessageId?: string | null;
 };
@@ -675,6 +688,7 @@ export type GuildConfigUpdateManyMutationInput = {
     farewellChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     notifRoles?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     expulsionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    rejectionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     notifPanelChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     notifPanelMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
@@ -708,6 +722,7 @@ export type GuildConfigUncheckedUpdateManyInput = {
     farewellChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     notifRoles?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     expulsionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
+    rejectionReasons?: Prisma.JsonNullValueInput | runtime.InputJsonValue;
     notifPanelChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     notifPanelMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
@@ -741,6 +756,7 @@ export type GuildConfigCountOrderByAggregateInput = {
     farewellChannelId?: Prisma.SortOrder;
     notifRoles?: Prisma.SortOrder;
     expulsionReasons?: Prisma.SortOrder;
+    rejectionReasons?: Prisma.SortOrder;
     notifPanelChannelId?: Prisma.SortOrder;
     notifPanelMessageId?: Prisma.SortOrder;
 };
@@ -845,6 +861,7 @@ export type GuildConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalA
     farewellChannelId?: boolean;
     notifRoles?: boolean;
     expulsionReasons?: boolean;
+    rejectionReasons?: boolean;
     notifPanelChannelId?: boolean;
     notifPanelMessageId?: boolean;
 }, ExtArgs["result"]["guildConfig"]>;
@@ -878,6 +895,7 @@ export type GuildConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
     farewellChannelId?: boolean;
     notifRoles?: boolean;
     expulsionReasons?: boolean;
+    rejectionReasons?: boolean;
     notifPanelChannelId?: boolean;
     notifPanelMessageId?: boolean;
 }, ExtArgs["result"]["guildConfig"]>;
@@ -911,6 +929,7 @@ export type GuildConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
     farewellChannelId?: boolean;
     notifRoles?: boolean;
     expulsionReasons?: boolean;
+    rejectionReasons?: boolean;
     notifPanelChannelId?: boolean;
     notifPanelMessageId?: boolean;
 }, ExtArgs["result"]["guildConfig"]>;
@@ -944,10 +963,11 @@ export type GuildConfigSelectScalar = {
     farewellChannelId?: boolean;
     notifRoles?: boolean;
     expulsionReasons?: boolean;
+    rejectionReasons?: boolean;
     notifPanelChannelId?: boolean;
     notifPanelMessageId?: boolean;
 };
-export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "welcomeChannelId" | "logsChannelId" | "logsModChannelId" | "logsAutomodChannelId" | "logsRecruitChannelId" | "logsJoinsChannelId" | "logsLeavesChannelId" | "suggestionsChannelId" | "recruitmentCategoryId" | "recruitmentReviewChannelId" | "visitorRoleId" | "aspirantRoleId" | "liderRoleId" | "coLiderRoleId" | "aquarisRoleId" | "staffRoleId" | "reclutadorRoleId" | "comercianteRoleId" | "levelUpChannelId" | "boostChannelId" | "shopStaffChannelId" | "shopCategoryId" | "createdAt" | "updatedAt" | "farewellChannelId" | "notifRoles" | "expulsionReasons" | "notifPanelChannelId" | "notifPanelMessageId", ExtArgs["result"]["guildConfig"]>;
+export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "welcomeChannelId" | "logsChannelId" | "logsModChannelId" | "logsAutomodChannelId" | "logsRecruitChannelId" | "logsJoinsChannelId" | "logsLeavesChannelId" | "suggestionsChannelId" | "recruitmentCategoryId" | "recruitmentReviewChannelId" | "visitorRoleId" | "aspirantRoleId" | "liderRoleId" | "coLiderRoleId" | "aquarisRoleId" | "staffRoleId" | "reclutadorRoleId" | "comercianteRoleId" | "levelUpChannelId" | "boostChannelId" | "shopStaffChannelId" | "shopCategoryId" | "createdAt" | "updatedAt" | "farewellChannelId" | "notifRoles" | "expulsionReasons" | "rejectionReasons" | "notifPanelChannelId" | "notifPanelMessageId", ExtArgs["result"]["guildConfig"]>;
 export type $GuildConfigPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "GuildConfig";
     objects: {};
@@ -981,6 +1001,7 @@ export type $GuildConfigPayload<ExtArgs extends runtime.Types.Extensions.Interna
         farewellChannelId: string | null;
         notifRoles: runtime.JsonValue;
         expulsionReasons: runtime.JsonValue;
+        rejectionReasons: runtime.JsonValue;
         notifPanelChannelId: string | null;
         notifPanelMessageId: string | null;
     }, ExtArgs["result"]["guildConfig"]>;
@@ -1366,6 +1387,7 @@ export interface GuildConfigFieldRefs {
     readonly farewellChannelId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly notifRoles: Prisma.FieldRef<"GuildConfig", 'Json'>;
     readonly expulsionReasons: Prisma.FieldRef<"GuildConfig", 'Json'>;
+    readonly rejectionReasons: Prisma.FieldRef<"GuildConfig", 'Json'>;
     readonly notifPanelChannelId: Prisma.FieldRef<"GuildConfig", 'String'>;
     readonly notifPanelMessageId: Prisma.FieldRef<"GuildConfig", 'String'>;
 }

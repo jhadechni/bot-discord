@@ -3011,6 +3011,7 @@ export declare const GuildConfigScalarFieldEnum: {
     readonly farewellChannelId: "farewellChannelId";
     readonly notifRoles: "notifRoles";
     readonly expulsionReasons: "expulsionReasons";
+    readonly rejectionReasons: "rejectionReasons";
     readonly notifPanelChannelId: "notifPanelChannelId";
     readonly notifPanelMessageId: "notifPanelMessageId";
 };

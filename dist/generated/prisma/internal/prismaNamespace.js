@@ -144,6 +144,7 @@ export const GuildConfigScalarFieldEnum = {
     farewellChannelId: 'farewellChannelId',
     notifRoles: 'notifRoles',
     expulsionReasons: 'expulsionReasons',
+    rejectionReasons: 'rejectionReasons',
     notifPanelChannelId: 'notifPanelChannelId',
     notifPanelMessageId: 'notifPanelMessageId'
 };

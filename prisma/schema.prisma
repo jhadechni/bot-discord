@@ -37,6 +37,7 @@ model GuildConfig {
   farewellChannelId     String?
   notifRoles          Json    @default("[]")
   expulsionReasons    Json    @default("[]")
+  rejectionReasons    Json    @default("[]")
   notifPanelChannelId String?
   notifPanelMessageId String?
 

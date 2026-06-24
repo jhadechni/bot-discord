@@ -43,6 +43,8 @@ import {
   getOrderFull,
   buildOrderEmbed,
   buildAcceptedButtons,
+  buildInPreparationButtons,
+  buildReadyButtons,
   buildPendingButtons,
   createPendingOrder,
   formatOrderStockStatusLine,
@@ -124,6 +126,14 @@ import {
   executeExpulsion,
 } from '../commands/expulsion/expulsion.command.js';
 import { buildAquarisEmbed, AQUARIS_COLORS } from '../utils/message-ui.js';
+import {
+  parseRejectionReasons,
+  buildRejectionReasonSelect,
+  buildRejectionConfirmRow,
+  buildRejectionSelectorEmbed,
+  pendingRecruitRejections,
+  handleAddRejectionReasonModal,
+} from '../commands/apply/reclutamiento.command.js';
 
 // ── Votación de reclutamiento ────────────────────────────────────────────────
 function buildRecruitmentVoteComponents(
@@ -168,6 +178,75 @@ function buildRecruitmentVoteComponents(
   );
 
   return [row1, row2];
+}
+
+// ── Rechazo de reclutamiento (lógica compartida) ────────────────────────────
+async function executeRecruitmentRejection(opts: {
+  guild:     import('discord.js').Guild;
+  ticketId:  string;
+  staffId:   string;
+  reason:    string;
+  channelId: string;
+  messageId: string;
+}): Promise<void> {
+  const { guild, ticketId, staffId, reason, channelId, messageId } = opts;
+
+  const ticket = await prisma.recruitmentTicket.findUnique({ where: { id: ticketId } });
+  if (!ticket || ticket.status !== 'OPEN') return;
+
+  await prisma.recruitmentTicket.update({ where: { id: ticketId }, data: { status: 'REJECTED' } });
+
+  const cfg = await getOrCreateGuildConfig(guild.id);
+
+  try {
+    const applicant = await guild.members.fetch(ticket.userId);
+    if (cfg.aspirantRoleId && applicant.roles.cache.has(cfg.aspirantRoleId)) {
+      await applicant.roles.remove(cfg.aspirantRoleId);
+    }
+    await applicant.user.send({
+      embeds: [
+        buildRecruitmentUserMessageEmbed({
+          title:     '❌ Solicitud rechazada',
+          description: 'Puedes intentarlo de nuevo en el futuro.',
+          guildName: guild.name,
+          reason,
+          color: RECRUITMENT_COLORS.danger,
+        }),
+      ],
+    });
+  } catch { /* DMs desactivados o sin permisos */ }
+
+  try {
+    if (channelId && messageId) {
+      const originalChannel = guild.channels.cache.get(channelId);
+      if (originalChannel?.isTextBased()) {
+        const originalMsg = await originalChannel.messages.fetch(messageId);
+        const rejectedEmbed = buildRecruitmentRejectedApplicationEmbed(
+          originalMsg.embeds[0] ?? new EmbedBuilder(),
+          staffId,
+          reason,
+        );
+        await originalMsg.edit({ embeds: [rejectedEmbed], components: [] });
+      }
+    }
+  } catch (err) {
+    logger.warn({ err }, 'No se pudo actualizar el embed de rechazo');
+  }
+
+  if (ticket.channelId) {
+    const ticketChannel = guild.channels.cache.get(ticket.channelId)
+      ?? await guild.channels.fetch(ticket.channelId).catch(() => null);
+    if (ticketChannel && 'delete' in ticketChannel) {
+      setTimeout(async () => { try { await ticketChannel.delete(); } catch { /* ya eliminado */ } }, 8_000);
+    }
+  }
+
+  const logCh = getLogChannel(guild, cfg, 'recruit');
+  if (logCh) {
+    await logCh.send({
+      embeds: [buildRecruitmentLogEmbed({ type: 'rejected', applicantId: ticket.userId, staffId, ticketId: ticket.id, reason })],
+    }).catch(() => undefined);
+  }
 }
 
 // ── Cooldowns (en memoria para sugerencias, DB para apply) ───────────────────
@@ -277,9 +356,13 @@ async function refreshOrderManagementEmbeds(params: {
   const componentRow =
     params.updatedOrder.status === 'accepted'
       ? [buildAcceptedButtons(params.orderCode)]
-      : params.updatedOrder.status === 'pending'
-        ? [buildPendingButtons(params.orderCode)]
-        : [];
+      : params.updatedOrder.status === 'in_preparation'
+        ? [buildInPreparationButtons(params.orderCode)]
+        : params.updatedOrder.status === 'ready'
+          ? [buildReadyButtons(params.orderCode)]
+          : params.updatedOrder.status === 'pending'
+            ? [buildPendingButtons(params.orderCode)]
+            : [];
 
   for (const channelId of channelIds) {
     const channel =
@@ -2041,30 +2124,59 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           }).catch(() => undefined);
         }
 
-        // Renombrar el canal privado del ticket (no el canal de revisión)
-        if (ticket.channelId) {
+        // Canal privado de entrevista — crearlo ahora si no existía (solicitudes sin canal previo)
+        const applicantMember = await guild.members.fetch(ticket.userId).catch(() => null);
+        const username = applicantMember?.user.username ?? ticket.userId;
+
+        let interviewChannelId = ticket.channelId;
+
+        if (!interviewChannelId && cfg.recruitmentCategoryId) {
           try {
-            const privateChannel = guild.channels.cache.get(ticket.channelId)
-              ?? await guild.channels.fetch(ticket.channelId).catch(() => null);
-            const applicantMember = await guild.members.fetch(ticket.userId).catch(() => null);
-            const username = applicantMember?.user.username ?? ticket.userId;
+            const newCh = await guild.channels.create({
+              name: `entrevista-${username}`,
+              type: ChannelType.GuildText,
+              parent: cfg.recruitmentCategoryId,
+              permissionOverwrites: [
+                { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
+                { id: ticket.userId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+                ...(cfg.staffRoleId       ? [{ id: cfg.staffRoleId,       allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }] : []),
+                ...(cfg.liderRoleId       ? [{ id: cfg.liderRoleId,       allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }] : []),
+                ...(cfg.coLiderRoleId     ? [{ id: cfg.coLiderRoleId,     allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }] : []),
+                ...(cfg.reclutadorRoleId  ? [{ id: cfg.reclutadorRoleId,  allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }] : []),
+              ],
+            });
+            interviewChannelId = newCh.id;
+            await prisma.recruitmentTicket.update({ where: { id: ticketId }, data: { channelId: interviewChannelId } });
+          } catch (err) {
+            logger.warn({ err }, 'No se pudo crear canal de entrevista al aceptar');
+          }
+        }
+
+        if (interviewChannelId) {
+          try {
+            const privateChannel = guild.channels.cache.get(interviewChannelId)
+              ?? await guild.channels.fetch(interviewChannelId).catch(() => null);
             if (privateChannel && privateChannel.isTextBased() && 'setName' in privateChannel) {
-              await privateChannel.setName(`entrevista-${username}`);
+              // Si el canal venía del apply, renombrarlo a entrevista-{username}
+              if (ticket.channelId) {
+                await privateChannel.setName(`entrevista-${username}`).catch(() => undefined);
+              }
               await privateChannel.send({
+                content: `<@${ticket.userId}>`,
                 embeds: [
                   buildRecruitmentNoticeEmbed({
                     title: '✅ Solicitud aceptada — entrevista en curso',
                     description:
-                      `Solicitud aceptada por <@${interaction.user.id}>.\n\n` +
-                      `<@${ticket.userId}> el staff se pondrá en contacto contigo aquí para coordinar la entrevista. ` +
-                      'Una vez aprobada la entrevista, el staff te asignará el rol **Aquaris** manualmente.',
+                      `👋 ¡Hola <@${ticket.userId}>! Tu solicitud fue aceptada por <@${interaction.user.id}>.\n\n` +
+                      `El staff se pondrá en contacto contigo aquí para coordinar la entrevista. ` +
+                      'Una vez aprobada, el staff te asignará el rol **Aquaris** manualmente.',
                     color: RECRUITMENT_COLORS.success,
                   }),
                 ],
               });
             }
           } catch (err) {
-            logger.warn({ err }, 'No se pudo renombrar el canal de entrevista');
+            logger.warn({ err }, 'No se pudo enviar mensaje al canal de entrevista');
           }
         }
       }
@@ -2105,21 +2217,40 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           }
         }
 
-        const rejectModal = new ModalBuilder()
-          .setCustomId(`apply_finalize_reject_reason_${ticketId}_${interaction.channelId}_${interaction.message.id}`)
-          .setTitle('Rechazar solicitud');
-        rejectModal.addComponents(
-          new ActionRowBuilder<TextInputBuilder>().addComponents(
-            new TextInputBuilder()
-              .setCustomId('reject_reason')
-              .setLabel('Motivo del rechazo')
-              .setStyle(TextInputStyle.Paragraph)
-              .setRequired(true)
-              .setMaxLength(500)
-              .setPlaceholder('Explica brevemente el motivo del rechazo...'),
-          ),
-        );
-        await interaction.showModal(rejectModal);
+        const rejectionReasons = parseRejectionReasons(cfg.rejectionReasons);
+        const chId  = interaction.channelId;
+        const msgId = interaction.message.id;
+
+        if (rejectionReasons.length > 0) {
+          // Mostrar selector de motivos predefinidos
+          await interaction.reply({
+            embeds: [buildRejectionSelectorEmbed(rejectionReasons)],
+            components: [
+              new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+                buildRejectionReasonSelect(rejectionReasons, ticketId, chId, msgId),
+              ),
+              buildRejectionConfirmRow(ticketId, chId, msgId, true),
+            ],
+            ephemeral: true,
+          });
+        } else {
+          // Sin motivos configurados — abrir modal de texto libre
+          const rejectModal = new ModalBuilder()
+            .setCustomId(`apply_finalize_reject_reason_${ticketId}_${chId}_${msgId}`)
+            .setTitle('Rechazar solicitud');
+          rejectModal.addComponents(
+            new ActionRowBuilder<TextInputBuilder>().addComponents(
+              new TextInputBuilder()
+                .setCustomId('reject_reason')
+                .setLabel('Motivo del rechazo')
+                .setStyle(TextInputStyle.Paragraph)
+                .setRequired(true)
+                .setMaxLength(500)
+                .setPlaceholder('Explica brevemente el motivo del rechazo...'),
+            ),
+          );
+          await interaction.showModal(rejectModal);
+        }
       }
 
     }
@@ -2137,7 +2268,8 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const cfg   = await getOrCreateGuildConfig(guildId);
       const hasPermission =
         actor.permissions.has(PermissionFlagsBits.ManageGuild) ||
-        (cfg.staffRoleId != null && actor.roles.cache.has(cfg.staffRoleId));
+        (cfg.staffRoleId        != null && actor.roles.cache.has(cfg.staffRoleId)) ||
+        (cfg.comercianteRoleId  != null && actor.roles.cache.has(cfg.comercianteRoleId));
 
       if (!hasPermission) {
         await interaction.reply({
@@ -2192,12 +2324,13 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
             });
             ticketChannelId = ticketCh.id;
             await ticketCh.send({
+              content: `<@${order.customer.discordUserId}>`,
               embeds: [
                 buildShopNoticeEmbed({
-                  title: 'Pedido aceptado',
+                  title: '🟢 Pedido aceptado',
                   description:
-                    `Tu pedido **${orderCode}** fue aceptado.\n` +
-                    `<@${order.customer.discordUserId}> el staff coordinará la entrega contigo aquí.`,
+                    `👋 ¡Hola <@${order.customer.discordUserId}>! Tu pedido **${orderCode}** fue aceptado y está en cola.\n` +
+                    `El staff coordinará la entrega contigo aquí. ¡Estamos en contacto!`,
                   color: SHOP_COLORS.success,
                 }),
               ],
@@ -2304,10 +2437,130 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         return;
       }
 
+      // ── Iniciar preparación (accepted → in_preparation) ───────────────────
+      if (action === 'prepare') {
+        await interaction.deferUpdate();
+
+        const order = await prisma.shopOrder.findUnique({
+          where:   { orderCode },
+          include: { customer: true },
+        });
+        if (!order || order.status !== 'accepted') {
+          await interaction.followUp({
+            embeds: [buildShopNoticeEmbed({ title: 'No disponible', description: 'Solo se puede iniciar preparación en pedidos aceptados.', color: SHOP_COLORS.warning })],
+            ephemeral: true,
+          });
+          return;
+        }
+
+        const staffUser = await upsertShopUser(guildId, interaction.user, true);
+
+        await prisma.shopOrder.update({
+          where: { id: order.id },
+          data:  { status: 'in_preparation' },
+        });
+        await prisma.shopOrderEvent.create({
+          data: {
+            orderId:       order.id,
+            eventType:     'status_changed',
+            oldStatus:     'accepted',
+            newStatus:     'in_preparation',
+            performedById: staffUser.id,
+          },
+        });
+
+        const updatedOrder = await getOrderFull(orderCode);
+        if (updatedOrder) {
+          await interaction.message.edit({
+            embeds:     [buildOrderEmbed(updatedOrder)],
+            components: [buildInPreparationButtons(orderCode)],
+          });
+        }
+
+        if (order.ticketChannelId) {
+          const ticketCh = guild.channels.cache.get(order.ticketChannelId);
+          if (ticketCh?.isTextBased()) {
+            await ticketCh.send({
+              content: `<@${order.customer.discordUserId}>`,
+              embeds: [
+                buildShopNoticeEmbed({
+                  title: '🔶 Pedido en preparación',
+                  description:
+                    `🔧 <@${order.customer.discordUserId}> ¡Tu pedido **${orderCode}** está siendo preparado!\n` +
+                    `¿Necesitas domicilio? Si es así, avísanos aquí — tiene un coste extra del **10%**.`,
+                  color: SHOP_COLORS.warning,
+                }),
+              ],
+            }).catch(() => undefined);
+          }
+        }
+        return;
+      }
+
+      // ── Marcar listo (in_preparation → ready) ─────────────────────────────
+      if (action === 'ready') {
+        await interaction.deferUpdate();
+
+        const order = await prisma.shopOrder.findUnique({
+          where:   { orderCode },
+          include: { customer: true },
+        });
+        if (!order || order.status !== 'in_preparation') {
+          await interaction.followUp({
+            embeds: [buildShopNoticeEmbed({ title: 'No disponible', description: `Solo se puede marcar listo un pedido en preparación. (Estado actual: \`${order?.status ?? 'no encontrado'}\`)`, color: SHOP_COLORS.warning })],
+            ephemeral: true,
+          });
+          return;
+        }
+
+        const staffUser = await upsertShopUser(guildId, interaction.user, true);
+
+        await prisma.shopOrder.update({
+          where: { id: order.id },
+          data:  { status: 'ready' },
+        });
+        await prisma.shopOrderEvent.create({
+          data: {
+            orderId:       order.id,
+            eventType:     'status_changed',
+            oldStatus:     'in_preparation',
+            newStatus:     'ready',
+            performedById: staffUser.id,
+          },
+        });
+
+        const updatedOrder = await getOrderFull(orderCode);
+        if (updatedOrder) {
+          await interaction.message.edit({
+            embeds:     [buildOrderEmbed(updatedOrder)],
+            components: [buildReadyButtons(orderCode)],
+          });
+        }
+
+        if (order.ticketChannelId) {
+          const ticketCh = guild.channels.cache.get(order.ticketChannelId);
+          if (ticketCh?.isTextBased()) {
+            await ticketCh.send({
+              content: `<@${order.customer.discordUserId}>`,
+              embeds: [
+                buildShopNoticeEmbed({
+                  title: '🔷 Pedido listo',
+                  description:
+                    `📦 <@${order.customer.discordUserId}> ¡Tu pedido **${orderCode}** está listo!\n` +
+                    `El staff te indicará los pasos para la entrega. ¡Ya casi!`,
+                  color: SHOP_COLORS.info,
+                }),
+              ],
+            }).catch(() => undefined);
+          }
+        }
+        return;
+      }
+
       // ── Agregar servicio adicional (abre modal) ────────────────────────────
       if (action === 'add_service') {
         const order = await prisma.shopOrder.findUnique({ where: { orderCode } });
-        if (!order || order.status !== 'accepted') {
+        if (!order || !['accepted', 'in_preparation'].includes(order.status)) {
           await interaction.reply({
             embeds: [buildShopNoticeEmbed({ title: 'No disponible', description: 'Solo se pueden agregar servicios a pedidos aceptados.', color: SHOP_COLORS.warning })],
             ephemeral: true,
@@ -2344,12 +2597,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       // ── Aplicar descuento manual ───────────────────────────────────────────
       if (action === 'discount') {
         const order = await prisma.shopOrder.findUnique({ where: { orderCode } });
-        if (!order || order.status !== 'accepted') {
+        if (!order || !['accepted', 'in_preparation'].includes(order.status)) {
           await interaction.reply({
             embeds: [
               buildShopNoticeEmbed({
                 title: 'Descuento no disponible',
-                description: 'Solo se pueden aplicar descuentos a pedidos aceptados.',
+                description: 'Solo se pueden aplicar descuentos a pedidos en curso.',
                 color: SHOP_COLORS.warning,
               }),
             ],
@@ -2428,12 +2681,12 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           where:   { orderCode },
           include: { customer: true },
         });
-        if (!order || order.status !== 'accepted') {
+        if (!order || order.status !== 'ready') {
           await interaction.followUp({
             embeds: [
               buildShopNoticeEmbed({
                 title: 'Pedido no cerrable',
-                description: 'Solo se pueden cerrar pedidos aceptados.',
+                description: 'Solo se pueden finalizar pedidos que estén en estado **Listo**.',
                 color: SHOP_COLORS.warning,
               }),
             ],
@@ -2451,8 +2704,8 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
               data: {
                 orderId:       order.id,
                 eventType:     'stock_reserved',
-                oldStatus:     'accepted',
-                newStatus:     'accepted',
+                oldStatus:     'ready',
+                newStatus:     'ready',
                 performedById: staffUser.id,
               },
             });
@@ -2498,7 +2751,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           data: {
             orderId:       order.id,
             eventType:     'delivery_completed',
-            oldStatus:     'accepted',
+            oldStatus:     'ready',
             newStatus:     'completed',
             performedById: staffUser.id,
           },
@@ -2507,7 +2760,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           data: {
             orderId:       order.id,
             eventType:     'order_completed',
-            oldStatus:     'accepted',
+            oldStatus:     'ready',
             newStatus:     'completed',
             performedById: staffUser.id,
           },
@@ -2521,34 +2774,50 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           });
         }
 
+        if (order.ticketChannelId) {
+          const ticketCh = guild.channels.cache.get(order.ticketChannelId);
+          if (ticketCh?.isTextBased()) {
+            await ticketCh.send({
+              content: `<@${order.customer.discordUserId}>`,
+              embeds: [
+                buildShopNoticeEmbed({
+                  title: '✅ Pedido entregado',
+                  description:
+                    `🎉 <@${order.customer.discordUserId}> ¡Tu pedido **${orderCode}** fue entregado!\n` +
+                    `Gracias por comprar en **${guild.name}**. ¡Hasta la próxima!`,
+                  color: SHOP_COLORS.success,
+                }),
+              ],
+            }).catch(() => undefined);
+          }
+          setTimeout(async () => {
+            try {
+              const ch = guild.channels.cache.get(order.ticketChannelId!);
+              if (ch) await ch.delete();
+            } catch { /* ya eliminado */ }
+          }, 8_000);
+        }
+
         try {
           const customerMember = await guild.members.fetch(order.customer.discordUserId);
           await customerMember.user.send({
             embeds: [
               buildShopNoticeEmbed({
-                title: 'Pedido entregado',
-                description: `Tu pedido **${orderCode}** en **${guild.name}** fue marcado como entregado. Gracias por comprar en Aquaris.`,
+                title: '✅ Pedido entregado',
+                description: `🎉 Tu pedido **${orderCode}** en **${guild.name}** fue entregado. ¡Gracias por comprar en Aquaris!`,
                 color: SHOP_COLORS.success,
               }),
             ],
           });
         } catch { /* DMs desactivados */ }
 
-        if (order.ticketChannelId) {
-          const ticketCh = guild.channels.cache.get(order.ticketChannelId);
-          if (ticketCh) {
-            setTimeout(async () => {
-              try { await ticketCh.delete(); } catch { /* ya eliminado */ }
-            }, 8_000);
-          }
-        }
         return;
       }
 
       // ── Cancelar pedido (abre modal) ────────────────────────────────────────
       if (action === 'cancel') {
         const order = await prisma.shopOrder.findUnique({ where: { orderCode } });
-        if (!order || !['pending', 'accepted'].includes(order.status)) {
+        if (!order || !['pending', 'accepted', 'in_preparation', 'ready'].includes(order.status)) {
           await interaction.reply({
             embeds: [
               buildShopNoticeEmbed({
@@ -3494,6 +3763,9 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       await interaction.deferUpdate();
 
+      // Borrar el carrito inmediatamente para evitar que clicks múltiples creen pedidos duplicados
+      deleteCart(guildId, interaction.user.id);
+
       const config    = await getOrCreateGuildConfig(guildId);
       const customer = await upsertShopUser(guildId, interaction.user);
       let order;
@@ -3535,8 +3807,6 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
           });
         }
       }
-
-      deleteCart(guildId, interaction.user.id);
 
       const isFullyAvailable = stockAssessment?.isFullyAvailable ?? true;
 
@@ -3635,9 +3905,10 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         logger.warn({ err }, 'No se pudo actualizar el embed de rechazo');
       }
 
-      // Eliminar canal de ticket si existe (no es el canal de logs)
-      if (ticket.channelId && ticket.channelId === channelId) {
-        const ticketChannel = guild.channels.cache.get(ticket.channelId);
+      // Eliminar canal privado del ticket
+      if (ticket.channelId) {
+        const ticketChannel = guild.channels.cache.get(ticket.channelId)
+          ?? await guild.channels.fetch(ticket.channelId).catch(() => null);
         if (ticketChannel && 'delete' in ticketChannel) {
           setTimeout(async () => {
             try { await ticketChannel.delete(); } catch { /* ya eliminado */ }
@@ -3863,7 +4134,7 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         where:   { orderCode },
         include: { customer: true },
       });
-      if (!order || !['pending', 'accepted'].includes(order.status)) {
+      if (!order || !['pending', 'accepted', 'in_preparation', 'ready'].includes(order.status)) {
         await interaction.editReply({
           embeds: [
             buildShopNoticeEmbed({
@@ -3878,13 +4149,13 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
 
       const staffUser = await upsertShopUser(guildId, interaction.user, true);
 
-      if (order.status === 'accepted') {
+      if (['accepted', 'in_preparation', 'ready'].includes(order.status)) {
         await releaseOrderStock(order.id, guildId, staffUser.id);
         await prisma.shopOrderEvent.create({
           data: {
             orderId: order.id,
             eventType: 'stock_released',
-            oldStatus: 'accepted',
+            oldStatus: order.status,
             newStatus: 'cancelled',
             performedById: staffUser.id,
             notes: reason,
@@ -3924,27 +4195,42 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
         logger.warn({ err }, 'No se pudo actualizar embed de pedido cancelado');
       }
 
+      if (order.ticketChannelId) {
+        const ticketCh = guild.channels.cache.get(order.ticketChannelId);
+        if (ticketCh?.isTextBased()) {
+          await ticketCh.send({
+            content: `<@${order.customer.discordUserId}>`,
+            embeds: [
+              buildShopNoticeEmbed({
+                title: '🚫 Pedido cancelado',
+                description:
+                  `😔 <@${order.customer.discordUserId}> tu pedido **${orderCode}** fue cancelado.\n` +
+                  `**Motivo:** ${reason}\n\nSi tienes dudas, escríbenos aquí.`,
+                color: SHOP_COLORS.warning,
+              }),
+            ],
+          }).catch(() => undefined);
+        }
+        setTimeout(async () => {
+          try {
+            const ch = guild.channels.cache.get(order.ticketChannelId!);
+            if (ch) await ch.delete();
+          } catch { /* ya eliminado */ }
+        }, 8_000);
+      }
+
       try {
         const customerMember = await guild.members.fetch(order.customer.discordUserId);
         await customerMember.user.send({
           embeds: [
             buildShopNoticeEmbed({
-              title: 'Pedido cancelado',
-              description: `Tu pedido **${orderCode}** en **${guild.name}** fue cancelado.\nMotivo: ${reason}`,
+              title: '🚫 Pedido cancelado',
+              description: `Tu pedido **${orderCode}** en **${guild.name}** fue cancelado.\n**Motivo:** ${reason}`,
               color: SHOP_COLORS.warning,
             }),
           ],
         });
       } catch { /* DMs desactivados */ }
-
-      if (order.ticketChannelId) {
-        const ticketCh = guild.channels.cache.get(order.ticketChannelId);
-        if (ticketCh) {
-          setTimeout(async () => {
-            try { await ticketCh.delete(); } catch { /* ya eliminado */ }
-          }, 8_000);
-        }
-      }
 
       await interaction.editReply({
         embeds: [
@@ -3963,24 +4249,34 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
       const guild = interaction.guild;
       if (!guild) return;
 
-      const session = activeNotifSessions.get(interaction.user.id);
-      const sessionValid = !!session && (Date.now() - session.createdAt) < NOTIF_SESSION_TTL;
-
-      const member = await guild.members.fetch(interaction.user.id).catch(() => null);
-      if (!member) return;
-
       const config = await getOrCreateGuildConfig(guild.id);
       const notifRoles = parseNotifRoles(config.notifRoles);
-      const currentRoleIds = new Set(notifRoles.map(r => r.roleId).filter(id => member.roles.cache.has(id)));
+
+      if (notifRoles.length === 0) {
+        await interaction.reply({ content: 'No hay temas de notificación configurados aún. Contacta al staff.', ephemeral: true });
+        return;
+      }
+
+      const memberRoles = interaction.member && 'cache' in (interaction.member.roles as object)
+        ? (interaction.member.roles as { cache: Map<string, unknown> }).cache
+        : null;
+      const currentRoleIds = new Set(
+        notifRoles.map(r => r.roleId).filter(id => memberRoles?.has(id) ?? false),
+      );
 
       const ephemeral = buildNotifEphemeral(notifRoles, currentRoleIds);
 
+      const session = activeNotifSessions.get(interaction.user.id);
+      const sessionValid = !!session && (Date.now() - session.createdAt) < NOTIF_SESSION_TTL;
+
       if (sessionValid) {
-        // Ya hay un ephemeral abierto — actualizar en lugar de crear uno nuevo
         await interaction.deferUpdate();
-        await session.interaction.editReply(ephemeral);
+        await session.interaction.editReply(ephemeral).catch(async () => {
+          // Token expirado — crear nuevo ephemeral
+          activeNotifSessions.delete(interaction.user.id);
+          await interaction.followUp({ ...ephemeral, ephemeral: true });
+        });
       } else {
-        // Primera vez o sesión expirada — crear nuevo ephemeral y programar cierre
         await interaction.reply({ ...ephemeral, ephemeral: true });
         const timeoutId = setTimeout(
           () => { void expireNotifSession(interaction, interaction.user.id); },
@@ -4251,6 +4547,143 @@ const interactionCreateEvent: BotEvent<'interactionCreate'> = {
             .setTimestamp(),
         ],
         components: [],
+      });
+      return;
+    }
+
+    // ── recruit:reason_select — staff elige motivo predefinido ───────────────
+    if (interaction.isStringSelectMenu() && interaction.customId.startsWith('recruit:reason_select:')) {
+      const parts     = interaction.customId.split(':');
+      // recruit:reason_select:{ticketId}:{channelId}:{messageId}
+      const ticketId  = parts[2]!;
+      const channelId = parts[3]!;
+      const messageId = parts[4]!;
+      const selected  = interaction.values[0]!;
+      const guild     = interaction.guild;
+      if (!guild) return;
+
+      const cfg     = await getOrCreateGuildConfig(guild.id);
+      const reasons = parseRejectionReasons(cfg.rejectionReasons);
+
+      if (selected === '__custom__') {
+        await interaction.showModal(
+          new ModalBuilder()
+            .setCustomId(`recruit:custom_reason_modal:${ticketId}:${channelId}:${messageId}`)
+            .setTitle('Motivo de rechazo personalizado')
+            .addComponents(
+              new ActionRowBuilder<TextInputBuilder>().addComponents(
+                new TextInputBuilder()
+                  .setCustomId('body')
+                  .setLabel('Mensaje (se envía al solicitante por DM)')
+                  .setStyle(TextInputStyle.Paragraph)
+                  .setRequired(true)
+                  .setMaxLength(2000)
+                  .setPlaceholder('Escribe el motivo completo aquí...'),
+              ),
+            ),
+        );
+        return;
+      }
+
+      const found = reasons.find(r => r.id === selected);
+      if (!found) return;
+
+      pendingRecruitRejections.set(interaction.user.id, {
+        ticketId,
+        channelId,
+        messageId,
+        label: found.label,
+        body:  found.body,
+      });
+
+      await interaction.deferUpdate();
+      await interaction.editReply({
+        embeds: [buildRejectionSelectorEmbed(reasons, found.label)],
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            buildRejectionReasonSelect(reasons, ticketId, channelId, messageId, selected),
+          ),
+          buildRejectionConfirmRow(ticketId, channelId, messageId, false),
+        ],
+      });
+      return;
+    }
+
+    // ── recruit:reason_cancel — cancelar flujo de rechazo ────────────────────
+    if (interaction.isButton() && interaction.customId === 'recruit:reason_cancel') {
+      pendingRecruitRejections.delete(interaction.user.id);
+      await interaction.deferUpdate();
+      await interaction.editReply({ embeds: [buildRecruitmentNoticeEmbed({ title: 'Cancelado', description: 'El rechazo fue cancelado.', color: RECRUITMENT_COLORS.warning })], components: [] });
+      return;
+    }
+
+    // ── recruit:reason_confirm — ejecutar rechazo con motivo guardado ─────────
+    if (interaction.isButton() && interaction.customId.startsWith('recruit:reason_confirm:')) {
+      const parts     = interaction.customId.split(':');
+      const ticketId  = parts[2]!;
+      const channelId = parts[3]!;
+      const messageId = parts[4]!;
+      const guild     = interaction.guild;
+      if (!guild) return;
+
+      const pending = pendingRecruitRejections.get(interaction.user.id);
+      if (!pending || pending.ticketId !== ticketId) {
+        await interaction.reply({
+          embeds: [buildRecruitmentErrorEmbed('Sesión expirada', 'Selecciona el motivo de nuevo.')],
+          ephemeral: true,
+        });
+        return;
+      }
+
+      await interaction.deferUpdate();
+      pendingRecruitRejections.delete(interaction.user.id);
+
+      await executeRecruitmentRejection({
+        guild,
+        ticketId,
+        staffId: interaction.user.id,
+        reason:  pending.body,
+        channelId,
+        messageId,
+      });
+
+      await interaction.editReply({
+        embeds: [buildRecruitmentNoticeEmbed({ title: 'Solicitud rechazada', description: 'El usuario fue notificado con el motivo.', color: RECRUITMENT_COLORS.success })],
+        components: [],
+      });
+      return;
+    }
+
+    // ── recruit:add_reason_modal — guardar nuevo motivo predeterminado ────────
+    if (interaction.isModalSubmit() && interaction.customId === 'recruit:add_reason_modal') {
+      await handleAddRejectionReasonModal(interaction);
+      return;
+    }
+
+    // ── recruit:custom_reason_modal — motivo libre, ejecutar rechazo ──────────
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('recruit:custom_reason_modal:')) {
+      const parts     = interaction.customId.split(':');
+      const ticketId  = parts[2]!;
+      const channelId = parts[3]!;
+      const messageId = parts[4]!;
+      const guild     = interaction.guild;
+      if (!guild) return;
+
+      const body = interaction.fields.getTextInputValue('body').trim();
+
+      await interaction.deferReply({ ephemeral: true });
+
+      await executeRecruitmentRejection({
+        guild,
+        ticketId,
+        staffId: interaction.user.id,
+        reason:  body,
+        channelId,
+        messageId,
+      });
+
+      await interaction.editReply({
+        embeds: [buildRecruitmentNoticeEmbed({ title: 'Solicitud rechazada', description: 'El usuario fue notificado con el motivo.', color: RECRUITMENT_COLORS.success })],
       });
       return;
     }

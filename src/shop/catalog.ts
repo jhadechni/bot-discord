@@ -183,11 +183,10 @@ function buildProductCardValue(product: CatalogProduct): string {
       presentationType: product.presentationType as Parameters<typeof resolvePresentationLabel>[0]['presentationType'],
       stackSize: product.baseMaterial?.stackSize ?? 64,
     })}`;
-  const description = product.description ? truncateText(product.description, 120) : null;
   const contentsSummary = buildProductContentsSummary(product);
   const contentsStr = contentsSummary ? `🎁 ${truncateText(contentsSummary, 120)}` : null;
 
-  return [presentationStr, priceStr, contentsStr, description].filter(Boolean).join('\n');
+  return [presentationStr, priceStr, contentsStr].filter(Boolean).join('\n');
 }
 
 function applyTaxonomyImages(
@@ -471,10 +470,6 @@ export function buildProductDetailEmbed(
   lines.push(priceStr);
   lines.push(`🏷️ **Tipo:** ${typeLabel}`);
 
-  if (product.description) {
-    lines.push('', product.description);
-  }
-
   const contentsSummary = buildProductContentsSummary(product);
   if (contentsSummary) {
     lines.push('', `🎁 **Contenido:** ${contentsSummary}`);
@@ -690,10 +685,7 @@ function buildVariantPickerEmbed(
     new EmbedBuilder()
       .setTitle(`${icon} ${product.name}`)
       .setDescription(
-        [
-          product.description ?? null,
-          `**${count} variante${count !== 1 ? 's' : ''} disponibles** — selecciona una del menú para ver el detalle y añadirla al carrito.`,
-        ].filter(Boolean).join('\n\n'),
+        `**${count} variante${count !== 1 ? 's' : ''} disponibles** — selecciona una del menú para ver el detalle y añadirla al carrito.`,
       )
       .setColor(SHOP_COLORS.info)
       .setFooter({ text: SHOP_FOOTER.text })
@@ -737,10 +729,6 @@ export function buildVariantDetailEmbed(
   if (presentationStr) {
     embed.addFields({ name: 'Presentación', value: presentationStr, inline: true });
   }
-  if (parent.description) {
-    embed.setDescription(parent.description);
-  }
-
   return applyTaxonomyImages(embed, categoryKey, subcategoryKey);
 }
 
@@ -975,9 +963,7 @@ export function buildSearchView(
 
   const price = selectedProduct.prices[0];
   const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
-  const descLines = [`💰 **${priceStr}**`];
-  if (selectedProduct.description) descLines.push('', selectedProduct.description);
-  const description = descLines.join('\n') + extraNote;
+  const description = `💰 **${priceStr}**` + extraNote;
 
   const embed = buildProductDetailEmbed(
     selectedProduct,

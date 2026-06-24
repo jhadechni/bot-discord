@@ -101,10 +101,9 @@ function buildProductCardValue(product) {
             presentationType: product.presentationType,
             stackSize: product.baseMaterial?.stackSize ?? 64,
         })}`;
-    const description = product.description ? truncateText(product.description, 120) : null;
     const contentsSummary = buildProductContentsSummary(product);
     const contentsStr = contentsSummary ? `🎁 ${truncateText(contentsSummary, 120)}` : null;
-    return [presentationStr, priceStr, contentsStr, description].filter(Boolean).join('\n');
+    return [presentationStr, priceStr, contentsStr].filter(Boolean).join('\n');
 }
 function applyTaxonomyImages(embed, categoryKey, subcategoryKey) {
     const category = getCategoryDefinition(categoryKey);
@@ -307,9 +306,6 @@ export function buildProductDetailEmbed(product, categoryKey, subcategoryKey) {
     }
     lines.push(priceStr);
     lines.push(`🏷️ **Tipo:** ${typeLabel}`);
-    if (product.description) {
-        lines.push('', product.description);
-    }
     const contentsSummary = buildProductContentsSummary(product);
     if (contentsSummary) {
         lines.push('', `🎁 **Contenido:** ${contentsSummary}`);
@@ -454,10 +450,7 @@ function buildVariantPickerEmbed(product, categoryKey, subcategoryKey) {
     const count = product.variants.length;
     return applyTaxonomyImages(new EmbedBuilder()
         .setTitle(`${icon} ${product.name}`)
-        .setDescription([
-        product.description ?? null,
-        `**${count} variante${count !== 1 ? 's' : ''} disponibles** — selecciona una del menú para ver el detalle y añadirla al carrito.`,
-    ].filter(Boolean).join('\n\n'))
+        .setDescription(`**${count} variante${count !== 1 ? 's' : ''} disponibles** — selecciona una del menú para ver el detalle y añadirla al carrito.`)
         .setColor(SHOP_COLORS.info)
         .setFooter({ text: SHOP_FOOTER.text })
         .setTimestamp(), categoryKey, subcategoryKey);
@@ -484,9 +477,6 @@ export function buildVariantDetailEmbed(variant, parent, categoryKey, subcategor
     embed.addFields({ name: 'Variante', value: `**${label}**`, inline: true }, { name: 'Precio', value: priceStr, inline: true });
     if (presentationStr) {
         embed.addFields({ name: 'Presentación', value: presentationStr, inline: true });
-    }
-    if (parent.description) {
-        embed.setDescription(parent.description);
     }
     return applyTaxonomyImages(embed, categoryKey, subcategoryKey);
 }
@@ -628,10 +618,7 @@ export function buildSearchView(allProducts, results, query, selectedProductId) 
         : '';
     const price = selectedProduct.prices[0];
     const priceStr = price ? formatPrice(price.price, price.currency) : 'Sin precio';
-    const descLines = [`💰 **${priceStr}**`];
-    if (selectedProduct.description)
-        descLines.push('', selectedProduct.description);
-    const description = descLines.join('\n') + extraNote;
+    const description = `💰 **${priceStr}**` + extraNote;
     const embed = buildProductDetailEmbed(selectedProduct, selectedProduct.category, selectedProduct.subcategory).setTitle(`🔍 "${truncateText(query, 50)}" — ${selectedProduct.name}`)
         .setDescription(description);
     return { components, embed };

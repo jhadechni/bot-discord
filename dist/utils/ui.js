@@ -20,6 +20,8 @@ export const COLORS = {
 export const ORDER_COLORS = {
     pending: COLORS.warning,
     accepted: COLORS.success,
+    in_preparation: COLORS.orange,
+    ready: 0x00b4d8,
     rejected: COLORS.danger,
     completed: COLORS.blurple,
     cancelled: COLORS.neutral,
@@ -27,6 +29,8 @@ export const ORDER_COLORS = {
 export const ORDER_LABELS = {
     pending: '🟡 Pendiente',
     accepted: '🟢 Aceptado',
+    in_preparation: '🔶 En preparación',
+    ready: '🔷 Listo',
     rejected: '🔴 Rechazado',
     completed: '🔵 Completado',
     cancelled: '⚫ Cancelado',

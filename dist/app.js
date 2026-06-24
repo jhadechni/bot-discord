@@ -20,6 +20,7 @@ import { kitCommand } from "./commands/kit/kit.command.js";
 import { notifCommand } from "./commands/notif/notif.command.js";
 import { expulsionCommand } from "./commands/expulsion/expulsion.command.js";
 import { anunciarCommand } from "./commands/anunciar/anunciar.command.js";
+import { reclutamientoCommand } from "./commands/apply/reclutamiento.command.js";
 // Events
 import readyEvent from "./events/ready.event.js";
 import interactionCreateEvent from "./events/interactionCreate.event.js";
@@ -51,6 +52,7 @@ for (const cmd of [
     notifCommand,
     expulsionCommand,
     anunciarCommand,
+    reclutamientoCommand,
 ]) {
     client.commands.set(cmd.data.name, cmd);
 }

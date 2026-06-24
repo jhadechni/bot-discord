@@ -1,1 +1,1 @@
-{"version":3,"file":"solicitudes.command.d.ts","sourceRoot":"","sources":["../../../src/commands/apply/solicitudes.command.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,wBAAwB,CAAC;AAgBtD,eAAO,MAAM,kBAAkB,EAAE,OAsGhC,CAAC"}
+{"version":3,"file":"solicitudes.command.d.ts","sourceRoot":"","sources":["../../../src/commands/apply/solicitudes.command.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,wBAAwB,CAAC;AAiBtD,eAAO,MAAM,kBAAkB,EAAE,OAmHhC,CAAC"}

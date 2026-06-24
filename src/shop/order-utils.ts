@@ -166,6 +166,9 @@ export async function getOrderFull(orderCode: string) {
           },
           product: {
             include: {
+              baseMaterial: {
+                select: { stackSize: true },
+              },
               components: {
                 include: {
                   material: {
@@ -721,6 +724,17 @@ export async function consumeOrderStock(
   }, { timeout: 30_000 });
 }
 
+function resolvePresentationUnit(presentationType: string, presentationLabel: string | null, quantity: number): string | null {
+  const p = quantity !== 1;
+  switch (presentationType) {
+    case 'unit':         return p ? 'Unidades' : 'Unidad';
+    case 'stack':        return p ? 'Stacks' : 'Stack';
+    case 'chest':        return p ? 'Cofres' : 'Cofre';
+    case 'double_chest': return p ? 'Cofres dobles' : 'Cofre doble';
+    default:             return presentationLabel ?? null;
+  }
+}
+
 // ── Embeds y botones ──────────────────────────────────────────────────────────
 
 export function buildOrderEmbed(
@@ -736,7 +750,9 @@ export function buildOrderEmbed(
     const namePart  = item.product.variantLabel
       ? `${item.product.name} · *${item.product.variantLabel}*`
       : item.product.name;
-    const line = `**${namePart}** × ${item.quantity}  —  ${unitStr} c/u  →  **${lineTotal}**`;
+    const presentationUnit = resolvePresentationUnit(item.product.presentationType, item.product.presentationLabel, item.quantity);
+    const quantityPart = presentationUnit ? `${item.quantity} ${presentationUnit}` : `${item.quantity}`;
+    const line = `**${namePart}** × ${quantityPart}  —  ${unitStr} c/u  →  **${lineTotal}**`;
     const itemDiscountTotal = item.appliedDiscounts.reduce(
       (sum, discount) => sum.add(discount.discountAmount),
       new Prisma.Decimal(0),
@@ -867,9 +883,13 @@ export function buildPendingButtons(orderCode: string) {
   );
 }
 
-/** Botones para pedido aceptado (en canal de staff). */
+/** Botones para pedido aceptado — paso siguiente: iniciar preparación. */
 export function buildAcceptedButtons(orderCode: string) {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`shop:prepare:${orderCode}`)
+      .setLabel('🔧 Iniciar preparación')
+      .setStyle(ButtonStyle.Primary),
     new ButtonBuilder()
       .setCustomId(`shop:add_service:${orderCode}`)
       .setLabel('➕ Agregar servicio')
@@ -879,9 +899,41 @@ export function buildAcceptedButtons(orderCode: string) {
       .setLabel('🏷️ Aplicar descuento')
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
-      .setCustomId(`shop:close:${orderCode}`)
-      .setLabel('📦 Marcar entregado')
+      .setCustomId(`shop:cancel:${orderCode}`)
+      .setLabel('🚫 Cancelar')
+      .setStyle(ButtonStyle.Secondary),
+  );
+}
+
+/** Botones para pedido en preparación — paso siguiente: marcar listo. */
+export function buildInPreparationButtons(orderCode: string) {
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`shop:ready:${orderCode}`)
+      .setLabel('📦 Marcar listo')
       .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(`shop:add_service:${orderCode}`)
+      .setLabel('➕ Agregar servicio')
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId(`shop:discount:${orderCode}`)
+      .setLabel('🏷️ Aplicar descuento')
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId(`shop:cancel:${orderCode}`)
+      .setLabel('🚫 Cancelar')
+      .setStyle(ButtonStyle.Secondary),
+  );
+}
+
+/** Botones para pedido listo — paso final: finalizar. */
+export function buildReadyButtons(orderCode: string) {
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`shop:close:${orderCode}`)
+      .setLabel('✅ Finalizar pedido')
+      .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
       .setCustomId(`shop:cancel:${orderCode}`)
       .setLabel('🚫 Cancelar')

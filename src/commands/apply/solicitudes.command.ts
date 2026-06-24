@@ -1,6 +1,7 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
 import type { Command } from '../../types/command.js';
 import { prisma } from '../../database/prisma.js';
+import { getOrCreateGuildConfig } from '../../database/guild-config.js';
 import {
   RECRUITMENT_COLORS,
   buildRecruitmentNoticeEmbed,
@@ -19,7 +20,6 @@ export const solicitudesCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('solicitudes')
     .setDescription('Lista las solicitudes de reclutamiento pendientes')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
     .addStringOption(opt =>
       opt
         .setName('estado')
@@ -40,6 +40,20 @@ export const solicitudesCommand: Command = {
 
     const guildId = interaction.guildId;
     if (!guildId) return;
+
+    const guild = interaction.guild;
+    if (!guild) return;
+
+    const cfg = await getOrCreateGuildConfig(guildId);
+    const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+    const recruitRoles = [cfg.liderRoleId, cfg.coLiderRoleId, cfg.staffRoleId, cfg.reclutadorRoleId].filter(Boolean) as string[];
+    const hasPermission = member?.permissions.has('Administrator') || recruitRoles.some(r => member?.roles.cache.has(r));
+    if (!hasPermission) {
+      await interaction.editReply({
+        embeds: [buildRecruitmentErrorEmbed('Permiso insuficiente', 'Solo el staff de reclutamiento puede ver las solicitudes.')],
+      });
+      return;
+    }
 
     const estadoOpt = interaction.options.getString('estado') ?? 'OPEN';
     const page = (interaction.options.getInteger('pagina') ?? 1) - 1;

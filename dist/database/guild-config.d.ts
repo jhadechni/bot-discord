@@ -28,6 +28,7 @@ export declare function getOrCreateGuildConfig(guildId: string): Promise<{
     farewellChannelId: string | null;
     notifRoles: import("@prisma/client/runtime/client").JsonValue;
     expulsionReasons: import("@prisma/client/runtime/client").JsonValue;
+    rejectionReasons: import("@prisma/client/runtime/client").JsonValue;
     notifPanelChannelId: string | null;
     notifPanelMessageId: string | null;
 }>;
